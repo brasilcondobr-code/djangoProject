@@ -1,0 +1,173 @@
+
+    INICIAR O PROJETO DJANGO
+
+        
+
+
+
+
+
+==============================================================================================================================================
+
+YOUTUBE:    https://youtu.be/UNiRHn2iusg
+            Docker com Django, PostgreSQL e Compose para seu ambiente de desenvolvimento Python
+            Otávio Miranda
+
+
+
+
+
+
+
+==============================================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Criei o conjunto completo de arquivos para um ambiente de desenvolvimento em Django com PostgreSQL, pronto para iniciar.
+
+O que foi criado (base para o setup de desenvolvimento)
+
+    Orquestração e infraestrutura
+        docker-compose.yml
+        docker/django/Dockerfile
+        docker/django/entrypoint.sh
+
+    Projeto Django (estrutura mínima)
+        manage.py (src/backend/manage.py)
+        src/backend/init.py
+        src/backend/config/init.py
+        src/backend/config/settings.py (configurado para PostgreSQL via variáveis de ambiente)
+        src/backend/config/wsgi.py
+        src/backend/config/urls.py
+        src/backend/config/views.py
+        src/backend/config/versions (opcional, não adicionado; raiz simples já atende)
+
+    Configurações e dependências
+        src/backend/requirements/base.txt (Django 6.0.1 + psycopg2-binary + gunicorn)
+        .env.example
+        .gitignore
+
+    Documentação
+        README.md (instruções iniciais)
+
+    Arquivos de apoio
+        .env.example (modelos de variáveis de ambiente)
+        README.md atualizado para o fluxo de desenvolvimento
+
+
+    Conteúdo-chave dos arquivos (resumo)
+
+        docker-compose.yml
+            backend: build a partir de docker/django/Dockerfile; mapeia ./src/backend:/app; porta 8000; usa .env; depende de db
+            db: postgres:16; usa Postgres com banco brasilio, usuário brasilcondo e senha brasilcondo123
+
+        docker/django/Dockerfile
+            Python 3.13-slim
+            Instala dependências a partir de src/backend/requirements/base.txt
+            Copia código Django para /app
+            Usa entrypoint para migrate + runserver
+
+        docker/django/entrypoint.sh
+            Espera o DB, roda migrate e inicia o servidor em 0.0.0.0:8000
+
+        src/backend/manage.py
+            Gerenciador padrão do Django
+
+        src/backend/config/settings.py
+            Configura Django para:
+                SECRET_KEY via DJANGO_SECRET_KEY
+                DEBUG via DEBUG
+                PostgreSQL via NAME/USER/PASSWORD/HOST/PORT com defaults
+                ALLOWED_HOSTS via DJANGO_ALLOWED_HOSTS (com fallback seguro para dev)
+                LANGUAGE_CODE pt-br
+
+        src/backend/config/views.py
+            view simples: retorna HttpResponse com “BrasilCondo - OK”
+
+        src/backend/config/urls.py
+            Rotas:
+                /admin/ -> admin
+                / -> home (view simples)
+        
+        src/backend/config/wsgi.py
+            Ponto de entrada WSGI
+
+        .env.example
+            Modelo com variáveis: DJANGO_SECRET_KEY, DEBUG, DJANGO_ALLOWED_HOSTS, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, DB_HOST, DB_PORT
+
+        .gitignore
+            Previne commit de secrets, ambientes virtuais etc.
+
+        .README.md
+            Instruções básicas de uso
+
+        .env.example
+            Modelo de configuração para o ambiente de desenvolvimento
+
+        README.md (novo conteúdo descrevendo o setup)
+
+
+
+    Como usar (fluxo recomendado)
+
+    1. Duplicar o env de desenvolvimento
+        cp .env.example .env
+        Editar .env com valores reais (DB_HOST=db, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD etc.)
+
+    2. Construir e iniciar
+        docker compose up --build
+
+    3. Migrações e usuário admin (opcional, para já ter admin)
+        docker compose exec backend python manage.py migrate
+        docker compose exec backend python manage.py createsuperuser
+
+    4. Acessar
+        http://localhost:8000/ deve retornar a raiz porque criamos uma view simples para ela
+        /admin/ para o painel do Django admin
+
+
+    Notas rápidas sobre o estado de desenvolvimento
+        Banco de dados: PostgreSQL é o DB principal, via Postgres 16 no docker-compose.
+        SQLite removido do projeto (não depende mais de db.sqlite3).
+        SECRET_KEY e DEBUG são carregados de variáveis de ambiente (próximo passo: garantir que estejam configurados em .env e/ou env do container).
+        Root/ homepage criada para evitar 404 na raiz; você pode evoluir para uma homepage com template futuramente.
+
+
+    Próximos passos (opcional)
+        Ajustar a homepage para um template simples (HTML).
+        Adicionar um script de bootstrap para automatizar migrations, create superuser, etc.
+        Ajustar ALLOWED_HOSTS para produção com valores reais (em .env).
+        Adicionar testes básicos e migrations iniciais de apps, se houver.
+    
+    Diga se você quer que eu:
+        Gere patches para aplicar diretamente nesse repositório (já crio diffs completos),
+        Ou forneça instruções passo a passo com comandos para copiar e colar,
+        Ou faça ajustes adicionais (por exemplo, criar uma homepage com template, ou adicionar um script de bootstrap).
+
+
+==============================================================================================================================================
+
