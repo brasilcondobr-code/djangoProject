@@ -1,9 +1,18 @@
 
     INICIAR O PROJETO DJANGO
 
-        
+    # Acessar a pasta do projeto
+        $ cd /home/delll/Projects/djangoProject
 
+    # Ativar o ambiente virtual
+        $ source venv/bin/activate
+        (venv) delll@pc:~/djangoProject$
 
+    # Rodar o projeto Django
+        $ python djangoapp/manage.py runserver
+
+    # Acesso ao projeto pelo navegador
+        http://127.0.0.1:8000/
 
 
 
