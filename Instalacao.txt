@@ -1,4 +1,17 @@
 
+
+    IONICIAR O PROJETO DJANGO COM Docker
+
+    # Subir as imagens do Docker
+    
+
+
+
+
+==============================================================================================================================================
+
+
+
     INICIAR O PROJETO DJANGO
 
     # Acessar a pasta do projeto
