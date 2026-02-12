@@ -1,24 +1,36 @@
-version: '3.9'
-
 services:
-  djangoapp:
-    container_name: djangoapp
-    build:
-      context: .
-    ports:
-      - 8000:8000
+  web:
+    build: .
+    container_name: django_project_web
+    command: /scripts/command.sh
     volumes:
-      - ./djangoapp:/djangoapp
-      - ./data/web/static:/data/web/static/
-      - ./data/web/media:/data/web/media/
+      - ./app:/app
+      - ./scripts:/scripts
+      - ./data/web/static:/app/static
+      - ./data/web/media:/app/media
+    ports:
+      - "8000:8000"
     env_file:
       - ./dotenv_files/.env
     depends_on:
-      - psql
-  psql:
-    container_name: psql
-    image: postgres:13-alpine
+      - db
+    networks:
+      - django-network
+
+  db:
+    image: postgres:16
+    container_name: django_project_db
+    restart: always
     volumes:
-      - ./data/postgres/data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data
     env_file:
       - ./dotenv_files/.env
+    networks:
+      - django-network
+
+networks:
+  django-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

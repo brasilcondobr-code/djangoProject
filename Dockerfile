@@ -1,50 +1,35 @@
-FROM python:3.15.0a5-alpine3.23
-LABEL mantainer="brasilcondo.br@gmail.com"
+# Utilizando Python 3.12 (Estável)
+FROM python:3.12-slim
 
-# Essa variável de ambiente é usada para controlar se o Python deve 
-# gravar arquivos de bytecode (.pyc) no disco. 1 = Não, 0 = Sim
+# Define variáveis de ambiente para evitar arquivos .pyc e logs em buffer
 ENV PYTHONDONTWRITEBYTECODE 1
-
-# Define que a saída do Python será exibida imediatamente no console ou em 
-# outros dispositivos de saída, sem ser armazenada em buffer.
-# Em resumo, você verá os outputs do Python em tempo real.
 ENV PYTHONUNBUFFERED 1
 
-# Copia a pasta "djangoapp" e "scripts" para dentro do container.
-COPY djangoapp /djangoapp
-COPY scripts /scripts
+# Define o diretório de trabalho
+WORKDIR /app
 
-# Entra na pasta djangoapp no container
-WORKDIR /djangoapp
+# Instala dependências do sistema necessárias para o psycopg2 e netcat (nc)
+RUN apt-get update && apt-get install -y \
+    netcat-openbsd \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# A porta 8000 estará disponível para conexões externas ao container
-# É a porta que vamos usar para o Django.
+# Copia o arquivo de requisitos
+COPY requirements.txt .
+
+# Instala as dependências do Python
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copia o restante do código do projeto
+COPY ./app /app
+COPY ./scripts /scripts
+
+# Garante que o script seja executável
+RUN chmod +x /scripts/command.sh
+
+# Expõe a porta 8000
 EXPOSE 8000
 
-# RUN executa comandos em um shell dentro do container para construir a imagem. 
-# O resultado da execução do comando é armazenado no sistema de arquivos da 
-# imagem como uma nova camada.
-# Agrupar os comandos em um único RUN pode reduzir a quantidade de camadas da 
-# imagem e torná-la mais eficiente.
-RUN python -m venv /venv && \
-  /venv/bin/pip install --upgrade pip && \
-  /venv/bin/pip install -r /djangoapp/requirements.txt && \
-  adduser --disabled-password --no-create-home duser && \
-  mkdir -p /data/web/static && \
-  mkdir -p /data/web/media && \
-  chown -R duser:duser /venv && \
-  chown -R duser:duser /data/web/static && \
-  chown -R duser:duser /data/web/media && \
-  chmod -R 755 /data/web/static && \
-  chmod -R 755 /data/web/media && \
-  chmod -R +x /scripts
-
-# Adiciona a pasta scripts e venv/bin 
-# no $PATH do container.
-ENV PATH="/scripts:/venv/bin:$PATH"
-
-# Muda o usuário para duser
-USER duser
-
-# Executa o arquivo scripts/commands.sh
-CMD ["commands.sh"]
+# Define o comando de inicialização
+CMD ["/scripts/command.sh"]

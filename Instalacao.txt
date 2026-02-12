@@ -2,8 +2,56 @@
 
     IONICIAR O PROJETO DJANGO COM Docker
 
+        Como o seu projeto está configurado com Docker Compose e possui um script de inicialização automatizado (scripts/command.sh), o processo para reiniciar o ambiente é bastante simples.
+
+        Siga estes passos no seu terminal:
+
+            Acesse a pasta do projeto:
+
+                $ cd /home/delll/Projects/djangoProject
+            
+            Suba os containers: Você tem duas opções principais:
+
+                Opção A (Com logs no terminal): Ideal para ver o que está acontecendo em tempo real.
+
+                    $ docker compose up
+                    (Para parar, pressione Ctrl+C)
+
+                Opção B (Em segundo plano/Detached): Ideal se você quiser liberar o terminal para rodar outros comandos (como criar apps ou superusuários).
+
+                    $ docker compose up -d
+                    (Para parar depois, use docker compose down)
+
+            O que acontece automaticamente quando você roda esse comando? 
+            Graças ao seu arquivo scripts/command.sh, o Docker irá:
+
+                - Iniciar o banco de dados PostgreSQL.
+                - Aguardar o banco estar pronto para conexão.
+                - Rodar as migrações pendentes (migrate).
+                - Coletar arquivos estáticos (collectstatic).
+                - Iniciar o servidor Django na porta 8000.
+        
+        Após o comando, basta acessar no navegador: http://localhost:8000/
+
+
+
+
+
+
+
     # Subir as imagens do Docker
-    
+    # docker compose up
+
+    # URL Acesso
+    http://localhost:8000/
+
+
+    # Gerar um superusuário
+    # docker compose exec web python manage.py createsuperuser
+        Username            ocpcps
+        Email               brasilcondo.br@gmail.com
+        Password            brasilcondo123
+        Password (again)    brasilcondo123
 
 
 
