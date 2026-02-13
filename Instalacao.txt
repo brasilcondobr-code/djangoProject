@@ -46,6 +46,10 @@
     http://localhost:8000/
 
 
+    # Acessar o Painel Administrativo
+    http://localhost:8000/admin/
+
+
     # Gerar um superusuário
     # docker compose exec web python manage.py createsuperuser
         Username            ocpcps
