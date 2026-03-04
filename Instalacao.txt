@@ -78,18 +78,15 @@
         
         Como Restaurar (Caso precise)
 
-            1. Banco de Dados:
+            Para restaurar um backup, use o script restore.sh passando o caminho do arquivo .tar.gz gerado.
+            
+            1. Dê permissão de execução (apenas na primeira vez):
+                    chmod +x scripts/restore.sh
 
-                # Descompacte o arquivo sql
-                # Verifique o usuário (POSTGRES_USER) e o banco (POSTGRES_DB) no seu arquivo ./dotenv_files/.env
-                # e substitua no comando abaixo se forem diferentes.
-                # Exemplo para restaurar (baseado no seu .env):
-                    cat db_dump.sql | docker compose exec -T db psql -U usr_postgres -d db_postgres
-
-
-            2. Arquivos de mídia:
-
-                Basta extrair a pasta media e copiar de volta para o local mapeado no seu volume ou container.
+            2. Execute a restauração (exemplo):
+                    ./scripts/restore.sh backups/backup_2026-03-04_15-57-22.tar.gz
+            
+            O script irá pedir confirmação antes de apagar o banco de dados atual e substituir pelo backup.
 
 
 ==============================================================================================================================================
