@@ -187,26 +187,6 @@ DEPOIS DA INSTALAÇÃO DO DJANGO
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Criei o conjunto completo de arquivos para um ambiente de desenvolvimento em Django com PostgreSQL, pronto para iniciar.
 
 O que foi criado (base para o setup de desenvolvimento)
