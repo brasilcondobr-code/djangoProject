@@ -55,6 +55,20 @@
         Password (again)    brasilcondo123
 
 
+
+    USUÁRIO (Teste)
+        Username            emerson_santos
+        Email               emerson@ocp.inf.br
+        Password            1qwerty02
+        Password (again)    1qwerty02
+        Primeiro nome:		Emerson
+        Último nome:		Santos
+        [X] Ativo
+        [X] Membro de equipe
+        [  ] Status de superusuários
+        Grupos              Sindicos
+
+
 ==============================================================================================================================================
 
 

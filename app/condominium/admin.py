@@ -1,3 +1,5 @@
+import csv
+from django.http import HttpResponse
 from django.contrib import admin
 from .models import Addresses, States, Condominium, TypesCondominium, StructionCondominium
 
@@ -9,6 +11,23 @@ class TypesCondominiumAdmin(admin.ModelAdmin):
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
+    
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
+        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+        writer.writerow(['id','Descrição', 'Ativo', 'Criado em', 'Atualizado em'])
+        for obj in queryset:
+            row = [getattr(obj, field) for field in field_names]
+            writer.writerow(row)
+        return response
+    
+    export_as_csv.short_description = "Exportar para CSV"
+    actions = ["export_as_csv"]
+    
 
 @admin.register(StructionCondominium)
 class StructionCondominiumAdmin(admin.ModelAdmin):
