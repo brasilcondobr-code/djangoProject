@@ -57,7 +57,7 @@ class Addresses(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     street = models.CharField(max_length=255, null=False, blank=False,verbose_name="Logradouro")
     number = models.CharField(max_length=10, null=False, blank=False,verbose_name="Número")
-    complement = models.CharField(max_length=255, null=True, verbose_name="Complemento")
+    complement = models.CharField(max_length=255, null=False, blank=True, verbose_name="Complemento")
     city = models.CharField(max_length=100, null=False, blank=False, verbose_name="Município")
     state = models.ForeignKey(States, related_name="address", null=False, blank=False, verbose_name="UF", on_delete=models.CASCADE)
     country = models.CharField(max_length=100, null=False, blank=False, default="Brasil", verbose_name="País")
@@ -72,7 +72,10 @@ class Addresses(models.Model):
         
 
     def __str__(self):
-        return f"{self.street}, {self.city}, {self.state} {self.zip_code}"
+        address_line = f"{self.street}, {self.number}"
+        if self.complement:
+            address_line += f" - {self.complement}"
+        return f"{address_line} | {self.city}/{self.state.abbreviation} | CEP: {self.zip_code}"
 
 class Condominium(models.Model):
     code = models.CharField(max_length=100, verbose_name="Código", unique=True)
