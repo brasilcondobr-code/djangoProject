@@ -1,0 +1,7 @@
+body.login-page {
+    background-image: url('../img/login-bg.jpg') !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+}

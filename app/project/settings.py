@@ -97,6 +97,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+# Local onde você salva os arquivos estáticos durante o desenvolvimento
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static_src'),
+]
+
 # Media files
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -116,6 +121,9 @@ JAZZMIN_SETTINGS = {
     
     # Mensagem de boas vindas na tela de login
     "welcome_sign": "Bem-vindo ao BrasilCondo",
+
+    # CSS customizado para aplicar o background e outros estilos
+    "custom_css": "css/custom_admin.css",
     
     # Copyright no rodapé
     "copyright": "BrasilCondo Ltd",
