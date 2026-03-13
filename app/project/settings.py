@@ -107,12 +107,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 JAZZMIN_SETTINGS = {
     # Título da janela do navegador
     "site_title": "BrasilCondo Admin",
+    
     # Título no brand do login (mobile e desktop)
     "site_header": "BrasilCondo",
+    
     # Logo do seu site
     "site_brand": "BrasilCondo",
+    
     # Mensagem de boas vindas na tela de login
     "welcome_sign": "Bem-vindo ao BrasilCondo",
+    
     # Copyright no rodapé
     "copyright": "BrasilCondo Ltd",
     
@@ -129,4 +133,6 @@ JAZZMIN_SETTINGS = {
         "condominium.Addresses": "fas fa-map-marked-alt",
         "condominium.States": "fas fa-flag",
     },
+    
+    "show_ui_builder": True,
 }

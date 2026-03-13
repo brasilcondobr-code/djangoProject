@@ -22,7 +22,7 @@ services:
     container_name: django_project_db
     restart: always
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     env_file:
       - ./dotenv_files/.env
     networks:
@@ -31,6 +31,3 @@ services:
 networks:
   django-network:
     driver: bridge
-
-volumes:
-  postgres_data:
