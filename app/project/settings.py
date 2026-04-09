@@ -126,13 +126,15 @@ JAZZMIN_SETTINGS = {
     # Mensagem de boas vindas na tela de login
     "welcome_sign": "Bem-vindo(a) ao Sistema BrasilCondo",
 
-    # CSS customizado para aplicar o background e outros estilos
+    # CSS customizado para aplicar o tema padrão do admin (antes do dark mode)
     "custom_css": "css/custom_admin.css",
+    # JS customizado para adicionar ícone de login no menu Account
+    "custom_js": "js/custom_admin_login_icon.js",
     
     # Copyright no rodapé (Footer)
     "copyright": "BrasilCondo Ltda. © 2026",
     
-    # Color scheme do tema
+    # Revert to previous dark-ish theme (Jazzmin default variant)
     "theme": "darkly",
         
     # Menu lateral
@@ -150,4 +152,37 @@ JAZZMIN_SETTINGS = {
     },
     
     "show_ui_builder": True,
+}
+
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": False,
+    "accent": "accent-primary",
+    "navbar": "navbar-white navbar-light",
+    "no_navbar_border": False,
+    "navbar_fixed": False,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": False,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "darkly",
+    "default_theme_mode": "dark",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
 }
