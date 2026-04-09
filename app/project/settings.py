@@ -13,6 +13,7 @@ DEBUG = os.environ.get('DEBUG') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
+
 # Application definition
 INSTALLED_APPS = [
     'jazzmin',
@@ -119,15 +120,21 @@ JAZZMIN_SETTINGS = {
     # Logo do seu site
     "site_brand": "BrasilCondo",
     
+    # Caminho para o logotipo exibido na tela de login (relativo a STATIC_URL)
+    "site_logo": "img/LogotipoVetor_011.png",
+    
     # Mensagem de boas vindas na tela de login
-    "welcome_sign": "Bem-vindo ao BrasilCondo",
+    "welcome_sign": "Bem-vindo(a) ao Sistema BrasilCondo",
 
     # CSS customizado para aplicar o background e outros estilos
     "custom_css": "css/custom_admin.css",
     
-    # Copyright no rodapé
-    "copyright": "BrasilCondo Ltd",
+    # Copyright no rodapé (Footer)
+    "copyright": "BrasilCondo Ltda. © 2026",
     
+    # Color scheme do tema
+    "theme": "darkly",
+        
     # Menu lateral
     "show_sidebar": True,
     "navigation_expanded": True,
