@@ -60,6 +60,13 @@ class CondominiumUnit(models.Model):
         choices=FloorChoices.choices,
         verbose_name="Pavimento"
     )
+    
+    identification = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name="Identificação"
+    )
 
     unit_type = models.CharField(
         default=UnitTypeChoices.APARTMENT,
@@ -93,12 +100,13 @@ class CondominiumUnit(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
     class Meta:
-        ordering = ["unit_number"]
+        ordering = ["tower", "unit_number", "floor", "created_at"]
         constraints = [
             models.UniqueConstraint(fields=["tower", "unit_number"], name="unique_unit_per_tower")
         ]
         verbose_name = "1. Unidade"
         verbose_name_plural = "1. Unidades"
+        unique_together = (("tower", "unit_number"),)
     
     def __str__(self):
         condominium_name = getattr(self.condominium, "name", "")
@@ -144,8 +152,10 @@ class Resident(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
     class Meta:
+        ordering = ["unit", "name", "created_at"]
         verbose_name = "2. Morador"
         verbose_name_plural = "2. Moradores"
+        unique_together = (("unit", "name"), ("unit", "cpf"), ("unit", "rg"))
 
     def __str__(self):
         return f"{self.name} | {self.unit}".strip()
@@ -164,8 +174,10 @@ class Visitor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ["condo_unit", "name", "visit_date", "created_at"]
         verbose_name = "6. Visitante"
         verbose_name_plural = "6. Visitantes"
+        unique_together = (("condo_unit", "name"), ("condo_unit", "cpf"), ("condo_unit", "rg"))
 
     def __str__(self):
         ## return f"{self.name} | {self.host}".strip()
@@ -208,6 +220,7 @@ class RealEstateAgency(models.Model):
         verbose_name="Condomínio/Unidade"
     )
     name = models.CharField(max_length=200, verbose_name="Nome da Imobiliária")
+    cnpj = models.CharField(max_length=20, blank=True, verbose_name="CNPJ")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
     email = models.EmailField(blank=True, verbose_name="E-mail")
     website = models.URLField(blank=True, verbose_name="Site")
@@ -221,8 +234,10 @@ class RealEstateAgency(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ["condo_unit", "name", "created_at"]
         verbose_name = "7. Imobiliária"
         verbose_name_plural = "7. Imobiliárias"
+        unique_together = (("condo_unit", "name"), ("condo_unit", "email"), ("condo_unit", "phone"))
 
     def __str__(self):
         return self.name
@@ -248,8 +263,10 @@ class Emergency(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ["condo_unit", "type", "occurred_at", "created_at"]
         verbose_name = "4. Emergência"
         verbose_name_plural = "4. Emergências"
+        unique_together = (("condo_unit", "type", "occurred_at"), ("condo_unit", "description", "occurred_at"))
 
     def __str__(self):
         return f"{self.get_type_display()} em {self.occurred_at}"
@@ -278,8 +295,10 @@ class Vehicle(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ["condo_unit", "vehicle_type", "license_plate", "created_at"]
         verbose_name = "3. Veículo"
         verbose_name_plural = "3. Veículos"
+        unique_together = (("condo_unit", "license_plate"), ("condo_unit", "vehicle_type", "model", "year"))
 
     def __str__(self):
         return f"{self.license_plate} - {self.get_vehicle_type_display()}"
@@ -309,8 +328,10 @@ class Animal(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ["condo_unit", "name", "species", "created_at"]
         verbose_name = "5. Animal"
         verbose_name_plural = "5. Animais"
+        unique_together = (("condo_unit", "name"), ("condo_unit", "species", "breed"))
 
     def __str__(self):
         return self.name

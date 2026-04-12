@@ -56,9 +56,9 @@ class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 @admin.register(Addresses)
 class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ( 'is_active', 'street', 'number', 'complement', 'city', 'state', 'country', 'zip_code')
+    list_display = ( 'street', 'number', 'neighborhood', 'city', 'state', 'is_active')
     search_fields = ('street', 'city', 'state')
-    list_filter = ('state',)
+    list_filter = ('state','city', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
@@ -66,9 +66,9 @@ class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 @admin.register(Condominium)
 class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ('code','name', 'cnpj', 'is_active', 'state_registration', 'municipal_registration', 'type_condominium', 'address')
+    list_display = ('code','name', 'cnpj', 'state_registration', 'municipal_registration', 'type_condominium', 'address', 'is_active')
     search_fields = ('name', 'code', 'cnpj')
-    list_filter = ('is_active',)
+    list_filter = ('code', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
