@@ -107,3 +107,23 @@ class Condominium(models.Model):
     def __str__(self):
         return self.name
     
+
+class Collaborators(models.Model):
+    condominium = models.ForeignKey(Condominium, related_name="collaborators", null=False, blank=False, verbose_name="Condomínio", on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome")
+    cpf = models.CharField(max_length=20, null=False, blank=False, verbose_name="CPF", unique=True)
+    rg = models.CharField(max_length=20, null=False, blank=False, verbose_name="RG")
+    email = models.EmailField(max_length=255, null=False, blank=False, verbose_name="Email", unique=True)
+    phone_number = models.CharField(max_length=20, null=False, blank=False, verbose_name="Telefone")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "6. Colaborador"
+        verbose_name_plural = "6. Colaboradores"
+        ordering = ["name", "email", "phone_number", "created_at"]
+        unique_together = [['name', 'cpf'], ['condominium', 'cpf']]
+
+    def __str__(self):
+        return self.name
