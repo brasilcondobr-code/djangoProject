@@ -101,6 +101,10 @@ class CondominiumUnit(models.Model):
         verbose_name_plural = "1. Unidades"
     
     def __str__(self):
+        condominium_name = getattr(self.condominium, "name", "")
+        if condominium_name:
+            condominium_name = f"{condominium_name}"
+            
         tower_name = ""
         if hasattr(self, "tower") and getattr(self, "tower"):
             tower_name = str(self.tower)
@@ -112,12 +116,19 @@ class CondominiumUnit(models.Model):
                 tower_name = getattr(self.structure, "name", "")
         unit = getattr(self, "unit_number", "")
         if tower_name:
-            return f"{tower_name} - {unit}".strip()
+            return f" {condominium_name} - {tower_name} - {unit}".strip()
         return f"Unidade {unit}".strip()
     
 
 class Resident(models.Model):
+    ResidentTypeChoices = [
+        ('owner', 'Proprietário(a)'),
+        ('tenant', 'Morador(a)'),
+        ('occupant', 'Ocupante'),
+    ]
+    
     unit = models.ForeignKey(CondominiumUnit, on_delete=models.CASCADE, related_name="residents", verbose_name="Unidade")
+    type_of_resident = models.CharField(max_length=20, choices=ResidentTypeChoices, default='tenant', null=True, blank=True, verbose_name="Tipo de morador")
     name = models.CharField(max_length=250, verbose_name="Nome")
     email = models.EmailField(blank=True, null=True, verbose_name="Email")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
@@ -128,6 +139,7 @@ class Resident(models.Model):
     profission = models.CharField(max_length=100, blank=True, verbose_name="Profissão")
     is_primary = models.BooleanField(default=False, verbose_name="Principal")
     is_resident = models.BooleanField(default=True, verbose_name="É residente")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
@@ -140,13 +152,14 @@ class Resident(models.Model):
 
 
 class Visitor(models.Model):
-    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="visitors", verbose_name="Unidade/Condomínio")
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="visitors", verbose_name="Condomínio/Unidade")
     name = models.CharField(max_length=250, verbose_name="Nome")
     cpf = models.CharField(max_length=14, blank=True, verbose_name="CPF")
     rg = models.CharField(max_length=20, blank=True, verbose_name="RG")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
     visit_date = models.DateTimeField(auto_now_add=True, verbose_name="Data da visita")
     purpose = models.CharField(max_length=255, blank=True, verbose_name="Propósito da visita")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -192,7 +205,7 @@ class RealEstateAgency(models.Model):
         null=True,
         blank=True,
         related_name='real_estate_units',
-        verbose_name="Unidade/Condomínio"
+        verbose_name="Condomínio/Unidade"
     )
     name = models.CharField(max_length=200, verbose_name="Nome da Imobiliária")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
@@ -203,7 +216,7 @@ class RealEstateAgency(models.Model):
         related_name='agencies', verbose_name="Endereço"
     )
     contact_person = models.CharField(max_length=100, blank=True, verbose_name="Pessoa de contato")
-    active = models.BooleanField(default=True, verbose_name="Ativo")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -226,10 +239,11 @@ class Emergency(models.Model):
         ['conflicts', 'Conflitos'],
         ('other', 'Outros'),
     ]
-    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies', verbose_name="Unidade/Condomínio")
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies', verbose_name="Condomínio/Unidade")
     type = models.CharField(max_length=20, choices=EMERGENCY_CHOICES, default='other', verbose_name="Tipo")
     description = models.TextField(blank=True, verbose_name="Descrição")
     occurred_at = models.DateTimeField(auto_now_add=True, verbose_name="Data/Hora")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -251,7 +265,7 @@ class Vehicle(models.Model):
         ('bicycle', 'Bicicleta'),
         ('other', 'Outro'),
     ]
-    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="vehicles", verbose_name="Unidade/Condomínio")
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="vehicles", verbose_name="Condomínio/Unidade")
     vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, default='car', verbose_name="Tipo")
     license_plate = models.CharField(max_length=20, verbose_name="Placa")
     brand = models.CharField(max_length=50, blank=True, verbose_name="Marca")
@@ -259,6 +273,7 @@ class Vehicle(models.Model):
     color = models.CharField(max_length=30, blank=True, verbose_name="Cor")
     year = models.PositiveIntegerField(null=True, blank=True, verbose_name="Ano")
     garage_space = models.CharField(max_length=50, blank=True, verbose_name="Vaga de garagem")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -281,7 +296,7 @@ class Animal(models.Model):
         ('F', 'Fêmea'),
         ('U', 'Desconhecido'),
     ]
-    condo_unit = models.ForeignKey('CondominiumUnit', on_delete=models.CASCADE, related_name="animals", verbose_name="Unidade", null=True, blank=True)
+    condo_unit = models.ForeignKey('CondominiumUnit', on_delete=models.CASCADE, related_name="animals", verbose_name="Condomínio/Unidade", null=True, blank=True)
     name = models.CharField(max_length=100, verbose_name="Nome")
     species = models.CharField(max_length=20, choices=SPECIES_CHOICES, default='dog', verbose_name="Espécie")
     breed = models.CharField(max_length=100, blank=True, verbose_name="Raça")
@@ -289,6 +304,7 @@ class Animal(models.Model):
     color = models.CharField(max_length=50, blank=True, verbose_name="Cor")
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='U', verbose_name="Sexo")
     notes = models.TextField(blank=True, verbose_name="Notas")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
