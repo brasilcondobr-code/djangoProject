@@ -1,7 +1,7 @@
 import csv
 from django.http import HttpResponse
 from django.contrib import admin
-from .models import Visitor, RealEstateAgency, Emergency, Vehicle, Animal, CondominiumUnit, Resident
+from .models import Documents, Visitor, RealEstateAgency, Emergency, Vehicle, Animal, CondominiumUnit, Resident
 
 
 class ExportCSVMixin:
@@ -111,3 +111,15 @@ class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('unit')
 
+
+@admin.register(Documents)
+class DocumentsAdmin(ExportCSVMixin, admin.ModelAdmin):
+    list_display = ('condo_unit', 'document_type', 'title', 'file', 'is_active')
+    search_fields = ('condo_unit__unit_number', 'document_type', 'title')
+    list_filter = ('document_type', 'is_active')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    ordering = ['-created_at']
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('condo_unit')

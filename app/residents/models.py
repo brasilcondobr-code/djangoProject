@@ -336,3 +336,32 @@ class Animal(models.Model):
     def __str__(self):
         return self.name
 
+
+class Documents(models.Model):
+    DOCTYPES_CHOICES = [
+        ('personal', 'Documentos Pessoais'),
+        ('cadastral', 'Cadastrais'),
+        ('contracts', 'Contratos'),
+        ('receipts', 'Comprovantes'),
+        ('TAX', 'Documentos Fiscais'),
+        ('vehicle_data', 'Dados de veículos'),
+        ('animal_data', 'Dados de animais'),
+        ('other', 'Outros'),
+    ]
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, related_name="documents", verbose_name="Condomínio/Unidade", null=True, blank=True)
+    title = models.CharField(max_length=200, verbose_name="Título")
+    document_type = models.CharField(max_length=20, choices=DOCTYPES_CHOICES, default='personal', verbose_name="Tipo de documento")
+    file = models.FileField(upload_to='documents/', null=True, blank=True, verbose_name="Arquivo")
+    description = models.TextField(blank=True, verbose_name="Descrição")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["condo_unit", "title", "created_at"]
+        verbose_name = "8. Documento"
+        verbose_name_plural = "8. Documentos"
+        unique_together = (("condo_unit", "title"), ("condo_unit", "document_type", "created_at"))
+
+    def __str__(self):
+        return self.title
