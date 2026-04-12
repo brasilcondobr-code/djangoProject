@@ -152,7 +152,7 @@ JAZZMIN_SETTINGS = {
         "condominium.States": "fas fa-flag",
     },
     
-    "show_ui_builder": True,
+    "show_ui_builder": False,
 }
 
 

@@ -97,8 +97,8 @@ class CondominiumUnit(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["tower", "unit_number"], name="unique_unit_per_tower")
         ]
-        verbose_name = "Unidade"
-        verbose_name_plural = "Unidades"
+        verbose_name = "1. Unidade"
+        verbose_name_plural = "1. Unidades"
     
     def __str__(self):
         tower_name = ""
@@ -132,35 +132,68 @@ class Resident(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
     class Meta:
-        verbose_name = "Morador"
-        verbose_name_plural = "Moradores"
+        verbose_name = "2. Morador"
+        verbose_name_plural = "2. Moradores"
 
     def __str__(self):
         return f"{self.name} | {self.unit}".strip()
 
 
 class Visitor(models.Model):
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="visitors", verbose_name="Unidade/Condomínio")
     name = models.CharField(max_length=250, verbose_name="Nome")
     cpf = models.CharField(max_length=14, blank=True, verbose_name="CPF")
     rg = models.CharField(max_length=20, blank=True, verbose_name="RG")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
-    host = models.ForeignKey(
-        'Resident', on_delete=models.CASCADE, related_name='visitors',
-        verbose_name="Morador anfitrião"
-    )
     visit_date = models.DateTimeField(auto_now_add=True, verbose_name="Data da visita")
     purpose = models.CharField(max_length=255, blank=True, verbose_name="Propósito da visita")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Visitante"
-        verbose_name_plural = "Visitantes"
+        verbose_name = "6. Visitante"
+        verbose_name_plural = "6. Visitantes"
 
     def __str__(self):
-        return f"{self.name} | {self.host}".strip()
+        ## return f"{self.name} | {self.host}".strip()
+        
+        visitor_name = ""
+        if hasattr(self, "first_name") and getattr(self, "first_name"):
+            visitor_name = self.first_name
+        if hasattr(self, "last_name") and getattr(self, "last_name"):
+            visitor_name = (visitor_name + " " + self.last_name).strip() if visitor_name else self.last_name
+        host_name = ""
+        if hasattr(self, "host") and self.host:
+            # Tenta obter o nome do host de Resident, se disponível
+            if hasattr(self.host, "name") and self.host.name:
+                host_name = self.host.name
+            elif hasattr(self.host, "first_name") or hasattr(self.host, "last_name"):
+                parts = []
+                if getattr(self.host, "first_name", ""):
+                    parts.append(self.host.first_name)
+                if getattr(self.host, "last_name", ""):
+                    parts.append(self.host.last_name)
+                host_name = " ".join(parts).strip()
+
+        if visitor_name and host_name:
+            return f"{visitor_name} | {host_name}".strip()
+        if visitor_name:
+            return visitor_name.strip()
+        if host_name:
+            return host_name.strip()
+        return super().__str__()
+        
+              
 
 class RealEstateAgency(models.Model):
+    condo_unit = models.ForeignKey(
+        'residents.CondominiumUnit',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='real_estate_units',
+        verbose_name="Unidade/Condomínio"
+    )
     name = models.CharField(max_length=200, verbose_name="Nome da Imobiliária")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
     email = models.EmailField(blank=True, verbose_name="E-mail")
@@ -169,13 +202,14 @@ class RealEstateAgency(models.Model):
         'condominium.Addresses', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='agencies', verbose_name="Endereço"
     )
+    contact_person = models.CharField(max_length=100, blank=True, verbose_name="Pessoa de contato")
     active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Imobiliária"
-        verbose_name_plural = "Imobiliárias"
+        verbose_name = "7. Imobiliária"
+        verbose_name_plural = "7. Imobiliárias"
 
     def __str__(self):
         return self.name
@@ -185,23 +219,23 @@ class Emergency(models.Model):
         ('fire', 'Incêndio'),
         ('medical', 'Emergência Médica'),
         ('security', 'Segurança'),
+        ('leaks', 'Vazamentos'),
+        ['power', 'Falta de energia'],
+        ['personal accidents', 'Acidentes pessoais'],
+        ['structural damage', 'Danos estruturais'],
+        ['conflicts', 'Conflitos'],
         ('other', 'Outros'),
     ]
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies', verbose_name="Unidade/Condomínio")
     type = models.CharField(max_length=20, choices=EMERGENCY_CHOICES, default='other', verbose_name="Tipo")
     description = models.TextField(blank=True, verbose_name="Descrição")
     occurred_at = models.DateTimeField(auto_now_add=True, verbose_name="Data/Hora")
-    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies', verbose_name="Unidade/Condomínio")
-    location = models.CharField(max_length=255, blank=True, verbose_name="Localização")
-    reported_by = models.ForeignKey(
-        'Resident', on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies_reported',
-        verbose_name="Quem reportou"
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Emergência"
-        verbose_name_plural = "Emergências"
+        verbose_name = "4. Emergência"
+        verbose_name_plural = "4. Emergências"
 
     def __str__(self):
         return f"{self.get_type_display()} em {self.occurred_at}"
@@ -211,22 +245,26 @@ class Vehicle(models.Model):
         ('car', 'Carro'),
         ('motorcycle', 'Moto'),
         ('truck', 'Caminhão'),
+        ('pickup truck', 'Caminhonete'),
+        ('trailer', 'Reboque'),
+        ('mpped', 'Ciclomotor'),
+        ('bicycle', 'Bicicleta'),
         ('other', 'Outro'),
     ]
-    owner = models.ForeignKey('Resident', on_delete=models.CASCADE, related_name='vehicles', verbose_name="Morador")
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="vehicles", verbose_name="Unidade/Condomínio")
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, default='car', verbose_name="Tipo")
     license_plate = models.CharField(max_length=20, verbose_name="Placa")
     brand = models.CharField(max_length=50, blank=True, verbose_name="Marca")
     model = models.CharField(max_length=100, blank=True, verbose_name="Modelo")
     color = models.CharField(max_length=30, blank=True, verbose_name="Cor")
     year = models.PositiveIntegerField(null=True, blank=True, verbose_name="Ano")
     garage_space = models.CharField(max_length=50, blank=True, verbose_name="Vaga de garagem")
-    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, default='car', verbose_name="Tipo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Veículo"
-        verbose_name_plural = "Veículos"
+        verbose_name = "3. Veículo"
+        verbose_name_plural = "3. Veículos"
 
     def __str__(self):
         return f"{self.license_plate} - {self.get_vehicle_type_display()}"
@@ -243,7 +281,7 @@ class Animal(models.Model):
         ('F', 'Fêmea'),
         ('U', 'Desconhecido'),
     ]
-    owner = models.ForeignKey('Resident', on_delete=models.CASCADE, related_name='animals', verbose_name="Morador")
+    condo_unit = models.ForeignKey('CondominiumUnit', on_delete=models.CASCADE, related_name="animals", verbose_name="Unidade", null=True, blank=True)
     name = models.CharField(max_length=100, verbose_name="Nome")
     species = models.CharField(max_length=20, choices=SPECIES_CHOICES, default='dog', verbose_name="Espécie")
     breed = models.CharField(max_length=100, blank=True, verbose_name="Raça")
@@ -255,8 +293,8 @@ class Animal(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Animal"
-        verbose_name_plural = "Animais"
+        verbose_name = "5. Animal"
+        verbose_name_plural = "5. Animais"
 
     def __str__(self):
         return self.name
