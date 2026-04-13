@@ -135,7 +135,6 @@ JAZZMIN_SETTINGS = {
     # Copyright no rodapé (Footer)
     "copyright": "BrasilCondo Ltda",
     "allrights_reserved": "Todos os direitos reservados.",
-    "powered_by": "OCP Internet Solutions",
     
     # Revert to previous dark-ish theme (Jazzmin default variant)
     "theme": "darkly",

@@ -25,6 +25,7 @@ aside.control-sidebar.control-sidebar-dark.ui-customiser { display: none !import
   color: #ffffff !important;
 }
 
+/* Desenvolvido por OCP Internet Solutions
 .float-end.d-none.d-sm-inline::after {
   content: "Desenvolvido por OCP Internet Solutions";
   display: block;
@@ -32,4 +33,4 @@ aside.control-sidebar.control-sidebar-dark.ui-customiser { display: none !import
   color: #ffffff !important;
   margin-top: 5px;
 }
-
+*/
