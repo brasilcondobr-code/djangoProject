@@ -24,3 +24,12 @@ aside.control-sidebar.control-sidebar-dark.ui-customiser { display: none !import
 .sidebar .nav-link > i {
   color: #ffffff !important;
 }
+
+.float-end.d-none.d-sm-inline::after {
+  content: "Desenvolvido por OCP Internet Solutions";
+  display: block;
+  font-size: 0.9em;
+  color: #ffffff !important;
+  margin-top: 5px;
+}
+

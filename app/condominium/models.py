@@ -108,6 +108,22 @@ class Condominium(models.Model):
         return self.name
     
 
+class Types_collaborators(models.Model):
+    name = models.CharField(max_length=255, unique=True, null=False, blank=False, verbose_name="Tipo de Colaborador")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    class Meta:
+        verbose_name = "6. Tipo de Colaborador"
+        verbose_name_plural = "6. Tipos de Colaboradores"
+        ordering = ["name", "is_active", "created_at"]
+        unique_together = ['name']
+    
+    def __str__(self):
+        return self.name
+
+
 class Collaborators(models.Model):
     condominium = models.ForeignKey(Condominium, related_name="collaborators", null=False, blank=False, verbose_name="Condomínio", on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome")
@@ -115,14 +131,15 @@ class Collaborators(models.Model):
     rg = models.CharField(max_length=20, null=False, blank=False, verbose_name="RG")
     email = models.EmailField(max_length=255, null=False, blank=False, verbose_name="Email", unique=True)
     phone_number = models.CharField(max_length=20, null=False, blank=False, verbose_name="Telefone")
+    type_collaborator = models.ForeignKey(Types_collaborators, related_name="Types_collaborators", null=True, blank=False, verbose_name="Tipo de Colaborador", on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     observations = models.TextField(null=True, blank=True, verbose_name="Observações")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "6. Colaborador"
-        verbose_name_plural = "6. Colaboradores"
+        verbose_name = "7. Colaborador"
+        verbose_name_plural = "7. Colaboradores"
         ordering = ["name", "email", "phone_number", "created_at"]
         unique_together = [['name', 'cpf'], ['condominium', 'cpf']]
 

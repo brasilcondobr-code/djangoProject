@@ -133,7 +133,8 @@ JAZZMIN_SETTINGS = {
     "custom_js": ["js/custom_admin_login_icon.js"],
     
     # Copyright no rodapé (Footer)
-    "copyright": "BrasilCondo Ltda. © 2026",
+    "copyright": "BrasilCondo Ltda",
+    "allrights_reserved": "Todos os direitos reservados.",
     "powered_by": "OCP Internet Solutions",
     
     # Revert to previous dark-ish theme (Jazzmin default variant)

@@ -1,7 +1,7 @@
 import csv
 from django.http import HttpResponse
 from django.contrib import admin
-from .models import Addresses, States, Condominium, TypesCondominium, StructionCondominium, Collaborators
+from .models import Addresses, States, Condominium, TypesCondominium, StructionCondominium, Collaborators, Types_collaborators
 
 # Register your models here.
 class ExportCsvMixin:
@@ -73,9 +73,18 @@ class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
     list_per_page = 25
     actions = ["export_as_csv"]
     
+@admin.register(Types_collaborators)
+class TypesCollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('name', 'is_active')
+    search_fields = ('name',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+
 @admin.register(Collaborators)
 class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ('name', 'email', 'phone_number', 'condominium', 'is_active')
+    list_display = ('name', 'email', 'phone_number', 'type_collaborator', 'condominium', 'is_active')
     search_fields = ('condominium__name', 'name', 'email')
     list_filter = ('condominium', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
