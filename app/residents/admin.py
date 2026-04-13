@@ -23,7 +23,7 @@ class ExportCSVMixin:
 
 @admin.register(Visitor)
 class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('condo_unit', 'name', 'visit_date', 'is_active')
+    list_display = ('name', 'visit_date', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name')
     list_filter = ('condo_unit', 'visit_date', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -37,7 +37,7 @@ class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(RealEstateAgency)
 class RealEstateAgencyAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('condo_unit', 'name', 'phone', 'contact_person', 'is_active')
+    list_display = ('name', 'phone', 'contact_person', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name', 'contact_person')
     readonly_fields = ('created_at', 'updated_at', 'is_active')
     list_per_page = 25
@@ -49,7 +49,7 @@ class RealEstateAgencyAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(Emergency)
 class EmergencyAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('condo_unit', 'type', 'description', 'is_active')
+    list_display = ('type', 'description', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'type', 'description')
     list_filter = ('condo_unit', 'type', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -62,7 +62,7 @@ class EmergencyAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(Vehicle)
 class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('condo_unit', 'license_plate', 'vehicle_type', 'brand', 'model', 'color', 'is_active')
+    list_display = ('license_plate', 'vehicle_type', 'brand', 'model', 'color', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'license_plate')
     list_filter = ('condo_unit', 'vehicle_type', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -75,7 +75,7 @@ class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(Animal)
 class AnimalAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('condo_unit', 'name', 'species', 'is_active')
+    list_display = ('name', 'species', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name', 'species')
     list_filter = ('condo_unit', 'species', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -88,7 +88,7 @@ class AnimalAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(CondominiumUnit)
 class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('condominium', 'tower', 'unit_number', 'floor')
+    list_display = ('identification', 'tower', 'unit_number', 'floor', 'condominium')
     search_fields = ('unit_number', 'condominium__name')
     list_filter = ('tower', 'floor')
     readonly_fields = ('created_at', 'updated_at')
@@ -101,7 +101,7 @@ class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(Resident)
 class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('unit', 'name', 'type_of_resident', 'phone', 'email', 'is_active')
+    list_display = ('name', 'type_of_resident', 'phone', 'email', 'unit', 'is_active')
     search_fields = ('unit__unit_number', 'name', 'email')
     list_filter = ('type_of_resident', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -114,7 +114,7 @@ class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(Documents)
 class DocumentsAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('condo_unit', 'document_type', 'title', 'file', 'is_active')
+    list_display = ('title','document_type', 'file', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'document_type', 'title')
     list_filter = ('document_type', 'is_active')
     readonly_fields = ('created_at', 'updated_at')

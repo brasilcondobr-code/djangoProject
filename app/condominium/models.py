@@ -116,6 +116,7 @@ class Collaborators(models.Model):
     email = models.EmailField(max_length=255, null=False, blank=False, verbose_name="Email", unique=True)
     phone_number = models.CharField(max_length=20, null=False, blank=False, verbose_name="Telefone")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    observations = models.TextField(null=True, blank=True, verbose_name="Observações")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
