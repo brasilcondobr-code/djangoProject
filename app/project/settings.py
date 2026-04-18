@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'core',
     'condominium',
     'residents',
+    'personalities',
     # Seus apps aqui
 ]
 
