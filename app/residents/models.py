@@ -1,6 +1,7 @@
+import decimal
+
 from django.db import models
 from condominium.models import Condominium
-
 
 # Create your models here.
 class FloorChoices(models.TextChoices):
@@ -43,7 +44,7 @@ class CondominiumUnit(models.Model):
     )
 
     tower = models.CharField(
-        max_length=20,
+        max_length=30,
         null=True,
         blank=True,
         verbose_name="Bloco / Torre"
@@ -62,7 +63,7 @@ class CondominiumUnit(models.Model):
     )
     
     identification = models.CharField(
-        max_length=20,
+        max_length=50,
         null=True,
         blank=True,
         verbose_name="Identificação"
@@ -79,7 +80,7 @@ class CondominiumUnit(models.Model):
     bathrooms = models.PositiveIntegerField(default=1, verbose_name="Número de banheiros")
     suites = models.PositiveIntegerField(default=0, verbose_name="Número de suítes")
     garage_spaces = models.PositiveIntegerField(default=1, verbose_name="Número de vagas de garagem")
-    area_total = models.DecimalField(default=60 ,max_digits=10, decimal_places=2, verbose_name="Área total")
+    area_total = models.DecimalField(default=decimal.Decimal('60.00'), max_digits=10, decimal_places=2, verbose_name="Área total")
 
     status = models.CharField(
         max_length=20,
@@ -116,12 +117,8 @@ class CondominiumUnit(models.Model):
         tower_name = ""
         if hasattr(self, "tower") and getattr(self, "tower"):
             tower_name = str(self.tower)
-        # senão tenta o campo antigo/referência 'structure'
         elif hasattr(self, "structure") and getattr(self, "structure"):
-            try:
-                tower_name = str(self.structure)
-            except Exception:
-                tower_name = getattr(self.structure, "name", "")
+            tower_name = str(self.unit_number) if hasattr(self, "unit_number") and getattr(self, "unit_number") else ""
         unit = getattr(self, "unit_number", "")
         if tower_name:
             return f" {condominium_name} - {tower_name} - {unit}".strip()
@@ -180,35 +177,8 @@ class Visitor(models.Model):
         unique_together = (("condo_unit", "name"), ("condo_unit", "cpf"), ("condo_unit", "rg"))
 
     def __str__(self):
-        ## return f"{self.name} | {self.host}".strip()
-        
-        visitor_name = ""
-        if hasattr(self, "first_name") and getattr(self, "first_name"):
-            visitor_name = self.first_name
-        if hasattr(self, "last_name") and getattr(self, "last_name"):
-            visitor_name = (visitor_name + " " + self.last_name).strip() if visitor_name else self.last_name
-        host_name = ""
-        if hasattr(self, "host") and self.host:
-            # Tenta obter o nome do host de Resident, se disponível
-            if hasattr(self.host, "name") and self.host.name:
-                host_name = self.host.name
-            elif hasattr(self.host, "first_name") or hasattr(self.host, "last_name"):
-                parts = []
-                if getattr(self.host, "first_name", ""):
-                    parts.append(self.host.first_name)
-                if getattr(self.host, "last_name", ""):
-                    parts.append(self.host.last_name)
-                host_name = " ".join(parts).strip()
-
-        if visitor_name and host_name:
-            return f"{visitor_name} | {host_name}".strip()
-        if visitor_name:
-            return visitor_name.strip()
-        if host_name:
-            return host_name.strip()
-        return super().__str__()
-        
-              
+        return f"{self.name} | {self.condo_unit}".strip()
+            
 
 class RealEstateAgency(models.Model):
     condo_unit = models.ForeignKey(
@@ -248,10 +218,10 @@ class Emergency(models.Model):
         ('medical', 'Emergência Médica'),
         ('security', 'Segurança'),
         ('leaks', 'Vazamentos'),
-        ['power', 'Falta de energia'],
-        ['personal accidents', 'Acidentes pessoais'],
-        ['structural damage', 'Danos estruturais'],
-        ['conflicts', 'Conflitos'],
+        ('power', 'Falta de energia'),
+        ('personal accidents', 'Acidentes pessoais'),
+        ('structural damage', 'Danos estruturais'),
+        ('conflicts', 'Conflitos'),
         ('other', 'Outros'),
     ]
     condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies', verbose_name="Condomínio/Unidade")
@@ -269,7 +239,7 @@ class Emergency(models.Model):
         unique_together = (("condo_unit", "type", "occurred_at"), ("condo_unit", "description", "occurred_at"))
 
     def __str__(self):
-        return f"{self.get_type_display()} em {self.occurred_at}"
+        return f"{self.type} | {self.condo_unit}".strip()
 
 class Vehicle(models.Model):
     VEHICLE_TYPE_CHOICES = [
@@ -301,7 +271,7 @@ class Vehicle(models.Model):
         unique_together = (("condo_unit", "license_plate"), ("condo_unit", "vehicle_type", "model", "year"))
 
     def __str__(self):
-        return f"{self.license_plate} - {self.get_vehicle_type_display()}"
+        return self.license_plate
 
 class Animal(models.Model):
     SPECIES_CHOICES = [

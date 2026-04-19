@@ -1,5 +1,6 @@
+/**
 (function(){
-  /**
+
   function addIconToAccount(){
     // Procura por elementos cuja textbox contenha o texto exato 'Account'
     const candidates = Array.from(document.querySelectorAll('*'));
@@ -22,5 +23,5 @@
   // Observa mudanças no DOM para lidar com carregamento assíncrono
   const observer = new MutationObserver(addIconToAccount);
   observer.observe(document.body, { childList: true, subtree: true });
-  **/
 })();
+**/
