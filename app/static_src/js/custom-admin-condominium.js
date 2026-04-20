@@ -1,19 +1,3 @@
-/**
-django.jQuery(function($) {
-    console.log('O arquivo custom-admin-condominium.js está carregado');
-    django.jQuery('head').load('/static_src/js/jquery.mask.min.js');
-
-    if ($().jquery) {
-        console.log('O jQuery está carregado corretamente');
-    } else {
-        console.log('O jQuery não está sendo carregado corretamente');
-    }
-
-    django.jQuery('.mask-cnpj').mask('00.000.000/0000-00', {reverse: true});
-});
-**/
-
-// Máscara básica de CNPJ (99.999.999/9999-99)
 (function($){
   function maskCNPJ(v){
     v = v.replace(/\D/g, ''); // apenas dígitos
@@ -41,4 +25,5 @@ django.jQuery(function($) {
 
     if (el.val()) el.val(maskCNPJ(el.val()));
   });
+  
 })(jQuery);

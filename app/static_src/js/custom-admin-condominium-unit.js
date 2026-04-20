@@ -1,17 +1,3 @@
-/*
-django.jQuery(function($) {
-    console.log('O arquivo custom-admin-condominium-unit.js está carregado');
-
-    if ($().jquery) {
-        console.log('O jQuery está carregado corretamente');
-    } else {
-        console.log('O jQuery não está sendo carregado corretamente');
-    }
-
-});
-*/
-
-// Identificação automática: tower + unit_number -> identification
 (function($){
     function updateIdentification(){
         var tower = django.jQuery('.mask-tower').val ? django.jQuery('.mask-tower').val().trim() : '';
@@ -38,5 +24,4 @@ django.jQuery(function($) {
         });
      });
      
-
 })(jQuery);

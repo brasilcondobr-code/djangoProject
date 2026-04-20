@@ -254,11 +254,11 @@ class Vehicle(models.Model):
     ]
     condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="vehicles", verbose_name="Condomínio/Unidade")
     vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, default='car', verbose_name="Tipo")
-    license_plate = models.CharField(max_length=20, verbose_name="Placa")
+    license_plate = models.CharField(max_length=8, verbose_name="Placa")
     brand = models.CharField(max_length=50, blank=True, verbose_name="Marca")
     model = models.CharField(max_length=100, blank=True, verbose_name="Modelo")
     color = models.CharField(max_length=30, blank=True, verbose_name="Cor")
-    year = models.PositiveIntegerField(null=True, blank=True, verbose_name="Ano")
+    year = models.PositiveIntegerField(null=True,max_length=4, blank=True, verbose_name="Ano")
     garage_space = models.CharField(max_length=50, blank=True, verbose_name="Vaga de garagem")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)

@@ -132,3 +132,209 @@ class CondominiumUnitFormAdmin(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['identification'].widget.attrs['class'] = 'mask-identification'
     
+
+class ResidentFormAdmin(forms.ModelForm):
+    
+    class Meta:
+        model = CondominiumUnit
+        fields = '__all__'
+        widgets = {
+            'email': forms.EmailInput(attrs={'class': 'mask-email'}),
+            'phone': forms.TextInput(attrs={'class': 'mask-phone'}),
+            'cpf': forms.TextInput(attrs={'class': 'mask-cpf'}),
+        }
+        
+        labels = {
+            'unit': 'Condominio/Unidade',
+            'type_of_resident': 'Tipo de Residente',
+            'name': 'Nome Completo',
+            'email': 'E-mail',
+            'phone': 'Número de Telefone',
+            'cpf': 'CPF',
+            'rg': 'RG',
+            'sex': 'Sexo',
+            'date_of_birth': 'Data de Nascimento',
+            'profission': 'Profissão',
+            'is_primary': 'Principal',
+            'is_resident': 'Residente',
+            'is_active': 'Ativo',
+            'created_at': 'Criado em',
+            'updated_at': 'Atualizado em',
+        }
+        
+        help_texts = {
+            'unit': 'Selecione a unidade à qual o(a) morador(a) pertence',
+            'type_of_resident': 'Selecione o tipo de morador(a)',
+            'name': 'Digite o nome completo do(a) morador(a)',
+            'email': 'Digite o e-mail do(a) morador(a)',
+            'phoner': 'Digite o número de telefone do(a) morador(a)',
+            'cpf': 'Digite o CPF do(a) morador(a)',
+            'rg': 'Digite o RG do(a) morador(a)',
+            'sex': 'Selecione o sexo do(a) morador(a)',
+            'date_of_birth': 'Digite a data de nascimento do(a) morador(a)',
+            'profission': 'Digite a profissão do(a) morador(a)',
+            'is_primary': 'Indique se o(a) morador(a) é o principal da unidade',
+            'is_resident': 'Indique se o(a) morador(a) é um morador da unidade',
+            'is_active': 'Indique se o(a) morador(a) está ativo',
+            'created_at': 'Data de criação do(a) morador(a)',
+            'updated_at': 'Data de atualização do(a) morador(a)',
+        }
+        
+        error_messages = {
+            'unit': {
+                'required': 'A unidade é obrigatória.',
+                'invalid_choice': 'Selecione uma unidade válida.',
+            },
+            'type_of_resident': {
+                'required': 'O tipo de morador(a) é obrigatório.',
+                'invalid_choice': 'Selecione um tipo de morador(a) válido.',
+            },
+            'name': {
+                'required': 'O nome completo é obrigatório.',
+            },
+            'email': {
+                'required': 'O e-mail é obrigatório.',
+                'invalid': 'Digite um e-mail válido.',
+            },
+            'phone': {
+                'required': 'O número de telefone é obrigatório.',
+                'invalid': 'Digite um número de telefone válido.',
+            },
+            'cpf': {
+                'required': 'O CPF é obrigatório.',
+                'invalid': 'Digite um CPF valido.',
+            },
+            'rg': {
+                'required': 'O RG é obrigatório.',
+                'invalid': 'Digite um RG valido.',
+            },
+            'sex': {
+                'required': 'O sexo é obrigatório.',
+                'invalid_choice': 'Selecione um sexo valido.',
+            },
+            'date_of_birth': {
+                'required': 'A data de nascimento é obrigatória.',
+                'invalid': 'Digite uma data de nascimento valida.',
+            },
+            'profission': {
+                'required': 'A profissão é obrigatória.',
+            },
+            'is_primary': {
+                'required': 'O principal é obrigatório.',
+            },
+            'is_resident': {
+                'required': 'O residente é obrigatório.',
+            },
+            'is_active': {
+                'required': 'O ativo é obrigatório.',
+            },
+            'created_at': {
+                'required': 'A data de criação é obrigatória.',
+            },
+            'updated_at': {
+                'required': 'A data de atualização é obrigatória.',
+            },
+        }
+        
+        exclude = [
+            'created_at',
+            'updated_at',
+        ]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs['class'] = 'mask-email'
+        self.fields['phone'].widget.attrs['class'] = 'mask-phone'
+        self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
+        
+
+class VehicleFormAdmin(forms.ModelForm):
+    
+    class Meta:
+        model = CondominiumUnit
+        fields = '__all__'
+        widgets = {
+            'license_plate': forms.TextInput(attrs={'class': 'mask-license-plate'}),
+            'year': forms.NumberInput(attrs={'class': 'mask-year'}),
+        }
+        
+        labels = {
+            'condo_unit': 'Condominio/Unidade',
+            'vehicle_type': 'Tipo de Veículo',
+            'license_plate': 'Placa do Veículo',
+            'brand': 'Marca do Veículo',
+            'model': 'Modelo do Veículo',
+            'color': 'Cor do Veículo',
+            'year': 'Ano do Veículo',
+            'garage_space': 'Vaga de Garagem',
+            'is_active': 'Ativo',
+            'created_at': 'Criado em',
+            'updated_at': 'Atualizado em',
+        }
+        
+        help_texts = {
+            'condo_unit': 'Selecione a unidade',
+            'vehicle_type': 'Selecione o tipo de veículo',
+            'license_plate': 'Digite a placa do veículo',
+            'brand': 'Digite a marca do veículo',
+            'model': 'Digite o modelo do veículo',
+            'color': 'Digite a cor do veículo',
+            'year': 'Digite o ano do veículo',
+            'garage_space': 'Selecione a vaga de garagem associada ao veículo',
+            'is_active': 'Indique se o veículo está ativo',
+            'created_at': 'Data de criação do veículo',
+            'updated_at': 'Data de atualização do veículo',
+        }
+        
+        error_messages = {
+            'condo_unit': {
+                'required': 'A unidade é obrigatória.',
+                'invalid_choice': 'Selecione uma unidade válida.',
+            },
+            'vehicle_type': {
+                'required': 'O tipo de veículo é obrigatório.',
+                'invalid_choice': 'Selecione um tipo de veículo válido.',
+            },
+            'license_plate': {
+                'required': 'A placa do veículo é obrigatória.',
+            },
+            'brand': {
+                'required': 'A marca do veículo é obrigatória.',
+            },
+            'model': {
+                'required': 'O modelo do veículo é obrigatório.',
+            },
+            'color': {
+                'required': 'A cor do veículo é obrigatória.',
+            },
+            'year': {
+                'required': 'O ano do veículo é obrigatório.',
+                'invalid': 'Digite um ano válido para o veículo.',
+            },
+            'garage_space': {
+                'required': 'A vaga de garagem é obrigatória.',
+                'invalid_choice': 'Selecione uma vaga de garagem válida.',
+            },
+            'is_active': {
+                'required': 'O status de ativo é obrigatório.',
+            },
+            'created_at': {
+                'required': 'A data de criação é obrigatória.',
+            },
+             'updated_at': {
+                'required': 'A data de atualização é obrigatória.',
+            },
+        }
+        
+        exclude = [
+            'created_at',
+            'updated_at',
+        ]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['license_plate'].widget.attrs['class'] = 'mask-license-plate'
+        self.fields['year'].widget.attrs['class'] = 'mask-year'
+
+
+
