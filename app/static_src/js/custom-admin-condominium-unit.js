@@ -1,27 +1,51 @@
-(function($){
-    function updateIdentification(){
-        var tower = django.jQuery('.mask-tower').val ? django.jQuery('.mask-tower').val().trim() : '';
-        var unit  = django.jQuery('.mask-unit-number').val ? django.jQuery('.mask-unit-number').val().trim() : '';
-        var combined = (tower && unit) ? (tower + ' - ' + unit) : (tower || unit);
-        django.jQuery('#id_identification').val(combined);
+(function($) {
+    'use strict';
+
+    function updateIdentification() {
+        // Busca os elementos usando o jQuery do Django
+        var $tower = $('.mask-tower');
+        var $unit = $('.mask-unit-number');
+        var $identification = $('#id_identification');
+
+        // Pega o valor ou string vazia se não existir, então remove espaços
+        var towerVal = ($tower.val() || "").trim();
+        var unitVal = ($unit.val() || "").trim();
+
+        // Lógica de combinação (Torre - Unidade)
+        var combined = "";
+        if (towerVal && unitVal) {
+            combined = towerVal + ' - ' + unitVal;
+        } else {
+            combined = towerVal || unitVal; // Pega o que estiver preenchido
+        }
+
+        // Define o valor no campo de identificação
+        $identification.val(combined);
     }
 
-    django.jQuery(function(){
-        // Atualiza quando qualquer um dos campos mudar
-        django.jQuery('.mask-tower').on('input', updateIdentification);
-        django.jQuery('.mask-unit-number').on('input', updateIdentification);
+    $(document).ready(function() {
+        // Seletores para os campos
+        var $tower = $('.mask-tower');
+        var $unit = $('.mask-unit-number');
+        var $moneyFields = $('.mask-sale-price, .mask-rent-price');
 
+        // Monitora digitação nos campos de Torre e Unidade
+        $tower.on('input', updateIdentification);
+        $unit.on('input', updateIdentification);
+
+        // Executa uma vez ao carregar para garantir consistência
         updateIdentification();
 
-        django.jQuery('.mask-sale-price, .mask-rent-price').on('input', function(){
-            var value = django.jQuery(this).val().replace(/\D/g, '');
-            if(value){
+        // Lógica para campos de preço (moeda)
+        $moneyFields.on('input', function() {
+            var value = $(this).val().replace(/\D/g, '');
+            if (value) {
                 value = (parseInt(value) / 100).toFixed(2);
-                django.jQuery(this).val(value);
+                $(this).val(value);
             } else {
-                django.jQuery(this).val('');
+                $(this).val('');
             }
         });
-     });
-     
-})(jQuery);
+    });
+
+})(django.jQuery);

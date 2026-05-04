@@ -130,8 +130,9 @@ JAZZMIN_SETTINGS = {
 
     # CSS customizado para aplicar o tema padrão do admin (antes do dark mode)
     "custom_css": "css/custom_admin.css",
+    
     # JS customizado para adicionar ícone de login no menu Account
-    "custom_js": ["js/custom_admin_login_icon.js"],
+    "custom_js": "js/custom_admin_login_icon.js",
     
     # Copyright no rodapé (Footer)
     "copyright": "BrasilCondo Ltda",

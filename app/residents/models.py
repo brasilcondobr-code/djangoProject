@@ -1,4 +1,5 @@
 import decimal
+from email.policy import default
 
 from django.db import models
 from condominium.models import Condominium
@@ -224,7 +225,7 @@ class Emergency(models.Model):
         ('conflicts', 'Conflitos'),
         ('other', 'Outros'),
     ]
-    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.SET_NULL, null=True, blank=True, related_name='emergencies', verbose_name="Condomínio/Unidade")
+    condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name='emergencies', verbose_name="Condomínio/Unidade")
     type = models.CharField(max_length=20, choices=EMERGENCY_CHOICES, default='other', verbose_name="Tipo")
     description = models.TextField(blank=True, verbose_name="Descrição")
     occurred_at = models.DateTimeField(auto_now_add=True, verbose_name="Data/Hora")
@@ -258,7 +259,7 @@ class Vehicle(models.Model):
     brand = models.CharField(max_length=50, blank=True, verbose_name="Marca")
     model = models.CharField(max_length=100, blank=True, verbose_name="Modelo")
     color = models.CharField(max_length=30, blank=True, verbose_name="Cor")
-    year = models.PositiveIntegerField(null=True,max_length=4, blank=True, verbose_name="Ano")
+    year = models.PositiveIntegerField(null=True, blank=True, verbose_name="Ano")
     garage_space = models.CharField(max_length=50, blank=True, verbose_name="Vaga de garagem")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True)

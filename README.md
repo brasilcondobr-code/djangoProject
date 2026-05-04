@@ -1,99 +1,140 @@
-# Título do projeto
+# Django Project
 
-Um parágrafo da descrição do projeto vai aqui
+Este repositório contém uma aplicação Django com PostgreSQL preparada para desenvolvimento usando Docker Compose.
 
-## 🚀 Começando
+O projeto inclui:
+- backend Django em `app/`
+- serviço PostgreSQL em Docker Compose
+- scripts de backup e restauração em `scripts/`
+- volume persistente para dados do banco em `data/postgres`
+- configuração de variáveis de ambiente em `dotenv_files/.env`
 
-Essas instruções permitirão que você obtenha uma cópia do projeto em operação na sua máquina local para fins de desenvolvimento e teste.
+## 🚀 Tecnologias usadas
 
-Consulte **[Implantação](#-implanta%C3%A7%C3%A3o)** para saber como implantar o projeto.
+- Python 3.12
+- Django 5.0.3
+- PostgreSQL 16
+- Docker / Docker Compose
+- django-jazzmin
+- psycopg2
 
-### 📋 Pré-requisitos
+## 📁 Estrutura principal
 
-De que coisas você precisa para instalar o software e como instalá-lo?
+- `docker-compose.yml` - orquestra `web` e `db`
+- `Dockerfile` - imagem do container Django
+- `scripts/command.sh` - script de inicialização com espera do banco, migrações e servidor
+- `scripts/backup.sh` - backup automático de banco e mídia
+- `scripts/restore.sh` - restauração a partir de backup gerado
+- `dotenv_files/.env` - configurações de ambiente para o container
+- `app/project/` - configuração Django
+- `app/core`, `app/condominium`, `app/personalities`, `app/residents` - apps Django
 
-```
-Dar exemplos
-```
+## ⚙️ Pré-requisitos
 
-### 🔧 Instalação
+- Docker
+- Docker Compose
 
-Uma série de exemplos passo-a-passo que informam o que você deve executar para ter um ambiente de desenvolvimento em execução.
+## 🛠️ Configuração e execução
 
-Diga como essa etapa será:
+1. Entre na pasta do projeto:
 
-```
-Dar exemplos
-```
-
-E repita:
-
-```
-Até finalizar
-```
-
-Termine com um exemplo de como obter dados do sistema ou como usá-los para uma pequena demonstração.
-
-## ⚙️ Executando os testes
-
-Explicar como executar os testes automatizados para este sistema.
-
-### 🔩 Analise os testes de ponta a ponta
-
-Explique que eles verificam esses testes e porquê.
-
-```
-Dar exemplos
+```bash
+cd /home/delll/Projects/djangoProject
 ```
 
-### ⌨️ E testes de estilo de codificação
+2. Verifique se `dotenv_files/.env` existe e contém as variáveis necessárias.
 
-Explique que eles verificam esses testes e porquê.
+3. Inicie os containers:
 
+```bash
+docker compose up --build
 ```
-Dar exemplos
+
+O fluxo de inicialização faz:
+- start do PostgreSQL
+- espera pelo banco estar disponível
+- `makemigrations` e `migrate`
+- criação/atualização de superusuário de desenvolvimento
+- start do servidor Django em `0.0.0.0:8000`
+
+## 🌐 Acessar a aplicação
+
+- Aplicação: `http://localhost:8000/`
+- Admin Django: `http://localhost:8000/admin/`
+
+## 🔐 Criar superusuário
+
+O container `web` pode criar um superusuário automaticamente no `scripts/command.sh`.
+Se preferir criar manualmente:
+
+```bash
+docker compose exec web python manage.py createsuperuser
 ```
 
-## 📦 Implantação
+## 📦 Variáveis de ambiente
 
-Adicione notas adicionais sobre como implantar isso em um sistema ativo
+Exemplo em `dotenv_files/.env`:
 
-## 🛠️ Construído com
+```env
+SECRET_KEY=django-insecure-change-me-in-production-please-generate-a-real-key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+POSTGRES_DB=db_postgres
+POSTGRES_USER=usr_postgres
+POSTGRES_PASSWORD=4802%postgres
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+```
 
-Mencione as ferramentas que você usou para criar seu projeto
+> Em produção, use `DEBUG=False` e atualize `SECRET_KEY` para uma chave realmente secreta.
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - O framework web usado
-* [Maven](https://maven.apache.org/) - Gerente de Dependência
-* [ROME](https://rometools.github.io/rome/) - Usada para gerar RSS
+## 📦 Comandos úteis
 
-## 🖇️ Colaborando
+### Verificar migrações
 
-Por favor, leia o [COLABORACAO.md](https://gist.github.com/usuario/linkParaInfoSobreContribuicoes) para obter detalhes sobre o nosso código de conduta e o processo para nos enviar pedidos de solicitação.
+```bash
+docker compose exec web python manage.py showmigrations --plan
+```
 
-## 📌 Versão
+### Rodar testes
 
-Nós usamos [SemVer](http://semver.org/) para controle de versão. Para as versões disponíveis, observe as [tags neste repositório](https://github.com/suas/tags/do/projeto). 
+```bash
+docker compose exec web python manage.py test
+```
 
-## ✒️ Autores
+### Parar os containers
 
-Mencione todos aqueles que ajudaram a levantar o projeto desde o seu início
+```bash
+docker compose down
+```
 
-* **Um desenvolvedor** - *Trabalho Inicial* - [umdesenvolvedor](https://github.com/linkParaPerfil)
-* **Fulano De Tal** - *Documentação* - [fulanodetal](https://github.com/linkParaPerfil)
+## 💾 Backup e restauração
 
-Você também pode ver a lista de todos os [colaboradores](https://github.com/usuario/projeto/colaboradores) que participaram deste projeto.
+### Backup
 
-## 📄 Licença
+```bash
+chmod +x scripts/backup.sh
+./scripts/backup.sh
+```
 
-Este projeto está sob a licença (sua licença) - veja o arquivo [LICENSE.md](https://github.com/usuario/projeto/licenca) para detalhes.
+O backup será salvo em `backups/backup_YYYY-MM-DD_HH-MM-SS.tar.gz`.
 
-## 🎁 Expressões de gratidão
+### Restauração
 
-* Conte a outras pessoas sobre este projeto 📢;
-* Convide alguém da equipe para uma cerveja 🍺;
-* Um agradecimento publicamente 🫂;
-* etc.
+```bash
+chmod +x scripts/restore.sh
+./scripts/restore.sh backups/backup_YYYY-MM-DD_HH-MM-SS.tar.gz
+```
 
+O script pedirá confirmação antes de sobrescrever o banco.
 
----
-⌨️ com ❤️ por [Armstrong Lohãns](https://gist.github.com/lohhans) 😊
+## ⚠️ Observações
+
+- O volume do banco é `./data/postgres`.
+- Caso haja erro de permissão no Postgres, verifique o dono e as permissões dessa pasta.
+- `DEBUG=True` é indicado apenas para desenvolvimento.
+
+## 📌 Resultado
+
+Esse README documenta como iniciar, usar e manter o projeto localmente.
+Se quiser, posso também adicionar uma seção de deploy ou instruções específicas para CI/CD.

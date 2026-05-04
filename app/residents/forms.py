@@ -1,5 +1,5 @@
 from django import forms
-from .models import CondominiumUnit
+from .models import CondominiumUnit, Vehicle
 
 class CondominiumUnitFormAdmin(forms.ModelForm):
     
@@ -8,7 +8,6 @@ class CondominiumUnitFormAdmin(forms.ModelForm):
         fields = '__all__'
         widgets = {
             'tower': forms.TextInput(attrs={'class': 'mask-tower'}),
-            'apartment': forms.TextInput(attrs={'class': 'mask-apartment'}),
             'unit_number': forms.TextInput(attrs={'class': 'mask-unit-number'}),
             'identification': forms.TextInput(attrs={'class': 'mask-identification'}),
             'area_total': forms.NumberInput(attrs={'class': 'mask-area-total'}),
@@ -19,7 +18,6 @@ class CondominiumUnitFormAdmin(forms.ModelForm):
         labels = {
             'condominium': 'Condomínio',
             'tower': 'Torre',
-            'apartment': 'Apartamento',
             'unit_number': 'Número da Unidade',
             'floor': 'Andar',
             'identification': 'Identificação',
@@ -251,11 +249,13 @@ class ResidentFormAdmin(forms.ModelForm):
 class VehicleFormAdmin(forms.ModelForm):
     
     class Meta:
-        model = CondominiumUnit
+        model = Vehicle
         fields = '__all__'
         widgets = {
+            'condo_unit': forms.Select(attrs={'class': 'mask-condo-unit'}),
             'license_plate': forms.TextInput(attrs={'class': 'mask-license-plate'}),
             'year': forms.NumberInput(attrs={'class': 'mask-year'}),
+            'garage_space': forms.TextInput(attrs={'class': 'mask-garage-space'}),
         }
         
         labels = {
@@ -333,6 +333,7 @@ class VehicleFormAdmin(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['condo_unit'].widget.attrs['class'] = 'mask-condo-unit'
         self.fields['license_plate'].widget.attrs['class'] = 'mask-license-plate'
         self.fields['year'].widget.attrs['class'] = 'mask-year'
 

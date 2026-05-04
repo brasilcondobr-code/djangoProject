@@ -79,7 +79,6 @@ class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
     
     class Media:
         js = (
-            'js/jquery-4.0.0.min.js',
             'js/custom-admin-vehicle.js',
         )
 
