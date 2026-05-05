@@ -6,7 +6,7 @@ services:
     volumes:
       - ./app:/app
       - ./scripts:/scripts
-      - ./data/web/static:/app/static
+      - ./data/web/static:/app/staticfiles
       - ./data/web/media:/app/media
     ports:
       - "8000:8000"

@@ -79,6 +79,8 @@ class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
     
     class Media:
         js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
             'js/custom-admin-vehicle.js',
         )
 
@@ -111,7 +113,8 @@ class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
     
     class Media:
         js = (
-            'js/jquery-4.0.0.min.js',
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
             'js/custom-admin-condominium-unit.js',
         )
 
@@ -131,7 +134,8 @@ class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
     
     class Media:
         js = (
-            'js/jquery-4.0.0.min.js',
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
             'js/custom-admin-resident.js',
         )
 
