@@ -59,7 +59,7 @@ class States(models.Model):
 class Addresses(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     street = models.CharField(max_length=255, null=False, blank=False,verbose_name="Logradouro")
-    number = models.CharField(max_length=10, null=False, blank=False,verbose_name="Número")
+    number = models.IntegerField(null=False, blank=False,verbose_name="Número")
     complement = models.CharField(max_length=255, null=False, blank=True, verbose_name="Complemento")
     neighborhood = models.CharField(max_length=255, null=True, blank=True, verbose_name="Bairro")
     city = models.CharField(max_length=100, null=False, blank=False, verbose_name="Município")
@@ -102,7 +102,7 @@ class Condominium(models.Model):
         verbose_name = "5. Condomínio"
         verbose_name_plural = "5. Condomínios"
         ordering = ["name", "code", "cnpj", "is_active", "created_at"]
-        unique_together = [['cnpj'], ['code']]
+        ##unique_together = [['cnpj'], ['code']]
 
     def __str__(self):
         return self.name

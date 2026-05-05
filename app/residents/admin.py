@@ -2,9 +2,13 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 from .models import Documents, Visitor, RealEstateAgency, Emergency, Vehicle, Animal, CondominiumUnit, Resident
-
+from .forms import CondominiumUnitFormAdmin, ResidentFormAdmin, VehicleFormAdmin
 
 class ExportCSVMixin:
+    def init(self, model, *args, **kwargs):
+        self.model = model
+        super().__init__(*args, **kwargs)
+        
     def export_as_csv(self, request, queryset):
         model_name = self.model._meta.model_name
         response = HttpResponse(content_type='text/csv')
@@ -62,6 +66,7 @@ class EmergencyAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(Vehicle)
 class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
+    form = VehicleFormAdmin
     list_display = ('license_plate', 'vehicle_type', 'brand', 'model', 'color', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'license_plate')
     list_filter = ('condo_unit', 'vehicle_type', 'is_active')
@@ -71,6 +76,13 @@ class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('condo_unit')
+    
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-admin-vehicle.js',
+        )
 
 
 @admin.register(Animal)
@@ -88,6 +100,7 @@ class AnimalAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(CondominiumUnit)
 class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
+    form = CondominiumUnitFormAdmin
     list_display = ('identification', 'tower', 'unit_number', 'floor', 'condominium')
     search_fields = ('unit_number', 'condominium__name')
     list_filter = ('tower', 'floor')
@@ -97,10 +110,18 @@ class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('condominium')
+    
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-admin-condominium-unit.js',
+        )
 
 
 @admin.register(Resident)
 class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
+    form = ResidentFormAdmin
     list_display = ('name', 'type_of_resident', 'phone', 'email', 'unit', 'is_active')
     search_fields = ('unit__unit_number', 'name', 'email')
     list_filter = ('type_of_resident', 'is_active')
@@ -110,6 +131,13 @@ class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('unit')
+    
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-admin-resident.js',
+        )
 
 
 @admin.register(Documents)

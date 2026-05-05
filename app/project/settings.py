@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'core',
     'condominium',
     'residents',
+    'personalities',
     # Seus apps aqui
 ]
 
@@ -97,7 +98,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+## STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Local onde você salva os arquivos estáticos durante o desenvolvimento
 STATICFILES_DIRS = [
@@ -129,8 +131,9 @@ JAZZMIN_SETTINGS = {
 
     # CSS customizado para aplicar o tema padrão do admin (antes do dark mode)
     "custom_css": "css/custom_admin.css",
+    
     # JS customizado para adicionar ícone de login no menu Account
-    "custom_js": ["js/custom_admin_login_icon.js"],
+    "custom_js": "js/custom_admin_login_icon.js",
     
     # Copyright no rodapé (Footer)
     "copyright": "BrasilCondo Ltda",

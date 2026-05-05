@@ -1,0 +1,176 @@
+/**
+// Usamos uma verificação segura para capturar o jQuery do Django
+(function($) {
+    'use strict';
+
+    // Se o $ ainda for undefined aqui dentro, algo falhou no carregamento
+    if (!$) {
+        console.error("--- Erro: django.jQuery não foi encontrado! ---");
+        return;
+    }
+
+    $(document).ready(function() {
+        console.log("--- Monitor de Veículos Carregado com Sucesso ---");
+
+        // Seletores (IDs padrão do Django Admin)
+        var unitSelect = '#id_condo_unit';
+        var garageInput = '#id_garage_space';
+
+        // 1. CAPTURA VIA SELECT2 (Obrigatório para o tema Jazzmin)
+        // O Select2 não dispara o evento 'change' padrão de forma limpa, 
+        // por isso usamos o 'select2:select' no 'body'
+        $('body').on('select2:select', unitSelect, function(e) {
+            var selectedId = e.params.data.id;
+            console.log("Unidade selecionada (Select2):", selectedId);
+            buscarIdentificacaoAjax(selectedId);
+        });
+
+        // 2. CAPTURA VIA CHANGE (Para garantir, caso o Select2 não carregue)
+        $(document).on('change', unitSelect, function() {
+            var selectedId = $(this).val();
+            if (selectedId) {
+                console.log("Unidade alterada (Change):", selectedId);
+                buscarIdentificacaoAjax(selectedId);
+            }
+        });
+
+        // Função do AJAX
+        function buscarIdentificacaoAjax(unitId) {
+            $.ajax({
+                url: '/ajax/get-unit-identification/',
+                data: { 'unit_id': unitId },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.identification) {
+                        $(garageInput).val(data.identification);
+                        console.log("Campo preenchido com:", data.identification);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Erro no AJAX:", error);
+                }
+            });
+        }
+
+
+        // Máscara para placa (letras maiúsculas + números)
+        $('.mask-license-plate').on('input', function(){
+            var input = $(this);
+            var value = input.val();
+
+            // Remove caracteres inválidos (mantém letras e números)
+            value = value.replace(/[^a-zA-Z0-9]/g, '');
+
+            // Converte para maiúsculas
+            value = value.toUpperCase();
+
+            input.val(value);
+        });
+
+        // Máscara para ano (apenas números, máximo 4 dígitos)
+        $('.mask-year').on('input', function(){
+            var input = $(this);
+            var value = input.val().replace(/[^0-9]/g, '');
+
+            if (value.length > 4) {
+                value = value.slice(0, 4); // Limita a 4 caracteres
+            }
+
+            input.val(value);
+        });
+
+    });
+
+})(window.django ? django.jQuery : jQuery);
+**/
+
+
+
+// Inicio do script
+(function($) {
+    'use strict';
+
+    if (!$) {
+        console.error("--- DEBUG: django.jQuery NÃO encontrado! ---");
+        return;
+    }
+
+    $(document).ready(function() {
+        console.log("--- DEBUG: Script custom-admin-vehicle.js carregado ---");
+
+        var unitSelect = '#id_condo_unit';
+        var garageInput = '#id_garage_space';
+
+        // Log de verificação de existência dos campos na página
+        console.log("--- DEBUG: Verificando seletores na DOM ---");
+        console.log("Select Unidade existe?", $(unitSelect).length > 0);
+        console.log("Input Garagem existe?", $(garageInput).length > 0);
+
+        // 1. CAPTURA VIA SELECT2
+        $('body').on('select2:select', unitSelect, function(e) {
+            console.log("--- DEBUG EVENTO: select2:select disparado ---");
+            
+            var selectedId = e.params.data.id;
+            console.log("--- DEBUG VALOR: ID capturado via Select2:", selectedId);
+            
+            console.log("--- DEBUG FLUXO: Chamando buscarIdentificacaoAjax com unitId:", selectedId);
+            buscarIdentificacaoAjax(selectedId);
+        });
+
+        // 2. CAPTURA VIA CHANGE (Fallback)
+        $(document).on('change', unitSelect, function() {
+            console.log("--- DEBUG EVENTO: change (padrão) disparado ---");
+            
+            var selectedId = $(this).val();
+            console.log("--- DEBUG VALOR: ID capturado via Change:", selectedId);
+            
+            if (selectedId) {
+                console.log("--- DEBUG FLUXO: Chamando buscarIdentificacaoAjax com unitId:", selectedId);
+                buscarIdentificacaoAjax(selectedId);
+            } else {
+                console.log("--- DEBUG AVISO: Change disparado, mas valor estava vazio.");
+            }
+        });
+
+        // Função do AJAX
+        function buscarIdentificacaoAjax(unitId) {
+            console.log("--- DEBUG AJAX: Iniciando chamada para unitId:", unitId);
+            
+            $.ajax({
+                url: '/ajax/get-unit-identification/',
+                data: { 'unit_id': unitId },
+                dataType: 'json',
+                success: function(data) {
+                    console.log("--- DEBUG AJAX: Sucesso no retorno!");
+                    console.log("--- DEBUG DATA: Objeto recebido:", data);
+                    
+                    if (data.identification) {
+                        $(garageInput).val(data.identification);
+                        console.log("--- DEBUG DOM: Campo Garagem atualizado para:", data.identification);
+                    } else {
+                        console.warn("--- DEBUG AVISO: Sucesso no AJAX, mas data.identification veio vazio.");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("--- DEBUG AJAX ERRO: Falha na requisição ---");
+                    console.error("Status:", status);
+                    console.error("Erro:", error);
+                    console.error("Resposta do Servidor:", xhr.responseText);
+                }
+            });
+        }
+
+        // Máscaras permanecem iguais (opcional adicionar logs aqui depois)
+        $('.mask-license-plate').on('input', function(){
+            var value = $(this).val().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            $(this).val(value);
+        });
+
+        $('.mask-year').on('input', function(){
+            var value = $(this).val().replace(/[^0-9]/g, '').slice(0, 4);
+            $(this).val(value);
+        });
+    });
+
+})(window.django ? django.jQuery : jQuery);
+//# Final do script
