@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'condominium',
     'residents',
     'personalities',
+    'parameters',
     # Seus apps aqui
 ]
 
@@ -152,10 +153,10 @@ JAZZMIN_SETTINGS = {
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
         "condominium.Condominium": "fas fa-building",
-        "condominium.Addresses": "fas fa-map-marked-alt",
-        "condominium.States": "fas fa-flag",
-        "condominium.TypesCondominium": "fas fa-home",
-        "condominium.StructionCondominium": "fas fa-sitemap",
+        "parameters.Addresses": "fas fa-map-marked-alt",
+        "parameters.States": "fas fa-flag",
+        "parameters.TypesCondominium": "fas fa-home",
+        "parameters.StructionCondominium": "fas fa-sitemap",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",

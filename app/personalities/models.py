@@ -41,7 +41,7 @@ class Entity(models.Model):
     sex = models.CharField(max_length=1, choices=SEX_CHOICES, verbose_name="Sexo")
     email = models.EmailField(verbose_name="E-mail", blank=True, null=True)
     phone = models.CharField(max_length=20, verbose_name="Telefone", blank=True, null=True)
-    address = models.ForeignKey('condominium.Addresses', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Endereço")
+    address = models.ForeignKey('parameters.Addresses', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Endereço")
     observations = models.TextField(verbose_name="Observações", blank=True, null=True)
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")

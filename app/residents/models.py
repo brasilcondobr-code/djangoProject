@@ -196,7 +196,7 @@ class RealEstateAgency(models.Model):
     email = models.EmailField(blank=True, verbose_name="E-mail")
     website = models.URLField(blank=True, verbose_name="Site")
     address = models.ForeignKey(
-        'condominium.Addresses', on_delete=models.SET_NULL, null=True, blank=True,
+        'parameters.Addresses', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='agencies', verbose_name="Endereço"
     )
     contact_person = models.CharField(max_length=100, blank=True, verbose_name="Pessoa de contato")
