@@ -2,7 +2,7 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 
-from .forms import CondominiumFormAdmin
+from .forms import CondominiumFormAdmin, CollaboratorsFormAdmin
 from .models import Condominium, Collaborators, Types_collaborators
 
 # Register your models here.
@@ -42,7 +42,8 @@ class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
     
     class Media:
         js = (
-            'js/jquery-4.0.0.min.js',
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
             'js/custom-admin-condominium.js',
         )
     
@@ -60,9 +61,20 @@ class TypesCollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 @admin.register(Collaborators)
 class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = CollaboratorsFormAdmin
     list_display = ('name', 'email', 'phone_number', 'type_collaborator', 'condominium', 'is_active')
     search_fields = ('condominium__name', 'name', 'email')
     list_filter = ('condominium', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
+        
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-admin-collaborators.js',
+        )
+        
+    class Meta:
+        model = Collaborators

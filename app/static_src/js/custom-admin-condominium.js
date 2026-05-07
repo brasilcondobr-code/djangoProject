@@ -10,20 +10,23 @@
   }
 
   $(document).ready(function(){
-    // tente pelo id padrão do field Django admin
-    var el = $('#cnpj');
-    if (!el.length) {
-      // fallback comum: input com name='cnpj'
-      el = $('input[name="cnpj"]');
-    }
-    if (!el.length) return;
 
-    el.on('input', function(){
-      var val = $(this).val();
-      $(this).val(maskCNPJ(val));
+    console.log('O arquivo custom-admin-resident.js está carregado');
+
+    if ($().jquery) {
+        console.log('O jQuery está carregado corretamente');
+    } else {
+        console.log('O jQuery não está sendo carregado corretamente');
+    }
+
+    django.jQuery('.mask-code').on('input', function(){
+      this.value = this.value.toUpperCase();
     });
 
-    if (el.val()) el.val(maskCNPJ(el.val()));
+    django.jQuery('.mask-cnpj').on('input', function(){
+      this.value = maskCNPJ(this.value);
+    });
+
   });
   
-})(jQuery);
+})(django.jQuery);

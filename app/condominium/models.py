@@ -20,7 +20,7 @@ class Condominium(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = "5. Condomínio"
+        verbose_name = "1. Condomínio"
         verbose_name_plural = "1. Condomínios"
         ordering = ["name", "code", "cnpj", "is_active", "created_at"]
         ##unique_together = [['cnpj'], ['code']]
@@ -36,7 +36,7 @@ class Types_collaborators(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
-        verbose_name = "6. Tipo de Colaborador"
+        verbose_name = "2. Tipo de Colaborador"
         verbose_name_plural = "2. Tipos de Colaboradores"
         ordering = ["name", "is_active", "created_at"]
         unique_together = ['name']
@@ -59,7 +59,7 @@ class Collaborators(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "7. Colaborador"
+        verbose_name = "3. Colaborador"
         verbose_name_plural = "3. Colaboradores"
         ordering = ["name", "email", "phone_number", "created_at"]
         unique_together = [['name', 'cpf'], ['condominium', 'cpf']]
