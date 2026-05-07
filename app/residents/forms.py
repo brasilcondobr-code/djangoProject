@@ -1,5 +1,5 @@
 from django import forms
-from .models import CondominiumUnit, Vehicle
+from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor
 
 class CondominiumUnitFormAdmin(forms.ModelForm):
     
@@ -129,6 +129,9 @@ class CondominiumUnitFormAdmin(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['identification'].widget.attrs['class'] = 'mask-identification'
+        self.fields['area_total'].widget.attrs['class'] = 'mask-area-total'
+        self.fields['sale_price'].widget.attrs['class'] = 'mask-sale-price'
+        self.fields['rent_price'].widget.attrs['class'] = 'mask-rent-price'
     
 
 class ResidentFormAdmin(forms.ModelForm):
@@ -244,6 +247,7 @@ class ResidentFormAdmin(forms.ModelForm):
         self.fields['email'].widget.attrs['class'] = 'mask-email'
         self.fields['phone'].widget.attrs['class'] = 'mask-phone'
         self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
+        self.fields['date_of_birth'].widget.attrs['class'] = 'mask-date-of-birth'
         
 
 class VehicleFormAdmin(forms.ModelForm):
@@ -338,4 +342,183 @@ class VehicleFormAdmin(forms.ModelForm):
         self.fields['year'].widget.attrs['class'] = 'mask-year'
 
 
+class VisitorFormAdmin(forms.ModelForm):
+    
+    class Meta:
+        model = Visitor
+        fields = '__all__'
+        widgets = {
+            'condo_unit': forms.Select(attrs={'class': 'mask-condo-unit'}),
+            'cpf': forms.TextInput(attrs={'class': 'mask-cpf'}),
+            'phone': forms.TextInput(attrs={'class': 'mask-phone'}),
+            'visit_date': forms.DateInput(attrs={'class': 'mask-visit-date'}),
+        }
+        
+        labels = {
+            'condo_unit': 'Condominio/Unidade',
+            'name': 'Nome',
+            'cpf': 'CPF',
+            'rg': 'RG',
+            'phone': 'Telefone',
+            'visit_date': 'Data da visita',
+            'purpose': 'Proposto da visita',
+            'is_active': 'Ativo',
+            'created_at': 'Criado em',
+            'updated_at': 'Atualizado em',
+        }
+        
+        help_texts = {
+            'condo_unit': 'Selecione a unidade que o visitante irá visitar',
+            'name': 'Digite o nome do visitante',
+            'cpf': 'Digite o CPF do visitante',
+            'rg': 'Digite o RG do visitante',
+            'phone': 'Digite o telefone do visitante',
+            'visit_date': 'Digite a data da visita',
+            'purpose': 'Digite o propósito da visita',
+            'is_active': 'Indique se o visitante está ativo',
+            'created_at': 'Data de criação do visitante',
+            'updated_at': 'Data de atualização do visitante',
+        }
+        
+        error_messages = {
+            'condo_unit': {
+                'required': 'A unidade é obrigatória.',
+                'invalid_choice': 'Selecione uma unidade válida.',
+            },
+            'name': {
+                'required': 'O nome é obrigatório.',
+            },
+            'cpf': {
+                'required': 'O CPF é obrigatório.',
+            },
+            'rg': {
+                'required': 'O RG é obrigatório.',
+            },
+            'phone': {
+                'required': 'O telefone é obrigatório.',
+            },
+            'visit_date': {
+                'required': 'A data da visita é obrigatória.',
+            },
+            'purpose': {
+                'required': 'O propósito da visita é obrigatório.',
+            },
+            'is_active': {
+                'required': 'O status de ativo é obrigatório.',
+            },
+            'created_at': {
+                'required': 'A data de criação é obrigatória.',
+            },
+             'updated_at': {
+                'required': 'A data de atualização é obrigatória.',
+            }
+        }
+        
+        exclude = [
+            'created_at',
+            'updated_at',
+        ]
+         
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['condo_unit'].widget.attrs['class'] = 'mask-condo-unit'
+        self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
+        self.fields['phone'].widget.attrs['class'] = 'mask-phone'
+        if 'visit_date' in self.fields:
+            self.fields['visit_date'].widget.attrs['class'] = 'mask-visit-date'
 
+
+class RealEstateAgencyFormAdmin(forms.ModelForm):
+    
+    class Meta:
+        model = RealEstateAgency
+        fields = '__all__'
+        widgets = {
+            'condo_unit': forms.Select(attrs={'class': 'mask-condo-unit'}),
+            'cnpj': forms.TextInput(attrs={'class': 'mask-cnpj'}),
+            'phone': forms.TextInput(attrs={'class': 'mask-phone'}),
+            'email': forms.EmailInput(attrs={'class': 'mask-email'}),            
+            'website': forms.URLInput(attrs={'class': 'mask-website'}),
+        }
+        
+        labels = {
+            'condo_unit': 'Condominio/Unidade',
+            'name': 'Nome da Imobiliária',
+            'cnpj': 'CNPJ',
+            'phone': 'Telefone',
+            'email': 'E-mail',
+            'website': 'Site',
+            'address': 'Endereço',
+            'contact_person': 'Pessoa de Contato',
+            'is_active': 'Ativo',
+            'created_at': 'Criado em',
+            'updated_at': 'Atualizado em',
+        }
+        
+        help_texts = {
+            'condo_unit': 'Selecione a unidade associada à imobiliária',
+            'name': 'Digite o nome da imobiliária',
+            'cnpj': 'Digite o CNPJ da imobiliária',
+            'phone': 'Digite o telefone da imobiliária',
+            'email': 'Digite o e-mail da imobiliária',
+            'website': 'Digite o site da imobiliária',
+            'address': 'Digite o endereço da imobiliária',
+            'contact_person': 'Digite o nome da pessoa de contato na imobiliária',
+            'is_active': 'Indique se a imobiliária está ativa',
+            'created_at': 'Data de criação da imobiliária',
+            'updated_at': 'Data de atualização da imobiliária',
+        }
+        
+        error_messages = {
+            'condo_unit': {
+                'required': 'A unidade é obrigatória.',
+                'invalid_choice': 'Selecione uma unidade válida.',
+            },
+            'name': {
+                'required': 'O nome da imobiliária é obrigatório.',
+            },
+            'cnpj': {
+                'required': 'O CNPJ é obrigatório.',
+                'invalid': 'Digite um CNPJ válido.',
+            },
+            'phone': {
+                'required': 'O telefone é obrigatório.',
+                'invalid': 'Digite um telefone válido.',
+            },
+            'email': {
+                'required': 'O e-mail é obrigatório.',
+                'invalid': 'Digite um e-mail válido.',
+            },
+            'website': {
+                'required': 'O site é obrigatório.',
+                'invalid': 'Digite um site válido.',
+            },
+            'address': {
+                'required': 'O endereço é obrigatório.',
+            },
+            'contact_person': {
+                'required': 'A pessoa de contato é obrigatória.',
+            },
+             'is_active': {
+                'required': 'O status de ativo é obrigatório.',
+            },
+             'created_at': {
+                'required': 'A data de criação é obrigatória.',
+            },
+             'updated_at': {
+                'required': 'A data de atualização é obrigatória.',
+            },
+        }
+        
+        exclude = [
+            'created_at',
+            'updated_at',
+        ]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['condo_unit'].widget.attrs['class'] = 'mask-condo-unit'
+        self.fields['cnpj'].widget.attrs['class'] = 'mask-cnpj'
+        self.fields['phone'].widget.attrs['class'] = 'mask-phone'
+        self.fields['email'].widget.attrs['class'] = 'mask-email'
+        self.fields['website'].widget.attrs['class'] = 'mask-website'

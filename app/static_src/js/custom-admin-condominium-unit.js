@@ -27,7 +27,7 @@
         // Seletores para os campos
         var $tower = $('.mask-tower');
         var $unit = $('.mask-unit-number');
-        var $moneyFields = $('.mask-sale-price, .mask-rent-price');
+        var $moneyFields = $('.mask-sale-price, .mask-rent-price, .mask-area-total');
 
         // Monitora digitação nos campos de Torre e Unidade
         $tower.on('input', updateIdentification);
