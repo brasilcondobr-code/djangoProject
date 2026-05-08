@@ -2,8 +2,8 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 
-from .forms import CondominiumFormAdmin
-from .models import Addresses, States, Condominium, TypesCondominium, StructionCondominium, Collaborators, Types_collaborators
+from .forms import CondominiumFormAdmin, CollaboratorsFormAdmin
+from .models import Condominium, Collaborators, Types_collaborators
 
 # Register your models here.
 class ExportCsvMixin:
@@ -30,42 +30,6 @@ class ExportCsvMixin:
     export_as_csv.short_description = "Exportar para CSV"
 
 
-@admin.register(TypesCondominium)
-class TypesCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ('name', 'is_active')
-    search_fields = ('name',)
-    list_filter = ('is_active',)
-    readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-
-@admin.register(StructionCondominium)
-class StructionCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ('name', 'is_active')
-    search_fields = ('name',)
-    list_filter = ('is_active',)
-    readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-
-@admin.register(States)
-class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ('name', 'abbreviation', 'capital', 'region')
-    search_fields = ('name', 'abbreviation', 'capital', 'region')
-    list_filter = ('name', 'abbreviation')
-    readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-
-@admin.register(Addresses)
-class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ( 'street', 'number', 'neighborhood', 'city', 'state', 'is_active')
-    search_fields = ('street', 'city', 'state')
-    list_filter = ('state','city', 'is_active')
-    readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-
 @admin.register(Condominium)
 class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
     form = CondominiumFormAdmin
@@ -78,7 +42,8 @@ class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
     
     class Media:
         js = (
-            'js/jquery-4.0.0.min.js',
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
             'js/custom-admin-condominium.js',
         )
     
@@ -96,9 +61,20 @@ class TypesCollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 @admin.register(Collaborators)
 class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = CollaboratorsFormAdmin
     list_display = ('name', 'email', 'phone_number', 'type_collaborator', 'condominium', 'is_active')
     search_fields = ('condominium__name', 'name', 'email')
     list_filter = ('condominium', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
+        
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-admin-collaborators.js',
+        )
+        
+    class Meta:
+        model = Collaborators

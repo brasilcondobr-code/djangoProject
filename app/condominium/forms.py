@@ -1,5 +1,5 @@
 from django import forms
-from .models import Condominium
+from .models import Collaborators, Condominium
 
 class CondominiumFormAdmin(forms.ModelForm):
     class Meta:
@@ -77,7 +77,81 @@ class CondominiumFormAdmin(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super(CondominiumFormAdmin, self).__init__(*args, **kwargs)
+        self.fields['code'].widget.attrs['class'] = 'mask-code'
         self.fields['cnpj'].widget.attrs['class'] = 'mask-cnpj'
          
         
+class CollaboratorsFormAdmin(forms.ModelForm):
+    class Meta:
+        model = Collaborators
+        fields = '__all__'
+        widgets = {
+            'cpf': forms.TextInput(attrs={'class': 'mask-cpf'}),
+            'email': forms.EmailInput(attrs={'class': 'mask-email'}),
+            'phone_number': forms.TextInput(attrs={'class': 'mask-phone'}),
+        }
         
+        labels = {
+            'condominium': 'Condomínio',
+            'name': 'Nome Completo',
+            'cpf': 'CPF',
+            'rg': 'RG',
+            'email': 'Email',
+            'phone_number': 'Telefone',
+            'type_collaborator': 'Tipo de Colaborador',
+            'is_active': 'Ativo',
+            'observations': 'Observações',
+        }
+        
+        help_texts = {
+            'condominium': 'Selecione o condomínio do colaborador',
+            'name': 'Digite o nome completo do colaborador',
+            'cpf': 'Digite o CPF do colaborador',
+            'rg': 'Digite o RG do colaborador',
+            'email': 'Digite o email do colaborador',
+            'phone_number': 'Digite o telefone do colaborador',
+            'type_collaborator': 'Selecione o tipo de colaborador',
+            'is_active': 'Colaborador ativo',
+            'observations': 'Observações adicionais sobre o colaborador',
+        }
+        
+        error_messages = {
+            'name': {
+                'max_length': 'O nome deve ter no máximo 255 caracteres.',
+            },
+            'cpf': {
+                'max_length': 'O CPF deve ter no máximo 20 caracteres.',
+            },
+            'rg': {
+                'max_length': 'O RG deve ter no máximo 20 caracteres.',
+            },
+            'email': {
+                'max_length': 'O email deve ter no máximo 255 caracteres.',
+            },
+            'phone_number': {
+                'max_length': 'O telefone deve ter no máximo 20 caracteres.',
+            },
+        }
+              
+        field_order = [
+            'condominium',
+            'name',
+            'cpf',
+            'rg',
+            'email',
+            'phone_number',
+            'type_collaborator',
+            'is_active',
+            'observations',
+            'created_at',
+            'updated_at',
+        ]
+        
+        exclude = ['created_at', 'updated_at']
+        
+    def __init__(self, *args, **kwargs):
+        super(CollaboratorsFormAdmin, self).__init__(*args, **kwargs)
+        self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
+        self.fields['rg'].widget.attrs['class'] = 'mask-rg'
+        self.fields['phone_number'].widget.attrs['class'] = 'mask-phone'
+        self.fields['email'].widget.attrs['class'] = 'mask-email'

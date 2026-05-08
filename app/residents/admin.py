@@ -2,7 +2,7 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 from .models import Documents, Visitor, RealEstateAgency, Emergency, Vehicle, Animal, CondominiumUnit, Resident
-from .forms import CondominiumUnitFormAdmin, ResidentFormAdmin, VehicleFormAdmin
+from .forms import CondominiumUnitFormAdmin, RealEstateAgencyFormAdmin, ResidentFormAdmin, VehicleFormAdmin, VisitorFormAdmin
 
 class ExportCSVMixin:
     def init(self, model, *args, **kwargs):
@@ -27,6 +27,7 @@ class ExportCSVMixin:
 
 @admin.register(Visitor)
 class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
+    form = VisitorFormAdmin
     list_display = ('name', 'visit_date', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name')
     list_filter = ('condo_unit', 'visit_date', 'is_active')
@@ -37,10 +38,18 @@ class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('condo_unit')
+    
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-admin-visitor.js',
+        )
 
 
 @admin.register(RealEstateAgency)
 class RealEstateAgencyAdmin(ExportCSVMixin, admin.ModelAdmin):
+    form = RealEstateAgencyFormAdmin
     list_display = ('name', 'phone', 'contact_person', 'condo_unit', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name', 'contact_person')
     readonly_fields = ('created_at', 'updated_at', 'is_active')
@@ -49,6 +58,13 @@ class RealEstateAgencyAdmin(ExportCSVMixin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('condo_unit')
+    
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-admin-realestateagency.js',
+        )
 
 
 @admin.register(Emergency)

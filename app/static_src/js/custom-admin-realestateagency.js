@@ -11,7 +11,7 @@
 
   $(document).ready(function(){
 
-    console.log('O arquivo custom-admin-resident.js está carregado');
+    console.log('O arquivo custom-admin-realestateagency.js está carregado');
 
     if ($().jquery) {
         console.log('O jQuery está carregado corretamente');
@@ -19,12 +19,23 @@
         console.log('O jQuery não está sendo carregado corretamente');
     }
 
-    django.jQuery('.mask-code').on('input', function(){
-      this.value = this.value.toUpperCase();
-    });
-
     django.jQuery('.mask-cnpj').on('input', function(){
       this.value = maskCNPJ(this.value);
+    });
+
+    django.jQuery('.mask-email').on('input', function(){
+      this.value = this.value.replace(/[^a-zA-Z0-9@._-]/g, '');
+    });
+
+    django.jQuery('.mask-phone').on('input', function(){
+      var phone = this.value.replace(/\D/g, '');
+      phone = phone.replace(/(\d{2})(\d)/, '($1) $2');
+      phone = phone.replace(/(\d{4,5})(\d{4})$/, '$1-$2');
+      this.value = phone;
+    });
+
+    django.jQuery('.mask-website').on('input', function(){
+      this.value = this.value.replace(/[^a-zA-Z0-9.-]/g, '');
     });
 
   });
