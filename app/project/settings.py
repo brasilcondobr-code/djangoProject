@@ -153,6 +153,8 @@ JAZZMIN_SETTINGS = {
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
         "condominium.Condominium": "fas fa-building",
+        "condominium.Types_collaborators": "fa-solid fa-anchor-circle-exclamation",
+        "condominium.Collaborators": "fa-solid fa-person-half-dress",
         "parameters.Addresses": "fas fa-map-marked-alt",
         "parameters.States": "fas fa-flag",
         "parameters.TypesCondominium": "fas fa-home",
@@ -164,6 +166,9 @@ JAZZMIN_SETTINGS = {
         "residents.Animal": "fas fa-dog",
         "residents.Visitor": "fas fa-user-friends",
         "residents.RealEstateAgency": "fas fa-home",
+        "residents.Documents": "fa-solid fa-bag-shopping",
+        "personalities.Entity": "fa-solid fa-boxes-stacked",
+        "personalities.BusinessSector": "fa-solid fa-chess",
     },
     
     "show_ui_builder": False,
