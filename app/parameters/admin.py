@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.contrib import admin
 
 from .models import Addresses, States, TypesCondominium, StructionCondominium
-
+from .forms import AddressesForm
 
 class ExportCsvMixin:
     def init(self, model, *args, **kwargs):
@@ -35,6 +35,13 @@ class TypesCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
+    
+    class Meta:
+        verbose_name = "1. Tipo de Condomínio"
+        verbose_name_plural = "1. Tipos de Condomínios"
+        ordering = ["name", "is_active", "created_at"]
+        unique_together = ['name']
+        db_table = 'condominium_typescondominium'
 
 
 @admin.register(StructionCondominium)
@@ -45,6 +52,13 @@ class StructionCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
+    
+    class Meta:
+        verbose_name = "2. Estrutura do Condomínio"
+        verbose_name_plural = "2. Estruturas dos Condomínios"
+        ordering = ["name", "is_active", "created_at"]
+        unique_together = ['name']
+        db_table = 'condominium_structioncondominium'
 
 
 @admin.register(States)
@@ -55,13 +69,34 @@ class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
+    
+    class Meta:
+        verbose_name = "3. Estado"
+        verbose_name_plural = "3. Estados"
+        ordering = ["abbreviation", "name", "region"]
+        unique_together = ['name', 'abbreviation']
+        db_table = 'condominium_states'
 
 
 @admin.register(Addresses)
 class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = AddressesForm
     list_display = ('street', 'number', 'neighborhood', 'city', 'state', 'is_active')
     search_fields = ('street', 'city', 'state')
     list_filter = ('state', 'city', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
+    
+    class Meta:
+        verbose_name = "4. Endereço"
+        verbose_name_plural = "4. Endereços"
+        ordering = ["street", "number", "city", "state", "is_active", "created_at"]
+        db_table = 'condominium_addresses'
+        unique_together = ['street', 'number', 'neighborhood', 'city', 'state', 'zip_code']
+        
+    class Media:
+        js = (
+            'js/custom-admin-address.js',
+            )
+        

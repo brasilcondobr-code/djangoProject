@@ -58,11 +58,12 @@ class States(models.Model):
         db_table = 'condominium_states'
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.abbreviation})"
 
 
 class Addresses(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    zip_code = models.CharField(max_length=20, null=False, blank=False, verbose_name="CEP")
     street = models.CharField(max_length=255, null=False, blank=False, verbose_name="Logradouro")
     number = models.IntegerField(null=False, blank=False, verbose_name="Número")
     complement = models.CharField(max_length=255, null=False, blank=True, verbose_name="Complemento")
@@ -70,7 +71,6 @@ class Addresses(models.Model):
     city = models.CharField(max_length=100, null=False, blank=False, verbose_name="Município")
     state = models.ForeignKey(States, related_name="address", null=False, blank=False, verbose_name="UF", on_delete=models.CASCADE)
     country = models.CharField(max_length=100, null=False, blank=False, default="Brasil", verbose_name="País")
-    zip_code = models.CharField(max_length=20, null=False, blank=False, verbose_name="CEP")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
