@@ -1,7 +1,65 @@
 
 from django import forms
-from .models import Addresses
+from .models import Addresses, States
 
+
+class StatesForm(forms.ModelForm):
+    class Meta:
+        model = States
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'mask-name'}),
+            'abbreviation': forms.TextInput(attrs={'class': 'mask-abbreviation'}),
+            'capital': forms.TextInput(attrs={'class': 'mask-capital'}),
+            'region': forms.Select(attrs={'class': 'mask-region'}),
+        }
+        labels = {
+            'name': 'Nome do Estado',
+            'abbreviation': 'Abreviação (UF)',
+            'capital': 'Capital',
+            'region': 'Região',
+            'created_at': 'Criado em',
+            'updated_at': 'Atualizado em',
+        }
+        
+        help_texts = {
+            'name': 'Digite o nome do estado',
+            'abbreviation': 'Digite a abreviação do estado',
+            'capital': 'Digite o nome da capital do estado',
+            'region': 'Selecione a região do estado',
+            'created_at': 'Data de criação do estado',
+            'updated_at': 'Data de atualização do estado',
+        }
+        
+        error_messages = {
+            'name': {
+                'required': 'O nome do estado é obrigatório.',
+            },
+            'abbreviation': {
+                'required': 'A abreviação do estado é obrigatória.',
+            },
+            'capital': {
+                'required': 'A capital do estado é obrigatória.',
+            },
+            'region': {
+                'required': 'A região do estado é obrigatória.',
+            },
+            'created_at': {
+                'required': 'A data de criação é obrigatória.',
+            },
+            'updated_at': {
+                'required': 'A data de atualização é obrigatória.',
+            },
+        }
+        
+    def __init__(self, *args, **kwargs):
+        super(StatesForm, self).__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs['class'] = 'mask-name'
+        self.fields['abbreviation'].widget.attrs['class'] = 'mask-abbreviation'
+        self.fields['capital'].widget.attrs['class'] = 'mask-capital'
+        self.fields['region'].widget.attrs['class'] = 'mask-region'
+        
+        
 
 class AddressesForm(forms.ModelForm):
     class Meta:

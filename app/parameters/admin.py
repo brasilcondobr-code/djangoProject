@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.contrib import admin
 
 from .models import Addresses, States, TypesCondominium, StructionCondominium
-from .forms import AddressesForm
+from .forms import AddressesForm, StatesForm
 
 class ExportCsvMixin:
     def init(self, model, *args, **kwargs):
@@ -63,6 +63,7 @@ class StructionCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 @admin.register(States)
 class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = StatesForm
     list_display = ('name', 'abbreviation', 'capital', 'region')
     search_fields = ('name', 'abbreviation', 'capital', 'region')
     list_filter = ('name', 'abbreviation')
@@ -76,6 +77,11 @@ class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
         ordering = ["abbreviation", "name", "region"]
         unique_together = ['name', 'abbreviation']
         db_table = 'condominium_states'
+        
+    class Media:
+        js = (
+            'js/custom-admin-states.js',
+            )
 
 
 @admin.register(Addresses)
