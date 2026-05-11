@@ -36,15 +36,17 @@ class BusinessSectorAdmin(admin.ModelAdmin):
 @admin.register(Entity)
 class EntityAdmin(admin.ModelAdmin):
     form = EntityForm
-    list_display = ('code', 'name', 'business_sector', 'kind', 'cpf_cnpj')
+    list_display = ('code', 'kind', 'business_sector', 'name', 'cpf_cnpj', 'is_active')
+    list_display_links = ('code', 'name')
     search_fields = ('code', 'name', 'cpf_cnpj')
-    list_filter = ('business_sector', 'kind')
-    ordering = ('business_sector', 'name')
+    list_filter = ('kind', 'is_active', 'business_sector')
+    ordering = ('name',)
     list_per_page = 25
-    fieldsets = (
-        (None, {
-            'fields': ('code', 'name', 'business_sector', 'kind', 'cpf_cnpj', 'rg_ie', 'municipal_registration', 'trade_name', 'date_of_birth_opening', 'sex', 'email', 'phone', 'address', 'observations', 'is_active')
-        }),
+    fields = (
+        'code', 'kind', 'business_sector', 'name', 'trade_name', 
+        'cpf_cnpj', 'rg_ie', 'municipal_registration', 
+        'date_of_birth_opening', 'sex', 'email', 'phone', 
+        'address', 'observations', 'is_active'
     )
     readonly_fields = ('created_at', 'updated_at')
 
@@ -60,5 +62,6 @@ class EntityAdmin(admin.ModelAdmin):
         
     class Media:
         js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js',
             'js/custom-personalities-entity.js',
-            )
+        )

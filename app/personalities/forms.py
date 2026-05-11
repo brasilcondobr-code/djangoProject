@@ -78,16 +78,21 @@ class EntityForm(forms.ModelForm):
                 'placeholder': 'Código',
                 'maxlength': '100',
             }),
+            'kind': forms.Select(attrs={
+                'class': 'mask-kind form-control',
+            }),
+            'business_sector': forms.Select(attrs={
+                'class': 'mask-business-sector form-control',
+            }),
             'name': forms.TextInput(attrs={
                 'class': 'mask-name form-control',
                 'placeholder': 'Nome da Entidade',
                 'maxlength': '100',
             }),
-            'business_sector': forms.Select(attrs={
-                'class': 'mask-business-sector form-control',
-            }),
-            'kind': forms.Select(attrs={
-                'class': 'mask-kind form-control',
+            'trade_name': forms.TextInput(attrs={
+                'class': 'mask-trade-name form-control',
+                'placeholder': 'Nome Fantasia',
+                'maxlength': '100',
             }),
             'cpf_cnpj': forms.TextInput(attrs={
                 'class': 'mask-cpf-cnpj form-control',
@@ -104,15 +109,9 @@ class EntityForm(forms.ModelForm):
                 'placeholder': 'Inscrição Municipal',
                 'maxlength': '100',
             }),
-            'trade_name': forms.TextInput(attrs={
-                'class': 'mask-trade-name form-control',
-                'placeholder': 'Nome Fantasia',
-                'maxlength': '100',
-            }),
-            'date_of_birth_opening': forms.DateInput(attrs={
+            'date_of_birth_opening': forms.TextInput(attrs={
                 'class': 'mask-date-of-birth-opening form-control',
-                'placeholder': 'Data de Nascimento/Abertura',
-                'type': 'date',
+                'placeholder': 'DD/MM/AAAA',
             }),
             'sex': forms.Select(attrs={
                 'class': 'mask-sex form-control',
@@ -145,13 +144,13 @@ class EntityForm(forms.ModelForm):
         
         labels = {
             'code': 'Código',
-            'name': 'Nome da Entidade',
-            'business_sector': 'Ramo de Atividade',
             'kind': 'Tipo',
+            'business_sector': 'Ramo de Atividade',
+            'name': 'Nome da Entidade',
+            'trade_name': 'Nome Fantasia',
             'cpf_cnpj': 'CPF/CNPJ',
             'rg_ie': 'RG/IE',
             'municipal_registration': 'Inscrição Municipal',
-            'trade_name': 'Nome Fantasia',
             'date_of_birth_opening': 'Data de Nascimento/Abertura',
             'sex': 'Sexo',
             'email': 'E-mail',
@@ -165,13 +164,13 @@ class EntityForm(forms.ModelForm):
         
         help_texts = {
             'code': 'Digite o código da entidade',
-            'name': 'Digite o nome da entidade',
-            'business_sector': 'Selecione o ramo de atividade da entidade',
             'kind': 'Selecione o tipo da entidade',
+            'business_sector': 'Selecione o ramo de atividade da entidade',
+            'name': 'Digite o nome da entidade',
+            'trade_name': 'Digite o nome fantasia da entidade (opcional)',
             'cpf_cnpj': 'Digite o CPF ou CNPJ da entidade',
             'rg_ie': 'Digite o RG ou IE da entidade (opcional)',
             'municipal_registration': 'Digite a inscrição municipal da entidade (opcional)',
-            'trade_name': 'Digite o nome fantasia da entidade (opcional)',
             'date_of_birth_opening': 'Digite a data de nascimento ou abertura da entidade (opcional)',
             'sex': 'Selecione o sexo da entidade',
             'email': 'Digite o e-mail da entidade (opcional)',
@@ -186,14 +185,17 @@ class EntityForm(forms.ModelForm):
                 'required': 'O código da entidade é obrigatório.',
                 'unique': 'Já existe uma entidade com este código.',
             },
-            'name': {
-                'required': 'O nome da entidade é obrigatório.',
+            'kind': {
+                'required': 'O tipo da entidade é obrigatório.',
             },
             'business_sector': {
                 'required': 'O ramo de atividade da entidade é obrigatório.',
             },
-            'kind': {
-                'required': 'O tipo da entidade é obrigatório.',
+            'name': {
+                'required': 'O nome da entidade é obrigatório.',
+            },
+            'trade_name': {
+                'unique': 'Já existe uma entidade com este nome fantasia.',
             },
             'cpf_cnpj': {
                 'required': 'O CPF ou CNPJ da entidade é obrigatório.',
@@ -204,9 +206,6 @@ class EntityForm(forms.ModelForm):
             },
             'municipal_registration': {
                 'unique': 'Já existe uma entidade com esta inscrição municipal.',
-            },
-            'trade_name': {
-                'unique': 'Já existe uma entidade com este nome fantasia.',
             },
             'date_of_birth_opening': {
                 'unique': 'Já existe uma entidade com esta data de nascimento ou abertura.',
