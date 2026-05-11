@@ -98,7 +98,6 @@ class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
         verbose_name = "4. Endereço"
         verbose_name_plural = "4. Endereços"
         ordering = ["street", "number", "city", "state", "is_active", "created_at"]
-        db_table = 'condominium_addresses'
         unique_together = ['street', 'number', 'neighborhood', 'city', 'state', 'zip_code']
         
     class Media:

@@ -1,9 +1,12 @@
 from django.contrib import admin
+
+from .forms import BusinessSectorForm, EntityForm
 from .models import BusinessSector, Entity
 
 # Register your models here.
 @admin.register(BusinessSector)
 class BusinessSectorAdmin(admin.ModelAdmin):
+    form = BusinessSectorForm
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('description', 'is_active')
@@ -15,9 +18,24 @@ class BusinessSectorAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('created_at', 'updated_at')
+    
+    class Meta:
+        verbose_name = "1. Ramo de Atividade"
+        verbose_name_plural = "1. Ramos de Atividade"
+        ordering = ["description"]
+        unique_together = ['description']
+        db_table = 'personalities_businesssector'
+        
+    class Media:
+        js = (
+            'js/custom-personalities-business-sector.js',
+            )
+    
+        
 
 @admin.register(Entity)
 class EntityAdmin(admin.ModelAdmin):
+    form = EntityForm
     list_display = ('code', 'name', 'business_sector', 'kind', 'cpf_cnpj')
     search_fields = ('code', 'name', 'cpf_cnpj')
     list_filter = ('business_sector', 'kind')
@@ -33,3 +51,14 @@ class EntityAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).order_by('business_sector', 'name')
 
+    class Meta:
+        verbose_name = "2. Entidade"
+        verbose_name_plural = "2. Entidades"
+        ordering = ["business_sector", "name", "cpf_cnpj"]
+        unique_together = ['business_sector', 'cpf_cnpj']
+        db_table = 'personalities_entity'
+        
+    class Media:
+        js = (
+            'js/custom-personalities-entity.js',
+            )

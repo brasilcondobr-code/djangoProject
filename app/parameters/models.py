@@ -12,7 +12,6 @@ class TypesCondominium(models.Model):
         verbose_name_plural = "1. Tipos de Condomínios"
         ordering = ["name", "is_active", "created_at"]
         unique_together = ['name']
-        db_table = 'condominium_typescondominium'
 
     def __str__(self):
         return self.name
@@ -29,7 +28,6 @@ class StructionCondominium(models.Model):
         verbose_name_plural = "2. Estruturas dos Condomínios"
         ordering = ["name", "is_active", "created_at"]
         unique_together = ['name']
-        db_table = 'condominium_structioncondominium'
 
     def __str__(self):
         return self.name
@@ -55,7 +53,6 @@ class States(models.Model):
         verbose_name_plural = "3. Estados"
         ordering = ["abbreviation", "name", "region"]
         unique_together = ['name', 'abbreviation']
-        db_table = 'condominium_states'
 
     def __str__(self):
         return f"{self.name} ({self.abbreviation})"
@@ -79,7 +76,6 @@ class Addresses(models.Model):
         verbose_name_plural = "4. Endereços"
         ordering = ["country", 'state', 'city', 'street', 'number', 'complement', "is_active", "created_at"]
         unique_together = ['street', 'number', 'neighborhood', 'city', 'state', 'zip_code']
-        db_table = 'condominium_addresses'
 
     def __str__(self):
         address_line = f"{self.street}, {self.number}"
