@@ -1,11 +1,38 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 
 from .forms import BusinessSectorForm, EntityForm
 from .models import BusinessSector, Entity
 
+class ExportCsvMixin:
+    
+    def init(self, model, *args, **kwargs):
+        self.model = model
+        super().__init__(*args, **kwargs)
+    
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
+        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+        
+        # Gera o cabeçalho dinamicamente usando o 'verbose_name' configurado no Model
+        writer.writerow([field.verbose_name.title() for field in meta.fields])
+        
+        for obj in queryset:
+            row = [getattr(obj, field) for field in field_names]
+            writer.writerow(row)
+        return response
+    
+    export_as_csv.short_description = "Exportar para CSV"
+
 # Register your models here.
 @admin.register(BusinessSector)
-class BusinessSectorAdmin(admin.ModelAdmin):
+class BusinessSectorAdmin(ExportCsvMixin, admin.ModelAdmin):
     form = BusinessSectorForm
     list_display = ('description', 'is_active')
     search_fields = ('description',)
@@ -34,7 +61,7 @@ class BusinessSectorAdmin(admin.ModelAdmin):
         
 
 @admin.register(Entity)
-class EntityAdmin(admin.ModelAdmin):
+class EntityAdmin(ExportCsvMixin, admin.ModelAdmin):
     form = EntityForm
     list_display = ('code', 'kind', 'business_sector', 'name', 'cpf_cnpj', 'is_active')
     list_display_links = ('code', 'name')
