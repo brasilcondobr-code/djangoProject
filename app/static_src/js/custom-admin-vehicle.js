@@ -91,6 +91,11 @@
             var value = $(this).val().replace(/[^0-9]/g, '').slice(0, 4);
             $(this).val(value);
         });
+
+
+        // Faz com que o link da foto abra em nova aba
+        $('.field-photo a').attr('target', '_blank');
+
     });
 
 })(window.django ? django.jQuery : jQuery);

@@ -54,6 +54,7 @@ class Collaborators(models.Model):
     phone_number = models.CharField(max_length=20, null=False, blank=False, verbose_name="Telefone")
     type_collaborator = models.ForeignKey(Types_collaborators, related_name="Types_collaborators", null=True, blank=False, verbose_name="Tipo de Colaborador", on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    photo = models.ImageField(upload_to='condominium/collaborators/', null=True, blank=True, verbose_name="Foto")
     observations = models.TextField(null=True, blank=True, verbose_name="Observações")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
