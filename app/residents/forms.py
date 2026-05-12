@@ -107,7 +107,7 @@ class CondominiumUnitFormAdmin(forms.ModelForm):
             'sale_price': {
                 'invalid': 'Digite um preço de venda válido.',
             },
-             'rent_price': {
+            'rent_price': {
                 'invalid': 'Digite um preço de aluguel válido.',
             },
             'notes': {
@@ -143,6 +143,7 @@ class ResidentFormAdmin(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'mask-email'}),
             'phone': forms.TextInput(attrs={'class': 'mask-phone'}),
             'cpf': forms.TextInput(attrs={'class': 'mask-cpf'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
         
         labels = {
@@ -156,6 +157,7 @@ class ResidentFormAdmin(forms.ModelForm):
             'sex': 'Sexo',
             'date_of_birth': 'Data de Nascimento',
             'profission': 'Profissão',
+            'photo': 'Foto',
             'is_primary': 'Principal',
             'is_resident': 'Residente',
             'is_active': 'Ativo',
@@ -177,6 +179,7 @@ class ResidentFormAdmin(forms.ModelForm):
             'is_primary': 'Indique se o(a) morador(a) é o principal da unidade',
             'is_resident': 'Indique se o(a) morador(a) é um morador da unidade',
             'is_active': 'Indique se o(a) morador(a) está ativo',
+            'photo': 'Selecione uma foto do(a) morador(a)',
             'created_at': 'Data de criação do(a) morador(a)',
             'updated_at': 'Data de atualização do(a) morador(a)',
         }
@@ -229,6 +232,9 @@ class ResidentFormAdmin(forms.ModelForm):
             'is_active': {
                 'required': 'O ativo é obrigatório.',
             },
+            'photo': {
+                'required': 'A foto é obrigatória.',
+            },
             'created_at': {
                 'required': 'A data de criação é obrigatória.',
             },
@@ -260,6 +266,7 @@ class VehicleFormAdmin(forms.ModelForm):
             'license_plate': forms.TextInput(attrs={'class': 'mask-license-plate'}),
             'year': forms.NumberInput(attrs={'class': 'mask-year'}),
             'garage_space': forms.TextInput(attrs={'class': 'mask-garage-space'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
         
         labels = {
@@ -271,6 +278,7 @@ class VehicleFormAdmin(forms.ModelForm):
             'color': 'Cor do Veículo',
             'year': 'Ano do Veículo',
             'garage_space': 'Vaga de Garagem',
+            'photo': 'Foto',
             'is_active': 'Ativo',
             'created_at': 'Criado em',
             'updated_at': 'Atualizado em',

@@ -30,6 +30,9 @@
       this.value = maskPhone(this.value);
     });
 
+    // Faz com que o link da foto abra em nova aba
+    django.jQuery('.field-photo a').attr('target', '_blank');
+
   });
   
 })(django.jQuery);

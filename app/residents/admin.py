@@ -28,7 +28,7 @@ class ExportCSVMixin:
 @admin.register(Visitor)
 class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
     form = VisitorFormAdmin
-    list_display = ('name', 'visit_date', 'condo_unit', 'is_active')
+    list_display = ('name', 'visit_date', 'condo_unit', 'photo', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name')
     list_filter = ('condo_unit', 'visit_date', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -83,7 +83,7 @@ class EmergencyAdmin(ExportCSVMixin, admin.ModelAdmin):
 @admin.register(Vehicle)
 class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
     form = VehicleFormAdmin
-    list_display = ('license_plate', 'vehicle_type', 'brand', 'model', 'color', 'condo_unit', 'is_active')
+    list_display = ('license_plate', 'vehicle_type', 'brand', 'model', 'color', 'condo_unit', 'photo', 'is_active')
     search_fields = ('condo_unit__unit_number', 'license_plate')
     list_filter = ('condo_unit', 'vehicle_type', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -103,7 +103,7 @@ class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
 
 @admin.register(Animal)
 class AnimalAdmin(ExportCSVMixin, admin.ModelAdmin):
-    list_display = ('name', 'species', 'condo_unit', 'is_active')
+    list_display = ('name', 'species', 'condo_unit', 'photo', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name', 'species')
     list_filter = ('condo_unit', 'species', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
@@ -112,6 +112,13 @@ class AnimalAdmin(ExportCSVMixin, admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('condo_unit')
+    
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-resident-animal.js',
+        )   
 
 
 @admin.register(CondominiumUnit)
@@ -138,7 +145,7 @@ class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
 @admin.register(Resident)
 class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
     form = ResidentFormAdmin
-    list_display = ('name', 'type_of_resident', 'phone', 'email', 'unit', 'is_active')
+    list_display = ('name', 'type_of_resident', 'phone', 'email', 'unit', 'photo', 'is_active')
     search_fields = ('unit__unit_number', 'name', 'email')
     list_filter = ('type_of_resident', 'is_active')
     readonly_fields = ('created_at', 'updated_at')

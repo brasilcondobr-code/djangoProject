@@ -89,6 +89,7 @@ class CollaboratorsFormAdmin(forms.ModelForm):
             'cpf': forms.TextInput(attrs={'class': 'mask-cpf'}),
             'email': forms.EmailInput(attrs={'class': 'mask-email'}),
             'phone_number': forms.TextInput(attrs={'class': 'mask-phone'}),
+            'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
         
         labels = {
@@ -99,6 +100,7 @@ class CollaboratorsFormAdmin(forms.ModelForm):
             'email': 'Email',
             'phone_number': 'Telefone',
             'type_collaborator': 'Tipo de Colaborador',
+            'photo': 'Foto',
             'is_active': 'Ativo',
             'observations': 'Observações',
         }

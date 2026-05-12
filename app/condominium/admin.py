@@ -62,7 +62,7 @@ class TypesCollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
 @admin.register(Collaborators)
 class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
     form = CollaboratorsFormAdmin
-    list_display = ('name', 'email', 'phone_number', 'type_collaborator', 'condominium', 'is_active')
+    list_display = ('name', 'email', 'phone_number', 'type_collaborator', 'condominium', 'photo', 'is_active')
     search_fields = ('condominium__name', 'name', 'email')
     list_filter = ('condominium', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
