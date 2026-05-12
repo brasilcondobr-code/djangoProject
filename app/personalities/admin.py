@@ -39,6 +39,7 @@ class BusinessSectorAdmin(ExportCsvMixin, admin.ModelAdmin):
     list_filter = ('description', 'is_active')
     ordering = ('description',)
     list_per_page = 25
+    actions = ["export_as_csv"]
     fieldsets = (
         (None, {
             'fields': ('description', 'is_active')
@@ -69,6 +70,7 @@ class EntityAdmin(ExportCsvMixin, admin.ModelAdmin):
     list_filter = ('kind', 'is_active', 'business_sector')
     ordering = ('name',)
     list_per_page = 25
+    actions = ["export_as_csv"]
     fields = (
         'code', 'kind', 'business_sector', 'name', 'trade_name', 
         'cpf_cnpj', 'rg_ie', 'municipal_registration', 
