@@ -39,3 +39,10 @@ aside.control-sidebar.control-sidebar-dark.ui-customiser { display: none !import
   margin-top: 5px;
 }
 */
+
+/* Estilo para o relógio digital no Dashboard */
+#digital-clock {
+    color: #00ff00 !important; /* Verde neon estilo digital */
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+

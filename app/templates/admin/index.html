@@ -1,0 +1,166 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+    <div class="row mb-4">
+        <!-- Painel Hora Atual -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0" style="font-size: 1.1rem; font-weight: 600;"><i class="fas fa-clock mr-2"></i> Hora Atual</h5>
+                </div>
+                <div class="card-body text-center py-4">
+                    <h2 id="digital-clock" class="display-4 font-weight-bold" style="font-family: 'Courier New', Courier, monospace;">00:00:00</h2>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Painel Previsão do Tempo -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0" style="font-size: 1.1rem; font-weight: 600;"><i class="fas fa-cloud-sun mr-2"></i> Previsão do Tempo</h5>
+                </div>
+                <div class="card-body text-center py-4">
+                    <div id="weather-content">
+                        <p class="text-muted">Carregando clima...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Indicadores do Condomínio -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0" style="font-size: 1.1rem; font-weight: 600;"><i class="fas fa-chart-line mr-2"></i> Indicadores</h5>
+                </div>
+                <div class="card-body p-3">
+                    <div id="indicators-content" class="row no-gutters">
+                        <p class="text-muted text-center w-100">Carregando indicadores...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ block.super }}
+
+    <script>
+        // Relógio Digital
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('pt-BR');
+            const clockElement = document.getElementById('digital-clock');
+            if (clockElement) {
+                clockElement.textContent = timeString;
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Previsão do Tempo
+        async function updateWeather() {
+            const weatherContent = document.getElementById('weather-content');
+            
+            try {
+                const url = `/admin/weather/?city=Campinas&state=SP`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Erro na resposta do servidor');
+                const data = await response.json();
+
+                if (data.results) {
+                    const res = data.results;
+                    weatherContent.innerHTML = `
+                        <div class="weather-info">
+                            <h4 class="mb-1" style="font-size: 1.2rem;">Campinas - SP</h4>
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <span class="h3 mb-0">${res.temp}°C</span>
+                            </div>
+                            <p class="mb-0 text-capitalize">${res.description}</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Clima não encontrado');
+                }
+            } catch (err) {
+                console.error('Erro clima:', err);
+                weatherContent.innerHTML = `<p class="text-danger">Erro ao carregar clima de Campinas</p>`;
+            }
+        }
+
+        // Indicadores do Condomínio
+        async function updateIndicators() {
+            const indicatorsContent = document.getElementById('indicators-content');
+            
+            try {
+                const response = await fetch('/admin/condo-indicators/');
+                if (!response.ok) throw new Error('Erro na resposta do servidor');
+                const data = await response.json();
+
+                const labels = {
+                    'unidades': 'Unidades',
+                    'colaboradores': 'Colaboradores',
+                    'moradores': 'Moradores',
+                    'veiculos': 'Veículos',
+                    'animais': 'Animais',
+                    'entidades': 'Entidades'
+                };
+
+                let html = '';
+                // Criamos 2 colunas de exibição
+                const entries = Object.entries(data);
+                const midPoint = Math.ceil(entries.length / 2);
+                
+                const col1 = entries.slice(0, midPoint);
+                const col2 = entries.slice(midPoint);
+
+                html += '<div class="col-6">';
+                col1.forEach(([key, value]) => {
+                    html += `
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <span class="text-muted" style="font-size: 0.9rem;">${labels[key] || key}</span>
+                            <span class="font-weight-bold">${value}</span>
+                        </div>`;
+                });
+                html += '</div>';
+
+                html += '<div class="col-6">';
+                col2.forEach(([key, value]) => {
+                    html += `
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <span class="text-muted" style="font-size: 0.9rem;">${labels[key] || key}</span>
+                            <span class="font-weight-bold">${value}</span>
+                        </div>`;
+                });
+                html += '</div>';
+
+                indicatorsContent.innerHTML = html;
+            } catch (err) {
+                console.error('Erro indicadores:', err);
+                indicatorsContent.innerHTML = '<p class="text-danger text-center w-100">Erro ao carregar indicadores.</p>';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateWeather();
+            updateIndicators();
+        });
+    </script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
