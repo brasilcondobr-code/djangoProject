@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.contrib import admin
 
 from .forms import CondominiumFormAdmin, CollaboratorsFormAdmin
-from .models import Condominium, Collaborators, Types_collaborators
+from .models import Condominium, Collaborators, DocumentCondominium, Types_collaborators
 
 # Register your models here.
 class ExportCsvMixin:
@@ -78,3 +78,23 @@ class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
         
     class Meta:
         model = Collaborators
+
+@admin.register(DocumentCondominium)
+class DocumentCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('condominium', 'name', 'file', 'is_active')
+    search_fields = ('condominium__name', 'name')
+    list_filter = ('condominium', 'is_active')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+    
+    class Meta:
+        model = DocumentCondominium
+        
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/custom-condominium-documentcondominium.js',
+        )
+        

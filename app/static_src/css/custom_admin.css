@@ -1,3 +1,8 @@
+/* Ocultar a versão do Jazzmin no rodapé */
+.app-footer .float-end { 
+    display: none !important; 
+}
+
 body.login-page {
     background-image: url('../img/login-bg.jpg') !important;
     background-size: cover !important;

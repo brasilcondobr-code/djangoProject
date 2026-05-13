@@ -1,4 +1,53 @@
 from django import forms
+import re
+from datetime import datetime
+
+def validate_cpf(cpf):
+    """
+    Valida se um CPF é válido.
+    """
+    cpf = "".join(filter(str.isdigit, cpf))
+    if len(cpf) != 11 or cpf == cpf[0] * 11:
+        return False
+    def calculate_digit(cpf, weights):
+        sum_val = sum(int(digit) * weight for digit, weight in zip(cpf, weights))
+        remainder = sum_val % 11
+        return 0 if remainder < 2 else 11 - remainder
+    weights1 = [10, 9, 8, 7, 6, 5, 4, 3, 2]
+    weights2 = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
+    if int(cpf[9]) != calculate_digit(cpf[:9], weights1):
+        return False
+    if int(cpf[10]) != calculate_digit(cpf[:10], weights2):
+        return False
+    return True
+
+def validate_cnpj(cnpj):
+    """
+    Valida se um CNPJ é válido.
+    """
+    cnpj = "".join(filter(str.isdigit, cnpj))
+    if len(cnpj) != 14 or cnpj == cnpj[0] * 14:
+        return False
+    def calculate_digit(cnpj, weights):
+        sum_val = sum(int(digit) * weight for digit, weight in zip(cnpj, weights))
+        remainder = sum_val % 11
+        return 0 if remainder < 2 else 11 - remainder
+    weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    if int(cnpj[12]) != calculate_digit(cnpj[:12], weights1):
+        return False
+    if int(cnpj[13]) != calculate_digit(cnpj[:13], weights2):
+        return False
+    return True
+
+def validate_email(email):
+    """
+    Valida se um email tem um formato básico válido.
+    """
+    if not email:
+        return True
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(email_regex, email))
 
 from .models import BusinessSector, Entity
 
@@ -67,6 +116,14 @@ class BusinessSectorForm(forms.ModelForm):
 
 
 class EntityForm(forms.ModelForm):
+    date_of_birth_opening = forms.DateField(
+        input_formats=['%d/%m/%Y'],
+        widget=forms.DateInput(attrs={
+            'class': 'mask-date-of-birth-opening form-control',
+            'placeholder': 'DD/MM/AAAA',
+        }),
+        required=False
+    )
 
     class Meta:
         model = Entity
@@ -104,18 +161,14 @@ class EntityForm(forms.ModelForm):
                 'placeholder': 'RG/IE',
                 'maxlength': '100',
             }),
-            'municipal_registration': forms.TextInput(attrs={
-                'class': 'mask-municipal-registration form-control',
-                'placeholder': 'Inscrição Municipal',
-                'maxlength': '100',
-            }),
-            'date_of_birth_opening': forms.TextInput(attrs={
-                'class': 'mask-date-of-birth-opening form-control',
-                'placeholder': 'DD/MM/AAAA',
-            }),
-            'sex': forms.Select(attrs={
-                'class': 'mask-sex form-control',
-            }),
+             'municipal_registration': forms.TextInput(attrs={
+                 'class': 'mask-municipal-registration form-control',
+                 'placeholder': 'Inscrição Municipal',
+                 'maxlength': '100',
+             }),
+             'sex': forms.Select(attrs={
+                 'class': 'mask-sex form-control',
+             }),
             'email': forms.EmailInput(attrs={
                 'class': 'mask-email form-control',
                 'placeholder': 'E-mail',
@@ -242,9 +295,6 @@ class EntityForm(forms.ModelForm):
         self.fields['municipal_registration'].widget.attrs.update({
             'class': 'mask-municipal-registration form-control',
         })
-        self.fields['date_of_birth_opening'].widget.attrs.update({
-            'class': 'mask-date-of-birth-open form-control',
-        })
         self.fields['phone'].widget.attrs.update({
             'class': 'mask-phone form-control',
         })
@@ -254,3 +304,48 @@ class EntityForm(forms.ModelForm):
         self.fields['observations'].widget.attrs.update({
             'class': 'mask-observations form-control',
         })
+
+    def clean_cpf_cnpj(self):
+        cpf_cnpj = self.cleaned_data.get('cpf_cnpj')
+        kind = self.cleaned_data.get('kind')
+
+        if not cpf_cnpj:
+            return cpf_cnpj
+
+        if kind == 'PF':
+            if not validate_cpf(cpf_cnpj):
+                raise forms.ValidationError('CPF inválido.')
+        elif kind == 'PJ':
+            if not validate_cnpj(cpf_cnpj):
+                raise forms.ValidationError('CNPJ inválido.')
+        
+        return cpf_cnpj
+
+    def clean_date_of_birth_opening(self):
+        date_val = self.cleaned_data.get('date_of_birth_opening')
+        
+        if not date_val:
+            return date_val
+
+        # Se já for um objeto date (comportamento padrão do ModelForm para DateField)
+        if hasattr(date_val, 'year'):
+            date_obj = date_val
+        else:
+            # Caso seja enviado como string (ex: via API ou widget customizado que não converteu)
+            try:
+                date_obj = datetime.strptime(date_val, '%d/%m/%Y').date()
+            except (ValueError, TypeError):
+                raise forms.ValidationError('Data inválida. Use o formato DD/MM/AAAA.')
+
+        if not (1930 <= date_obj.year <= 2050):
+            raise forms.ValidationError('A data deve estar entre os anos de 1930 e 2050.')
+
+        return date_val
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        
+        if email and not validate_email(email):
+            raise forms.ValidationError('E-mail inválido.')
+            
+        return email

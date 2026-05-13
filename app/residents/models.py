@@ -193,6 +193,7 @@ class RealEstateAgency(models.Model):
         verbose_name="Condomínio/Unidade"
     )
     name = models.CharField(max_length=200, verbose_name="Nome da Imobiliária")
+    trade_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="Nome Fantasia")
     cnpj = models.CharField(max_length=20, blank=True, verbose_name="CNPJ")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
     email = models.EmailField(blank=True, verbose_name="E-mail")
