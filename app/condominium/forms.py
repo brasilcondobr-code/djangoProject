@@ -1,7 +1,79 @@
 from django import forms
+import re
 from .models import Collaborators, Condominium, DocumentCondominium
 
+def validate_cnpj(cnpj):
+    """
+    Valida se um CNPJ é válido.
+    """
+    cnpj = "".join(filter(str.isdigit, cnpj))
+
+    if len(cnpj) != 14:
+        return False
+
+    if cnpj == cnpj[0] * 14:
+        return False
+
+    def calculate_digit(cnpj, weights):
+        sum_val = sum(int(digit) * weight for digit, weight in zip(cnpj, weights))
+        remainder = sum_val % 11
+        return 0 if remainder < 2 else 11 - remainder
+
+    weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+
+    if int(cnpj[12]) != calculate_digit(cnpj[:12], weights1):
+        return False
+    if int(cnpj[13]) != calculate_digit(cnpj[:13], weights2):
+        return False
+
+    return True
+
+def validate_cpf(cpf):
+    """
+    Valida se um CPF é válido.
+    """
+    cpf = "".join(filter(str.isdigit, cpf))
+
+    if len(cpf) != 11:
+        return False
+
+    if cpf == cpf[0] * 11:
+        return False
+
+    def calculate_digit(cpf, weights):
+        sum_val = sum(int(digit) * weight for digit, weight in zip(cpf, weights))
+        remainder = sum_val % 11
+        return 0 if remainder < 2 else 11 - remainder
+
+    weights1 = [10, 9, 8, 7, 6, 5, 4, 3, 2]
+    weights2 = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
+
+    if int(cpf[9]) != calculate_digit(cpf[:9], weights1):
+        return False
+    if int(cpf[10]) != calculate_digit(cpf[:10], weights2):
+        return False
+
+    return True
+
+def validate_email(email):
+    """
+    Valida se um email tem um formato básico válido.
+    """
+    if not email:
+        return True
+    
+    # Regex simples para validação de email
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, email):
+        return False
+    
+    return True
+
+
+
 class CondominiumFormAdmin(forms.ModelForm):
+
     class Meta:
         model = Condominium
         fields = '__all__'
@@ -81,6 +153,13 @@ class CondominiumFormAdmin(forms.ModelForm):
         self.fields['cnpj'].widget.attrs['class'] = 'mask-cnpj'
          
         
+    def clean_cnpj(self):
+        cnpj = self.cleaned_data.get('cnpj')
+        if cnpj and not validate_cnpj(cnpj):
+            raise forms.ValidationError('O CNPJ informado é inválido.')
+        return cnpj
+
+        
 class CollaboratorsFormAdmin(forms.ModelForm):
     class Meta:
         model = Collaborators
@@ -157,6 +236,18 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         self.fields['rg'].widget.attrs['class'] = 'mask-rg'
         self.fields['phone_number'].widget.attrs['class'] = 'mask-phone'
         self.fields['email'].widget.attrs['class'] = 'mask-email'
+
+    def clean_cpf(self):
+        cpf = self.cleaned_data.get('cpf')
+        if cpf and not validate_cpf(cpf):
+            raise forms.ValidationError('O CPF informado é inválido.')
+        return cpf
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and not validate_email(email):
+            raise forms.ValidationError('O e-mail informado é inválido.')
+        return email
         
 class DocumentCondominiumFormAdmin(forms.ModelForm):
     class Meta:
