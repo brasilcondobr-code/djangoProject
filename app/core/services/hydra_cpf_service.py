@@ -1,12 +1,13 @@
 import requests
 import logging
+import os
 from requests.exceptions import RequestException
 
 # Configure logging for HydraCPF service
 logger = logging.getLogger(__name__)
 
 # Configuration - In production, these should be in settings.py/env
-HYDRACPF_API_KEY = "sk_live_TDogmdQoMrPF4GF6snsID3S83GAklhQvVFqVxWnfenU"
+HYDRACPF_API_KEY = os.environ.get('HYDRACPF_API_KEY')
 HYDRACPF_URL = "https://api.hydracpf.com/v1/cpf"
 
 def consult_cpf(cpf):
