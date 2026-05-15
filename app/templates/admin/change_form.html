@@ -1,0 +1,11 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    <div class="d-grid gap-2 mt-2">
+        <a href="javascript:history.back()" class="btn btn-secondary" style="text-align: center;">
+            {% trans "Voltar" %}
+        </a>
+    </div>
+{% endblock %}
