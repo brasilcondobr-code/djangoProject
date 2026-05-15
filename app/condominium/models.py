@@ -56,6 +56,34 @@ class Collaborators(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     photo = models.ImageField(upload_to='condominium/collaborators/', null=True, blank=True, verbose_name="Foto")
     observations = models.TextField(null=True, blank=True, verbose_name="Observações")
+    
+    situation = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Situação Receita Federal"
+    )
+    regular = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="CPF Regular"
+    )
+    death = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Óbito"
+    )
+    api_status = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Status da API"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

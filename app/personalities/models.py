@@ -22,7 +22,7 @@ class Entity(models.Model):
         ('PF', 'Pessoa Física'),
         ('PJ', 'Pessoa Jurídica'),
     )
-
+    
     SEX_CHOICES = (
         ('M', 'Masculino'),
         ('F', 'Feminino'),
@@ -35,15 +35,43 @@ class Entity(models.Model):
     name = models.CharField(max_length=100, verbose_name="Nome da Entidade")
     trade_name = models.CharField(max_length=100, verbose_name="Nome Fantasia", blank=True, null=True) 
     cpf_cnpj = models.CharField(max_length=20, verbose_name="CPF/CNPJ", unique=True)
-    rg_ie = models.CharField(max_length=20, verbose_name="RG/IE", blank=True, null=True)
+    rg_ie = models.CharField(max_length=20, verbose_name="RG/IE")
     municipal_registration = models.CharField(max_length=20, blank=True, null=True, verbose_name="Inscrição Municipal")
     date_of_birth_opening = models.DateField(verbose_name="Data de Nascimento/Abertura", blank=True, null=True)
     sex = models.CharField(max_length=1, choices=SEX_CHOICES, blank=True, null=True , verbose_name="Sexo")
-    email = models.EmailField(verbose_name="E-mail", blank=True, null=True)
-    phone = models.CharField(max_length=20, verbose_name="Telefone", blank=True, null=True)
+    email = models.EmailField(verbose_name="E-mail")
+    phone = models.CharField(max_length=20, verbose_name="Telefone")
     address = models.ForeignKey('parameters.Addresses', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Endereço")
     observations = models.TextField(verbose_name="Observações", blank=True, null=True)
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    
+    situation = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Situação Receita Federal"
+    )
+    regular = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="CPF Regular"
+    )
+    death = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Óbito"
+    )
+    api_status = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Status da API"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
     

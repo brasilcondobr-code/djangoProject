@@ -65,9 +65,29 @@ class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
     list_display = ('name', 'email', 'phone_number', 'type_collaborator', 'condominium', 'photo', 'is_active')
     search_fields = ('condominium__name', 'name', 'email')
     list_filter = ('condominium', 'is_active')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'situation', 'regular', 'death', 'api_status')
     list_per_page = 25
     actions = ["export_as_csv"]
+    
+    fieldsets = (
+        (None, {
+            'fields': (
+                'condominium',
+                'name',
+                'cpf',
+                'rg',
+                'email',
+                'phone_number',
+                'type_collaborator',
+                'is_active',
+                'photo',
+                'observations',
+            )
+        }),
+        ('Receita Federal', {
+            'fields': ('situation', 'regular', 'death', 'api_status'),
+        }),
+    )
         
     class Media:
         js = (

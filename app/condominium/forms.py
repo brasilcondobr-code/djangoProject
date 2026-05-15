@@ -1,79 +1,9 @@
 from django import forms
-import re
+from core.services.hydra_cpf_service import consult_cpf
+from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone
 from .models import Collaborators, Condominium, DocumentCondominium
 
-def validate_cnpj(cnpj):
-    """
-    Valida se um CNPJ é válido.
-    """
-    cnpj = "".join(filter(str.isdigit, cnpj))
-
-    if len(cnpj) != 14:
-        return False
-
-    if cnpj == cnpj[0] * 14:
-        return False
-
-    def calculate_digit(cnpj, weights):
-        sum_val = sum(int(digit) * weight for digit, weight in zip(cnpj, weights))
-        remainder = sum_val % 11
-        return 0 if remainder < 2 else 11 - remainder
-
-    weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-
-    if int(cnpj[12]) != calculate_digit(cnpj[:12], weights1):
-        return False
-    if int(cnpj[13]) != calculate_digit(cnpj[:13], weights2):
-        return False
-
-    return True
-
-def validate_cpf(cpf):
-    """
-    Valida se um CPF é válido.
-    """
-    cpf = "".join(filter(str.isdigit, cpf))
-
-    if len(cpf) != 11:
-        return False
-
-    if cpf == cpf[0] * 11:
-        return False
-
-    def calculate_digit(cpf, weights):
-        sum_val = sum(int(digit) * weight for digit, weight in zip(cpf, weights))
-        remainder = sum_val % 11
-        return 0 if remainder < 2 else 11 - remainder
-
-    weights1 = [10, 9, 8, 7, 6, 5, 4, 3, 2]
-    weights2 = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
-
-    if int(cpf[9]) != calculate_digit(cpf[:9], weights1):
-        return False
-    if int(cpf[10]) != calculate_digit(cpf[:10], weights2):
-        return False
-
-    return True
-
-def validate_email(email):
-    """
-    Valida se um email tem um formato básico válido.
-    """
-    if not email:
-        return True
-    
-    # Regex simples para validação de email
-    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    if not re.match(email_regex, email):
-        return False
-    
-    return True
-
-
-
 class CondominiumFormAdmin(forms.ModelForm):
-
     class Meta:
         model = Condominium
         fields = '__all__'
@@ -151,7 +81,6 @@ class CondominiumFormAdmin(forms.ModelForm):
         super(CondominiumFormAdmin, self).__init__(*args, **kwargs)
         self.fields['code'].widget.attrs['class'] = 'mask-code'
         self.fields['cnpj'].widget.attrs['class'] = 'mask-cnpj'
-         
         
     def clean_cnpj(self):
         cnpj = self.cleaned_data.get('cnpj')
@@ -159,7 +88,6 @@ class CondominiumFormAdmin(forms.ModelForm):
             raise forms.ValidationError('O CNPJ informado é inválido.')
         return cnpj
 
-        
 class CollaboratorsFormAdmin(forms.ModelForm):
     class Meta:
         model = Collaborators
@@ -239,8 +167,26 @@ class CollaboratorsFormAdmin(forms.ModelForm):
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
-        if cpf and not validate_cpf(cpf):
-            raise forms.ValidationError('O CPF informado é inválido.')
+        if cpf:
+            if not validate_cpf(cpf):
+                raise forms.ValidationError('O CPF informado é inválido.')
+            
+            cpf_digits = "".join(filter(str.isdigit, cpf))
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
+                result = consult_cpf(cpf_digits)
+                if result is not None:
+                    self.instance.api_status = 'Pass'
+                    if 'error' not in result:
+                        self.instance.situation = result.get('situation')
+                        self.instance.regular = result.get('regular')
+                        self.instance.death = result.get('death')
+                    else:
+                        self.instance.situation = "Erro na Consulta"
+                else:
+                    self.instance.api_status = 'Fail'
         return cpf
 
     def clean_email(self):
@@ -248,6 +194,12 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         if email and not validate_email(email):
             raise forms.ValidationError('O e-mail informado é inválido.')
         return email
+        
+    def clean_phone_number(self):
+        phone = self.cleaned_data.get('phone_number')
+        if phone and not validate_phone(phone):
+            raise forms.ValidationError('O telefone informado é inválido.')
+        return phone
         
 class DocumentCondominiumFormAdmin(forms.ModelForm):
     class Meta:
