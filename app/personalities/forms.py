@@ -1,55 +1,9 @@
 from django import forms
-import re
 from datetime import datetime
-
-def validate_cpf(cpf):
-    """
-    Valida se um CPF é válido.
-    """
-    cpf = "".join(filter(str.isdigit, cpf))
-    if len(cpf) != 11 or cpf == cpf[0] * 11:
-        return False
-    def calculate_digit(cpf, weights):
-        sum_val = sum(int(digit) * weight for digit, weight in zip(cpf, weights))
-        remainder = sum_val % 11
-        return 0 if remainder < 2 else 11 - remainder
-    weights1 = [10, 9, 8, 7, 6, 5, 4, 3, 2]
-    weights2 = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
-    if int(cpf[9]) != calculate_digit(cpf[:9], weights1):
-        return False
-    if int(cpf[10]) != calculate_digit(cpf[:10], weights2):
-        return False
-    return True
-
-def validate_cnpj(cnpj):
-    """
-    Valida se um CNPJ é válido.
-    """
-    cnpj = "".join(filter(str.isdigit, cnpj))
-    if len(cnpj) != 14 or cnpj == cnpj[0] * 14:
-        return False
-    def calculate_digit(cnpj, weights):
-        sum_val = sum(int(digit) * weight for digit, weight in zip(cnpj, weights))
-        remainder = sum_val % 11
-        return 0 if remainder < 2 else 11 - remainder
-    weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    if int(cnpj[12]) != calculate_digit(cnpj[:12], weights1):
-        return False
-    if int(cnpj[13]) != calculate_digit(cnpj[:13], weights2):
-        return False
-    return True
-
-def validate_email(email):
-    """
-    Valida se um email tem um formato básico válido.
-    """
-    if not email:
-        return True
-    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return bool(re.match(email_regex, email))
-
+from core.services.hydra_cpf_service import consult_cpf
+from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone
 from .models import BusinessSector, Entity
+
 from core.services.hydra_cpf_service import consult_cpf
 
 
@@ -372,8 +326,23 @@ class EntityForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        
-        if email and not validate_email(email):
+        if not email:
+            raise forms.ValidationError('O e-mail é obrigatório.')
+        if not validate_email(email):
             raise forms.ValidationError('E-mail inválido.')
             
         return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not phone:
+            raise forms.ValidationError('O telefone é obrigatório.')
+        if not validate_phone(phone):
+            raise forms.ValidationError('Telefone inválido.')
+        return phone
+
+    def clean_rg_ie(self):
+        rg_ie = self.cleaned_data.get('rg_ie')
+        if not rg_ie:
+            raise forms.ValidationError('O RG/IE é obrigatório.')
+        return rg_ie

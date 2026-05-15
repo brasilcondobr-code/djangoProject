@@ -1,74 +1,6 @@
 from django import forms
-import re
 from core.services.hydra_cpf_service import consult_cpf
-
-def validate_cpf(cpf):
-    """
-    Valida se um CPF é válido.
-    """
-    cpf = "".join(filter(str.isdigit, cpf))
-
-    if len(cpf) != 11:
-        return False
-
-    if cpf == cpf[0] * 11:
-        return False
-
-    def calculate_digit(cpf, weights):
-        sum_val = sum(int(digit) * weight for digit, weight in zip(cpf, weights))
-        remainder = sum_val % 11
-        return 0 if remainder < 2 else 11 - remainder
-
-    weights1 = [10, 9, 8, 7, 6, 5, 4, 3, 2]
-    weights2 = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
-
-    if int(cpf[9]) != calculate_digit(cpf[:9], weights1):
-        return False
-    if int(cpf[10]) != calculate_digit(cpf[:10], weights2):
-        return False
-
-    return True
-
-def validate_cnpj(cnpj):
-    """
-    Valida se um CNPJ é válido.
-    """
-    cnpj = "".join(filter(str.isdigit, cnpj))
-
-    if len(cnpj) != 14:
-        return False
-
-    if cnpj == cnpj[0] * 14:
-        return False
-
-    def calculate_digit(cnpj, weights):
-        sum_val = sum(int(digit) * weight for digit, weight in zip(cnpj, weights))
-        remainder = sum_val % 11
-        return 0 if remainder < 2 else 11 - remainder
-
-    weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-
-    if int(cnpj[12]) != calculate_digit(cnpj[:12], weights1):
-        return False
-    if int(cnpj[13]) != calculate_digit(cnpj[:13], weights2):
-        return False
-
-    return True
-
-def validate_email(email):
-    """
-    Valida se um email tem um formato básico válido.
-    """
-    if not email:
-        return True
-    
-    # Regex simples para validação de email
-    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    if not re.match(email_regex, email):
-        return False
-    
-    return True
+from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone, validate_url
 
 from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor
 
@@ -361,11 +293,21 @@ class ResidentFormAdmin(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if email:
-            email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-            if not re.match(email_regex, email):
-                raise forms.ValidationError('O e-mail informado é inválido.')
+        if email and not validate_email(email):
+            raise forms.ValidationError('O e-mail informado é inválido.')
         return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone and not validate_phone(phone):
+            raise forms.ValidationError('O telefone informado é inválido.')
+        return phone
+
+    def clean_rg(self):
+        rg = self.cleaned_data.get('rg')
+        if not rg:
+            raise forms.ValidationError('O RG é obrigatório.')
+        return rg
 
     def clean_date_of_birth(self):
         dob = self.cleaned_data.get('date_of_birth')
@@ -478,7 +420,6 @@ class VisitorFormAdmin(forms.ModelForm):
             'condo_unit': forms.Select(attrs={'class': 'mask-condo-unit'}),
             'cpf': forms.TextInput(attrs={'class': 'mask-cpf'}),
             'phone': forms.TextInput(attrs={'class': 'mask-phone'}),
-            'visit_date': forms.DateInput(attrs={'class': 'mask-visit-date'}),
         }
         
         labels = {
@@ -487,7 +428,6 @@ class VisitorFormAdmin(forms.ModelForm):
             'cpf': 'CPF',
             'rg': 'RG',
             'phone': 'Telefone',
-            'visit_date': 'Data da visita',
             'purpose': 'Proposto da visita',
             'is_active': 'Ativo',
             'created_at': 'Criado em',
@@ -500,7 +440,6 @@ class VisitorFormAdmin(forms.ModelForm):
             'cpf': 'Digite o CPF do visitante',
             'rg': 'Digite o RG do visitante',
             'phone': 'Digite o telefone do visitante',
-            'visit_date': 'Digite a data da visita',
             'purpose': 'Digite o propósito da visita',
             'is_active': 'Indique se o visitante está ativo',
             'created_at': 'Data de criação do visitante',
@@ -523,9 +462,6 @@ class VisitorFormAdmin(forms.ModelForm):
             },
             'phone': {
                 'required': 'O telefone é obrigatório.',
-            },
-            'visit_date': {
-                'required': 'A data da visita é obrigatória.',
             },
             'purpose': {
                 'required': 'O propósito da visita é obrigatório.',
@@ -551,39 +487,52 @@ class VisitorFormAdmin(forms.ModelForm):
         self.fields['condo_unit'].widget.attrs['class'] = 'mask-condo-unit'
         self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
         self.fields['phone'].widget.attrs['class'] = 'mask-phone'
-        if 'visit_date' in self.fields:
-            self.fields['visit_date'].widget.attrs['class'] = 'mask-visit-date'
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
-        if cpf:
-            if not validate_cpf(cpf):
-                raise forms.ValidationError('O CPF informado é inválido.')
+        if not cpf:
+            raise forms.ValidationError('O CPF é obrigatório.')
+        if not validate_cpf(cpf):
+            raise forms.ValidationError('O CPF informado é inválido.')
+        
+        # Consultar Receita Federal via HydraCPF se o CPF mudou ou se a situação está vazia
+        cpf_digits = "".join(filter(str.isdigit, cpf))
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
+        
+        if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
+            logger.info(f"Triggering API consultation for CPF {cpf_digits}")
+            result = consult_cpf(cpf_digits)
+            logger.info(f"API result for {cpf_digits}: {result}")
             
-            # Consultar Receita Federal via HydraCPF se o CPF mudou ou se a situação está vazia
-            cpf_digits = "".join(filter(str.isdigit, cpf))
-            import logging
-            logger = logging.getLogger(__name__)
-            
-            logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
-            
-            if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
-                logger.info(f"Triggering API consultation for CPF {cpf_digits}")
-                result = consult_cpf(cpf_digits)
-                logger.info(f"API result for {cpf_digits}: {result}")
-                
-                if result is not None:
-                    if 'error' not in result:
-                        self.instance.situation = result.get('situation')
-                        self.instance.regular = result.get('regular')
-                        self.instance.death = result.get('death')
-                        logger.info(f"Updating instance: situation={self.instance.situation}, regular={self.instance.regular}, death={self.instance.death}")
-                    else:
-                        self.instance.situation = "Erro na Consulta"
-                        logger.info("API returned error, setting situation to 'Erro na Consulta'")
+            if result is not None:
+                if 'error' not in result:
+                    self.instance.situation = result.get('situation')
+                    self.instance.regular = result.get('regular')
+                    self.instance.death = result.get('death')
+                    logger.info(f"Updating instance: situation={self.instance.situation}, regular={self.instance.regular}, death={self.instance.death}")
                 else:
-                    logger.info("API result is None")
+                    self.instance.situation = "Erro na Consulta"
+                    logger.info("API returned error, setting situation to 'Erro na Consulta'")
+            else:
+                logger.info("API result is None")
         return cpf
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not phone:
+            raise forms.ValidationError('O telefone é obrigatório.')
+        if not validate_phone(phone):
+            raise forms.ValidationError('O telefone informado é inválido.')
+        return phone
+
+    def clean_rg(self):
+        rg = self.cleaned_data.get('rg')
+        if not rg:
+            raise forms.ValidationError('O RG é obrigatório.')
+        return rg
 
 
 
@@ -688,20 +637,30 @@ class RealEstateAgencyFormAdmin(forms.ModelForm):
 
     def clean_cnpj(self):
         cnpj = self.cleaned_data.get('cnpj')
-        if cnpj and not validate_cnpj(cnpj):
+        if not cnpj:
+            raise forms.ValidationError('O CNPJ é obrigatório.')
+        if not validate_cnpj(cnpj):
             raise forms.ValidationError('O CNPJ informado é inválido.')
         return cnpj
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if email and not validate_email(email):
+        if not email:
+            raise forms.ValidationError('O e-mail é obrigatório.')
+        if not validate_email(email):
             raise forms.ValidationError('O e-mail informado é inválido.')
         return email
 
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not phone:
+            raise forms.ValidationError('O telefone é obrigatório.')
+        if not validate_phone(phone):
+            raise forms.ValidationError('O telefone informado é inválido.')
+        return phone
+
     def clean_website(self):
         website = self.cleaned_data.get('website')
-        if website:
-            # Validação básica: deve começar com http ou https
-            if not (website.startswith('http://') or website.startswith('https://')):
-                raise forms.ValidationError('O site deve começar com http:// ou https://')
+        if website and not validate_url(website):
+            raise forms.ValidationError('O site informado é inválido.')
         return website

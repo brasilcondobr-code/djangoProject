@@ -136,10 +136,10 @@ class Resident(models.Model):
     unit = models.ForeignKey(CondominiumUnit, on_delete=models.CASCADE, related_name="residents", verbose_name="Unidade")
     type_of_resident = models.CharField(max_length=20, choices=ResidentTypeChoices, default='tenant', null=True, blank=True, verbose_name="Tipo de morador")
     name = models.CharField(max_length=250, verbose_name="Nome")
-    email = models.EmailField(blank=True, null=True, verbose_name="Email")
-    phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
-    cpf = models.CharField(max_length=14, blank=True, verbose_name="CPF")
-    rg = models.CharField(max_length=20, blank=True, verbose_name="RG")
+    email = models.EmailField(verbose_name="Email")
+    phone = models.CharField(max_length=20, verbose_name="Telefone")
+    cpf = models.CharField(max_length=14, verbose_name="CPF")
+    rg = models.CharField(max_length=20, verbose_name="RG")
     sex = models.CharField(max_length=1, choices=SexChoices.choices, verbose_name="Sexo")
     date_of_birth = models.DateField(blank=True, null=True, verbose_name="Data de nascimento")
     profission = models.CharField(max_length=100, blank=True, verbose_name="Profissão")
@@ -191,10 +191,9 @@ class Resident(models.Model):
 class Visitor(models.Model):
     condo_unit = models.ForeignKey('residents.CondominiumUnit', on_delete=models.CASCADE, null=True, blank=True, related_name="visitors", verbose_name="Condomínio/Unidade")
     name = models.CharField(max_length=250, verbose_name="Nome")
-    cpf = models.CharField(max_length=14, blank=True, verbose_name="CPF")
-    rg = models.CharField(max_length=20, blank=True, verbose_name="RG")
-    phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
-    visit_date = models.DateTimeField(auto_now_add=True, verbose_name="Data da visita")
+    cpf = models.CharField(max_length=14, verbose_name="CPF")
+    rg = models.CharField(max_length=20, verbose_name="RG")
+    phone = models.CharField(max_length=20, verbose_name="Telefone")
     purpose = models.CharField(max_length=255, blank=True, verbose_name="Propósito da visita")
     photo = models.ImageField(upload_to='residents/visitors/', null=True, blank=True, verbose_name="Foto")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
@@ -230,7 +229,7 @@ class Visitor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["condo_unit", "name", "visit_date", "created_at"]
+        ordering = ["condo_unit", "name", "created_at"]
         verbose_name = "6. Visitante"
         verbose_name_plural = "6. Visitantes"
         unique_together = (("condo_unit", "name"), ("condo_unit", "cpf"), ("condo_unit", "rg"))
@@ -250,9 +249,9 @@ class RealEstateAgency(models.Model):
     )
     name = models.CharField(max_length=200, verbose_name="Nome da Imobiliária")
     trade_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="Nome Fantasia")
-    cnpj = models.CharField(max_length=20, blank=True, verbose_name="CNPJ")
-    phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
-    email = models.EmailField(blank=True, verbose_name="E-mail")
+    cnpj = models.CharField(max_length=20, verbose_name="CNPJ")
+    phone = models.CharField(max_length=20, verbose_name="Telefone")
+    email = models.EmailField(verbose_name="E-mail")
     website = models.URLField(blank=True, verbose_name="Site")
     address = models.ForeignKey(
         'parameters.Addresses', on_delete=models.SET_NULL, null=True, blank=True,

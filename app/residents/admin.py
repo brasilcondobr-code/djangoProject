@@ -28,17 +28,16 @@ class ExportCSVMixin:
 @admin.register(Visitor)
 class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
     form = VisitorFormAdmin
-    list_display = ('name', 'visit_date', 'condo_unit', 'photo', 'is_active')
+    list_display = ('name', 'condo_unit', 'photo', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name')
-    list_filter = ('condo_unit', 'visit_date', 'is_active')
-    readonly_fields = ('created_at', 'updated_at', 'situation', 'regular', 'death', 'api_status', 'visit_date')
+    list_filter = ('condo_unit', 'is_active')
+    readonly_fields = ('created_at', 'updated_at', 'situation', 'regular', 'death', 'api_status')
     list_per_page = 25
-    ordering = ['-visit_date']
-    date_hierarchy = 'visit_date'
+    ordering = ['-created_at']
     
     fieldsets = (
         (None, {
-            'fields': ('condo_unit', 'name', 'cpf', 'rg', 'phone', 'visit_date', 'purpose', 'photo', 'is_active'),
+            'fields': ('condo_unit', 'name', 'cpf', 'rg', 'phone', 'purpose', 'photo', 'is_active'),
         }),
         ('Receita Federal', {
             'fields': ('situation', 'regular', 'death', 'api_status'),
