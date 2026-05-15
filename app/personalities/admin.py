@@ -71,13 +71,21 @@ class EntityAdmin(ExportCsvMixin, admin.ModelAdmin):
     ordering = ('name',)
     list_per_page = 25
     actions = ["export_as_csv"]
-    fields = (
-        'code', 'kind', 'business_sector', 'name', 'trade_name', 
-        'cpf_cnpj', 'rg_ie', 'municipal_registration', 
-        'date_of_birth_opening', 'sex', 'email', 'phone', 
-        'address', 'observations', 'is_active'
+    
+    fieldsets = (
+        (None, {
+            'fields': (
+                'code', 'kind', 'business_sector', 'name', 'trade_name', 
+                'cpf_cnpj', 'rg_ie', 'municipal_registration', 
+                'date_of_birth_opening', 'sex', 'email', 'phone', 
+                'address', 'observations', 'is_active'
+            )
+        }),
+        ('Receita Federal', {
+            'fields': ('situation', 'regular', 'death', 'api_status'),
+        }),
     )
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'situation', 'regular', 'death', 'api_status')
 
     def get_queryset(self, request):
         return super().get_queryset(request).order_by('business_sector', 'name')

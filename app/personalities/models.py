@@ -22,7 +22,7 @@ class Entity(models.Model):
         ('PF', 'Pessoa Física'),
         ('PJ', 'Pessoa Jurídica'),
     )
-
+    
     SEX_CHOICES = (
         ('M', 'Masculino'),
         ('F', 'Feminino'),
@@ -44,6 +44,34 @@ class Entity(models.Model):
     address = models.ForeignKey('parameters.Addresses', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Endereço")
     observations = models.TextField(verbose_name="Observações", blank=True, null=True)
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    
+    situation = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Situação Receita Federal"
+    )
+    regular = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="CPF Regular"
+    )
+    death = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Óbito"
+    )
+    api_status = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Status da API"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
     

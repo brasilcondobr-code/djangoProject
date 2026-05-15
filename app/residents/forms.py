@@ -1,5 +1,6 @@
 from django import forms
 import re
+from core.services.hydra_cpf_service import consult_cpf
 
 def validate_cpf(cpf):
     """
@@ -327,9 +328,36 @@ class ResidentFormAdmin(forms.ModelForm):
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
-        if cpf and not validate_cpf(cpf):
-            raise forms.ValidationError('O CPF informado é inválido.')
+        if cpf:
+            if not validate_cpf(cpf):
+                raise forms.ValidationError('O CPF informado é inválido.')
+            
+            # Consultar Receita Federal via HydraCPF se o CPF mudou ou se a situação está vazia
+            cpf_digits = "".join(filter(str.isdigit, cpf))
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
+            
+            if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
+                logger.info(f"Triggering API consultation for CPF {cpf_digits}")
+                result = consult_cpf(cpf_digits)
+                logger.info(f"API result for {cpf_digits}: {result}")
+                
+                if result is not None:
+                    if 'error' not in result:
+                        self.instance.situation = result.get('situation')
+                        self.instance.regular = result.get('regular')
+                        self.instance.death = result.get('death')
+                        logger.info(f"Updating instance: situation={self.instance.situation}, regular={self.instance.regular}, death={self.instance.death}")
+                    else:
+                        self.instance.situation = "Erro na Consulta"
+                        logger.info("API returned error, setting situation to 'Erro na Consulta'")
+                else:
+                    logger.info("API result is None")
         return cpf
+
+
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -528,9 +556,36 @@ class VisitorFormAdmin(forms.ModelForm):
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
-        if cpf and not validate_cpf(cpf):
-            raise forms.ValidationError('O CPF informado é inválido.')
+        if cpf:
+            if not validate_cpf(cpf):
+                raise forms.ValidationError('O CPF informado é inválido.')
+            
+            # Consultar Receita Federal via HydraCPF se o CPF mudou ou se a situação está vazia
+            cpf_digits = "".join(filter(str.isdigit, cpf))
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
+            
+            if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
+                logger.info(f"Triggering API consultation for CPF {cpf_digits}")
+                result = consult_cpf(cpf_digits)
+                logger.info(f"API result for {cpf_digits}: {result}")
+                
+                if result is not None:
+                    if 'error' not in result:
+                        self.instance.situation = result.get('situation')
+                        self.instance.regular = result.get('regular')
+                        self.instance.death = result.get('death')
+                        logger.info(f"Updating instance: situation={self.instance.situation}, regular={self.instance.regular}, death={self.instance.death}")
+                    else:
+                        self.instance.situation = "Erro na Consulta"
+                        logger.info("API returned error, setting situation to 'Erro na Consulta'")
+                else:
+                    logger.info("API result is None")
         return cpf
+
+
 
 
 class RealEstateAgencyFormAdmin(forms.ModelForm):

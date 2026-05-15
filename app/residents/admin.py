@@ -31,10 +31,19 @@ class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
     list_display = ('name', 'visit_date', 'condo_unit', 'photo', 'is_active')
     search_fields = ('condo_unit__unit_number', 'name')
     list_filter = ('condo_unit', 'visit_date', 'is_active')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'situation', 'regular', 'death', 'api_status', 'visit_date')
     list_per_page = 25
     ordering = ['-visit_date']
     date_hierarchy = 'visit_date'
+    
+    fieldsets = (
+        (None, {
+            'fields': ('condo_unit', 'name', 'cpf', 'rg', 'phone', 'visit_date', 'purpose', 'photo', 'is_active'),
+        }),
+        ('Receita Federal', {
+            'fields': ('situation', 'regular', 'death', 'api_status'),
+        }),
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('condo_unit')
@@ -148,12 +157,22 @@ class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
     list_display = ('name', 'type_of_resident', 'phone', 'email', 'unit', 'photo', 'is_active')
     search_fields = ('unit__unit_number', 'name', 'email')
     list_filter = ('type_of_resident', 'is_active')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'situation', 'regular', 'death', 'api_status')
     list_per_page = 25
     ordering = ['-created_at']
+    
+    fieldsets = (
+        (None, {
+            'fields': ('unit', 'type_of_resident', 'name', 'email', 'phone', 'cpf', 'rg', 'sex', 'date_of_birth', 'profission', 'photo', 'is_primary', 'is_resident', 'is_active'),
+        }),
+        ('Receita Federal', {
+            'fields': ('situation', 'regular', 'death', 'api_status'),
+        }),
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('unit')
+
     
     class Media:
         js = (

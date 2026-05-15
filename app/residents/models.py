@@ -147,7 +147,35 @@ class Resident(models.Model):
     is_resident = models.BooleanField(default=True, verbose_name="É residente")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name="Foto")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    
+    situation = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Situação Receita Federal"
+    )
+    regular = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="CPF Regular"
+    )
+    death = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Óbito"
+    )
+    api_status = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Status da API"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Cri도 em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
     class Meta:
@@ -170,6 +198,34 @@ class Visitor(models.Model):
     purpose = models.CharField(max_length=255, blank=True, verbose_name="Propósito da visita")
     photo = models.ImageField(upload_to='residents/visitors/', null=True, blank=True, verbose_name="Foto")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    
+    situation = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Situação Receita Federal"
+    )
+    regular = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="CPF Regular"
+    )
+    death = models.BooleanField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Óbito"
+    )
+    api_status = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Status da API"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
