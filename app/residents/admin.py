@@ -42,6 +42,9 @@ class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
         ('Receita Federal', {
             'fields': ('situation', 'regular', 'death', 'api_status', 'retorno_api', 'date_time_appointment'),
         }),
+        ('Antecedentes', {
+            'fields': ('certificate_presentation_date', 'certificate_validity', 'observations_certificate', 'certificate_file'),
+        }),
     )
 
     def get_queryset(self, request):
@@ -166,6 +169,9 @@ class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
         }),
         ('Receita Federal', {
             'fields': ('situation', 'regular', 'death', 'api_status', 'retorno_api', 'date_time_appointment'),
+        }),
+        ('Antecedentes', {
+            'fields': ('certificate_presentation_date', 'certificate_validity', 'observations_certificate', 'certificate_file'),
         }),
     )
 

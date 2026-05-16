@@ -187,6 +187,8 @@ def validate_upload_files_docs(value):
     Validates that an uploaded file has a permitted extension.
     Permitted: .txt, .doc, .docx, .odt, .rtf, .pdf
     """
+    if not value or not hasattr(value, 'name'):
+        return
     ext = value.name.split('.')[-1].lower()
     if ext not in ['txt', 'doc', 'docx', 'odt', 'rtf', 'pdf']:
         raise ValidationError('Apenas arquivos .txt, .doc, .docx, .odt, .rtf e .pdf são permitidos.')

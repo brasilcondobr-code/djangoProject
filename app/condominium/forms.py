@@ -212,6 +212,7 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         return date_val
         
 class DocumentCondominiumFormAdmin(forms.ModelForm):
+
     class Meta:
         model = DocumentCondominium
         fields = '__all__'
