@@ -82,10 +82,10 @@ class EntityAdmin(ExportCsvMixin, admin.ModelAdmin):
             )
         }),
         ('Receita Federal', {
-            'fields': ('situation', 'regular', 'death', 'api_status'),
+            'fields': ('situation', 'regular', 'death', 'api_status', 'retorno_api', 'date_time_appointment'),
         }),
     )
-    readonly_fields = ('created_at', 'updated_at', 'situation', 'regular', 'death', 'api_status')
+    readonly_fields = ('created_at', 'updated_at', 'api_status', 'retorno_api', 'date_time_appointment')
 
     def get_queryset(self, request):
         return super().get_queryset(request).order_by('business_sector', 'name')

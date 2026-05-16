@@ -1,10 +1,8 @@
 from django import forms
 from datetime import datetime
-from core.services.hydra_cpf_service import consult_cpf
 from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone
-from .models import BusinessSector, Entity
-
 from core.services.hydra_cpf_service import consult_cpf
+from .models import BusinessSector, Entity
 
 
 class BusinessSectorForm(forms.ModelForm):
@@ -263,45 +261,44 @@ class EntityForm(forms.ModelForm):
     def clean_cpf_cnpj(self):
         cpf_cnpj = self.cleaned_data.get('cpf_cnpj')
         kind = self.cleaned_data.get('kind')
-
+ 
         if not cpf_cnpj:
             return cpf_cnpj
-
+ 
         if kind == 'PF':
             if not validate_cpf(cpf_cnpj):
                 raise forms.ValidationError('CPF inválido.')
-            
-            # Consultar Receita Federal via HydraCPF se o CPF mudou ou se a situação está vazia
-            cpf_digits = "".join(filter(str.isdigit, cpf_cnpj))
-            import logging
-            logger = logging.getLogger(__name__)
-            
-            logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
-            
-            if not self.instance.pk or self.instance.cpf_cnpj != cpf_cnpj or not self.instance.situation:
-                logger.info(f"Triggering API consultation for CPF {cpf_digits}")
-                result = consult_cpf(cpf_digits)
-                logger.info(f"API result for {cpf_digits}: {result}")
-                
-                if result is not None:
-                    self.instance.api_status = 'Pass'
-                    if 'error' not in result:
-                        self.instance.situation = result.get('situation')
-                        self.instance.regular = result.get('regular')
-                        self.instance.death = result.get('death')
-                        logger.info(f"Updating instance: situation={self.instance.situation}, regular={self.instance.regular}, death={self.instance.death}")
-                    else:
-                        self.instance.situation = "Erro na Consulta"
-                        logger.info("API returned error, setting situation to 'Erro na Consulta'")
-                else:
-                    self.instance.api_status = 'Fail'
-                    logger.info("API result is None, setting api_status to 'Fail'")
-                    
+        
         elif kind == 'PJ':
             if not validate_cnpj(cpf_cnpj):
                 raise forms.ValidationError('CNPJ inválido.')
         
+        # Consultar Receita Federal via HydraCPF se o CPF/CNPJ mudou ou se a situação está vazia
+        cpf_cnpj_digits = "".join(filter(str.isdigit, cpf_cnpj))
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"Validating CPF/CNPJ for {self.instance}: digits={cpf_cnpj_digits}")
+        
+        if not self.instance.pk or (hasattr(self.instance, 'cpf_cnpj') and self.instance.cpf_cnpj != cpf_cnpj) or not self.instance.situation:
+            logger.info(f"Triggering API consultation for CPF/CNPJ {cpf_cnpj_digits}")
+            result = consult_cpf(cpf_cnpj_digits)
+            logger.info(f"API result for {cpf_cnpj_digits}: {result}")
+            
+            if result is not None:
+                if 'error' not in result:
+                    self.instance.situation = result.get('situation')
+                    self.instance.regular = result.get('regular')
+                    self.instance.death = result.get('death')
+                    logger.info(f"Updating instance: situation={self.instance.situation}, regular={self.instance.regular}, death={self.instance.death}")
+                else:
+                    self.instance.situation = "Erro na Consulta"
+                    logger.info("API returned error, setting situation to 'Erro na Consulta'")
+            else:
+                logger.info("API result is None")
+        
         return cpf_cnpj
+
 
     def clean_date_of_birth_opening(self):
         date_val = self.cleaned_data.get('date_of_birth_opening')

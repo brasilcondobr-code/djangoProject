@@ -46,6 +46,19 @@ class Types_collaborators(models.Model):
 
 
 class Collaborators(models.Model):
+    RECEITA_STATUS_CHOICES = (
+        ('Regular', 'Regular'),
+        ('Suspenso', 'Suspenso'),
+        ('Pendente de Regularização', 'Pendente de Regularização'),
+        ('Cancelado', 'Cancelado'),
+        ('Titular Falecido', 'Titular Falecido'),
+        ('Nulo', 'Nulo'),
+    )
+    YES_NO_CHOICES = (
+        ('Sim', 'Sim'),
+        ('Não', 'Não'),
+    )
+
     condominium = models.ForeignKey(Condominium, related_name="collaborators", null=False, blank=False, verbose_name="Condomínio", on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome")
     cpf = models.CharField(max_length=20, null=False, blank=False, verbose_name="CPF", unique=True)
@@ -59,33 +72,51 @@ class Collaborators(models.Model):
     
     situation = models.CharField(
         max_length=100,
+        choices=RECEITA_STATUS_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Situação Receita Federal"
     )
-    regular = models.BooleanField(
+    regular = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="CPF Regular"
     )
-    death = models.BooleanField(
+    death = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Óbito"
     )
     api_status = models.CharField(
-        max_length=10,
+        max_length=100,
+        default='nulo',
         null=True,
         blank=True,
         editable=False,
         verbose_name="Status da API"
     )
+    retorno_api = models.TextField(
+        default='nulo',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Retorno da API"
+    )
+    date_time_appointment = models.DateTimeField(
+        auto_now=True,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='Data/hora da consulta'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         verbose_name = "3. Colaborador"

@@ -127,6 +127,19 @@ class CondominiumUnit(models.Model):
     
 
 class Resident(models.Model):
+    RECEITA_STATUS_CHOICES = (
+        ('Regular', 'Regular'),
+        ('Suspenso', 'Suspenso'),
+        ('Pendente de Regularização', 'Pendente de Regularização'),
+        ('Cancelado', 'Cancelado'),
+        ('Titular Falecido', 'Titular Falecido'),
+        ('Nulo', 'Nulo'),
+    )
+    YES_NO_CHOICES = (
+        ('Sim', 'Sim'),
+        ('Não', 'Não'),
+    )
+
     ResidentTypeChoices = [
         ('owner', 'Proprietário(a)'),
         ('tenant', 'Morador(a)'),
@@ -150,29 +163,46 @@ class Resident(models.Model):
     
     situation = models.CharField(
         max_length=100,
+        choices=RECEITA_STATUS_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Situação Receita Federal"
     )
-    regular = models.BooleanField(
+    regular = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="CPF Regular"
     )
-    death = models.BooleanField(
+    death = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Óbito"
     )
     api_status = models.CharField(
-        max_length=10,
+        max_length=100,
+        default='nulo',
         null=True,
         blank=True,
         editable=False,
         verbose_name="Status da API"
+    )
+    retorno_api = models.TextField(
+        default='nulo',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Retorno da API'
+    )
+    date_time_appointment = models.DateTimeField(
+        auto_now=True,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='Data/hora da consulta'
     )
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Cri도 em")
@@ -200,29 +230,46 @@ class Visitor(models.Model):
     
     situation = models.CharField(
         max_length=100,
+        choices=Resident.RECEITA_STATUS_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Situação Receita Federal"
     )
-    regular = models.BooleanField(
+    regular = models.CharField(
+        max_length=3,
+        choices=Resident.YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="CPF Regular"
     )
-    death = models.BooleanField(
+    death = models.CharField(
+        max_length=3,
+        choices=Resident.YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Óbito"
     )
     api_status = models.CharField(
-        max_length=10,
+        max_length=100,
+        default='nulo',
         null=True,
         blank=True,
         editable=False,
         verbose_name="Status da API"
+    )
+    retorno_api = models.TextField(
+        default='nulo',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Retorno da API'
+    )
+    date_time_appointment = models.DateTimeField(
+        auto_now=True,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='Data/hora da consulta'
     )
     
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,8 +1,8 @@
 from django import forms
-from core.services.hydra_cpf_service import consult_cpf
 from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone, validate_url
+from core.services.hydra_cpf_service import consult_cpf
 
-from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor
+from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor, Resident
 
 class CondominiumUnitFormAdmin(forms.ModelForm):
     
@@ -140,7 +140,7 @@ class CondominiumUnitFormAdmin(forms.ModelForm):
 class ResidentFormAdmin(forms.ModelForm):
     
     class Meta:
-        model = CondominiumUnit
+        model = Resident
         fields = '__all__'
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'mask-email'}),
@@ -502,7 +502,7 @@ class VisitorFormAdmin(forms.ModelForm):
         
         logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
         
-        if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
+        if not self.instance.pk or (hasattr(self.instance, 'cpf') and self.instance.cpf != cpf) or not self.instance.situation:
             logger.info(f"Triggering API consultation for CPF {cpf_digits}")
             result = consult_cpf(cpf_digits)
             logger.info(f"API result for {cpf_digits}: {result}")
@@ -519,6 +519,7 @@ class VisitorFormAdmin(forms.ModelForm):
             else:
                 logger.info("API result is None")
         return cpf
+
 
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')

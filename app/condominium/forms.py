@@ -1,5 +1,4 @@
 from django import forms
-from core.services.hydra_cpf_service import consult_cpf
 from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone
 from .models import Collaborators, Condominium, DocumentCondominium
 
@@ -170,23 +169,6 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         if cpf:
             if not validate_cpf(cpf):
                 raise forms.ValidationError('O CPF informado é inválido.')
-            
-            cpf_digits = "".join(filter(str.isdigit, cpf))
-            import logging
-            logger = logging.getLogger(__name__)
-            
-            if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
-                result = consult_cpf(cpf_digits)
-                if result is not None:
-                    self.instance.api_status = 'Pass'
-                    if 'error' not in result:
-                        self.instance.situation = result.get('situation')
-                        self.instance.regular = result.get('regular')
-                        self.instance.death = result.get('death')
-                    else:
-                        self.instance.situation = "Erro na Consulta"
-                else:
-                    self.instance.api_status = 'Fail'
         return cpf
 
     def clean_email(self):
