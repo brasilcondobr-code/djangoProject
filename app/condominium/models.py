@@ -113,6 +113,27 @@ class Collaborators(models.Model):
         editable=False,
         verbose_name='Data/hora da consulta'
     )
+    certificate_presentation_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Data de apresentação da certidão"
+    )
+    certificate_validity = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Validade da certidão"
+    )
+    observations_certificate = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Observações"
+    )
+    certificate_file = models.FileField(
+        upload_to='certidoes/',
+        null=True,
+        blank=True,
+        verbose_name="Arquivo da certidão"
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

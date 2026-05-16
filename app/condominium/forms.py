@@ -1,8 +1,9 @@
 from django import forms
-from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone
+from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone, validate_upload_files_docs, validate_date
 from .models import Collaborators, Condominium, DocumentCondominium
 
 class CondominiumFormAdmin(forms.ModelForm):
+
     class Meta:
         model = Condominium
         fields = '__all__'
@@ -96,6 +97,7 @@ class CollaboratorsFormAdmin(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'mask-email'}),
             'phone_number': forms.TextInput(attrs={'class': 'mask-phone'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'certificate_file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
         
         labels = {
@@ -109,6 +111,10 @@ class CollaboratorsFormAdmin(forms.ModelForm):
             'photo': 'Foto',
             'is_active': 'Ativo',
             'observations': 'Observações',
+            'certificate_presentation_date': 'Data de apresentação da certidão',
+            'certificate_validity': 'Validade da certidão',
+            'observations_certificate': 'Observações da Certidão',
+            'certificate_file': 'Arquivo da certidão',
         }
         
         help_texts = {
@@ -121,6 +127,10 @@ class CollaboratorsFormAdmin(forms.ModelForm):
             'type_collaborator': 'Selecione o tipo de colaborador',
             'is_active': 'Colaborador ativo',
             'observations': 'Observações adicionais sobre o colaborador',
+            'certificate_presentation_date': 'Digite a data de apresentação da certidão',
+            'certificate_validity': 'Digite a data de validade da certidão',
+            'observations_certificate': 'Digite observações sobre a certidão',
+            'certificate_file': 'Selecione o arquivo da certidão (PDF, JPG, PNG)',
         }
         
         error_messages = {
@@ -163,6 +173,8 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         self.fields['rg'].widget.attrs['class'] = 'mask-rg'
         self.fields['phone_number'].widget.attrs['class'] = 'mask-phone'
         self.fields['email'].widget.attrs['class'] = 'mask-email'
+        if 'certificate_file' in self.fields:
+            self.fields['certificate_file'].validators.append(validate_upload_files_docs)
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
@@ -182,6 +194,22 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         if phone and not validate_phone(phone):
             raise forms.ValidationError('O telefone informado é inválido.')
         return phone
+
+    def clean_certificate_presentation_date(self):
+        date_val = self.cleaned_data.get('certificate_presentation_date')
+        if not date_val:
+            raise forms.ValidationError('A data de apresentação da certidão é obrigatória.')
+        if not validate_date(date_val):
+            raise forms.ValidationError('A data de apresentação da certidão é inválida.')
+        return date_val
+
+    def clean_certificate_validity(self):
+        date_val = self.cleaned_data.get('certificate_validity')
+        if not date_val:
+            raise forms.ValidationError('A data de validade da certidão é obrigatória.')
+        if not validate_date(date_val):
+            raise forms.ValidationError('A data de validade da certidão é inválida.')
+        return date_val
         
 class DocumentCondominiumFormAdmin(forms.ModelForm):
     class Meta:
