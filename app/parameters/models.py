@@ -82,3 +82,19 @@ class Addresses(models.Model):
         if self.complement:
             address_line += f" - {self.complement}"
         return f"{address_line} | {self.neighborhood} | {self.city}/{self.state.abbreviation} | {self.zip_code}"
+
+
+class TypesVisitorRestrictions(models.Model):
+    description = models.CharField(max_length=100, unique=True, null=False, blank=False, verbose_name="Tipo de Restrição")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    
+    class Meta:
+        ordering = ['description']
+        verbose_name = "5. Tipo de Restrição/Visitante"
+        verbose_name_plural = "5. Tipos de Restrição/Visitantes"
+        unique_together = ['description']
+
+    def __str__(self):
+        return self.description

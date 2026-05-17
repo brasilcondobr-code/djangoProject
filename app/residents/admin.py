@@ -45,6 +45,9 @@ class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
         ('Antecedentes', {
             'fields': ('certificate_presentation_date', 'certificate_validity', 'observations_certificate', 'certificate_file'),
         }),
+        ('Restrições', {
+            'fields': ('types_visitor_restriction', 'restrictionVisitor_presentation_date', 'restrictionVisitor_validity_date', 'restrictionVisitor_observations', 'restrictionVisitor_file'),
+        }),
     )
 
     def get_queryset(self, request):

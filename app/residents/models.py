@@ -205,28 +205,28 @@ class Resident(models.Model):
         verbose_name='Data/hora da consulta'
     )
     certificate_presentation_date = models.DateField(
-        null=True,
-        blank=True,
+        null=True, 
+        blank=True, 
         verbose_name="Data de apresentação da certidão"
     )
     certificate_validity = models.DateField(
-        null=True,
-        blank=True,
+        null=True, 
+        blank=True, 
         verbose_name="Validade da certidão"
     )
     observations_certificate = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name="Observações"
+        null=True, 
+        blank=True, 
+        verbose_name="Observações da certidão"
     )
     certificate_file = models.FileField(
-        upload_to='residents/certidoes/',
-        null=True,
-        blank=True,
+        upload_to='residents/certidoes/', 
+        null=True, 
+        blank=True, 
         verbose_name="Arquivo da certidão"
     )
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Cri도 em")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criдо em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
     class Meta:
@@ -293,25 +293,53 @@ class Visitor(models.Model):
         verbose_name='Data/hora da consulta'
     )
     certificate_presentation_date = models.DateField(
-        null=True,
-        blank=True,
+        null=True, 
+        blank=True, 
         verbose_name="Data de apresentação da certidão"
     )
     certificate_validity = models.DateField(
-        null=True,
-        blank=True,
+        null=True, 
+        blank=True, 
         verbose_name="Validade da certidão"
     )
     observations_certificate = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name="Observações"
+        null=True, 
+        blank=True, 
+        verbose_name="Observações da certidão"
     )
     certificate_file = models.FileField(
-        upload_to='residents/certidoes/',
-        null=True,
-        blank=True,
+        upload_to='residents/certidoes/', 
+        null=True, 
+        blank=True, 
         verbose_name="Arquivo da certidão"
+    )
+    types_visitor_restriction = models.ForeignKey(
+        'parameters.TypesVisitorRestrictions', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name="Tipos de Restrição"
+    )
+    restrictionVisitor_presentation_date = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Data de apresentação"
+    )
+    restrictionVisitor_validity_date = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Data de validade"
+    )
+    restrictionVisitor_observations = models.TextField(
+        null=True, 
+        blank=True, 
+        verbose_name="Observações"
+    )
+    restrictionVisitor_file = models.FileField(
+        upload_to='residents/restrictions/', 
+        null=True, 
+        blank=True, 
+        verbose_name="Arquivo"
     )
     
     created_at = models.DateTimeField(auto_now_add=True)

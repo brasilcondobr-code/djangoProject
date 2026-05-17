@@ -343,3 +343,5 @@ class EntityForm(forms.ModelForm):
         if not rg_ie:
             raise forms.ValidationError('O RG/IE é obrigatório.')
         return rg_ie
+
+

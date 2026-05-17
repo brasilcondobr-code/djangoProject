@@ -458,6 +458,11 @@ class VisitorFormAdmin(forms.ModelForm):
             'certificate_validity': 'Validade da Certidão',
             'observations_certificate': 'Observações da Certidão',
             'certificate_file': 'Arquivo da Certidão',
+            'types_visitor_restriction': 'Tipos de Restrição',
+            'restrictionVisitor_presentation_date': 'Data de apresentação',
+            'restrictionVisitor_validity_date': 'Data de validade',
+            'restrictionVisitor_observations': 'Observações',
+            'restrictionVisitor_file': 'Arquivo',
         }
         
         help_texts = {
@@ -474,6 +479,11 @@ class VisitorFormAdmin(forms.ModelForm):
             'certificate_validity': 'Digite a data de validade da certidão',
             'observations_certificate': 'Digite as observações da certidão',
             'certificate_file': 'Selecione o arquivo da certidão',
+            'types_visitor_restriction': 'Selecione o tipo de restrição',
+            'restrictionVisitor_presentation_date': 'Digite a data de apresentação',
+            'restrictionVisitor_validity_date': 'Digite a data de validade',
+            'restrictionVisitor_observations': 'Digite as observações da restrição',
+            'restrictionVisitor_file': 'Selecione o arquivo da restrição',
         }
         
         error_messages = {
@@ -519,6 +529,8 @@ class VisitorFormAdmin(forms.ModelForm):
         self.fields['phone'].widget.attrs['class'] = 'mask-phone'
         if 'certificate_file' in self.fields:
             self.fields['certificate_file'].validators.append(validate_upload_files_docs)
+        if 'restrictionVisitor_file' in self.fields:
+            self.fields['restrictionVisitor_file'].validators.append(validate_upload_files_docs)
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
@@ -566,6 +578,25 @@ class VisitorFormAdmin(forms.ModelForm):
         if not rg:
             raise forms.ValidationError('O RG é obrigatório.')
         return rg
+
+    def clean_restrictionVisitor_presentation_date(self):
+        date_val = self.cleaned_data.get('restrictionVisitor_presentation_date')
+        if date_val and not validate_date(date_val):
+            raise forms.ValidationError('Data de apresentação inválida.')
+        return date_val
+
+    def clean_restrictionVisitor_validity_date(self):
+        validity_date = self.cleaned_data.get('restrictionVisitor_validity_date')
+        presentation_date = self.cleaned_data.get('restrictionVisitor_presentation_date')
+        
+        if validity_date:
+            if not validate_date(validity_date):
+                raise forms.ValidationError('Data de validade inválida.')
+            
+            if presentation_date and validity_date < presentation_date:
+                raise forms.ValidationError('A data de validade não pode ser anterior à data de apresentação.')
+        
+        return validity_date
 
     def clean_certificate_presentation_date(self):
         date_val = self.cleaned_data.get('certificate_presentation_date')

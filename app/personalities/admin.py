@@ -102,3 +102,4 @@ class EntityAdmin(ExportCsvMixin, admin.ModelAdmin):
             'https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js',
             'js/custom-personalities-entity.js',
         )
+        
