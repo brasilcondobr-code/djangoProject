@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'personalities',
     'parameters',
     'data_management',
+    'reservations',
     # Seus apps aqui
 ]
 
@@ -208,10 +209,12 @@ JAZZMIN_SETTINGS = {
         "condominium.Condominium": "fas fa-building",
         "condominium.Types_collaborators": "fa-solid fa-anchor-circle-exclamation",
         "condominium.Collaborators": "fa-solid fa-person-half-dress",
+        "condominium.DocumentCondominium": "fa-solid fa-file-invoice",
         "parameters.Addresses": "fas fa-map-marked-alt",
         "parameters.States": "fas fa-flag",
         "parameters.TypesCondominium": "fas fa-home",
         "parameters.StructionCondominium": "fas fa-sitemap",
+        "parameters.TypesVisitorRestrictions": "fa-solid fa-triangle-exclamation",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",
@@ -226,10 +229,13 @@ JAZZMIN_SETTINGS = {
         "data_management.ExportModule": "fas fa-file-export",
         "data_management.LogModule": "fas fa-list",
         "data_management.AuditModule": "fas fa-history",
-        "data_management.ScheduledTaskModule": "fas fa-clock",
+        "data_management.ScheduledTaskModule": "fa-regular fa-calendar-days",
         "data_management.IntegrationModule": "fas fa-plug",
         "data_management.BackupModule": "fas fa-save",
-        "data_management.RestoreModule": "fas fa-undo"
+        "data_management.RestoreModule": "fas fa-undo",
+        "reservations.Rentals": "fa-solid fa-location-arrow",
+        "reservations.MaintenanceReservations": "fas fa-tools",
+        "reservations.MoveReservations": "fas fa-truck-moving",
     },
     
     "show_ui_builder": False,
