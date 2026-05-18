@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Bank, Circular, Contract, Infraction, Meter, 
-    Notification, Patrimony, BudgetForecast, ChartOfAccount, Project, Task
+    Notification, Patrimony, BudgetForecast, ChartOfAccount, Project, Task, VirtualAssembly
 )
 
 @admin.register(Bank)
@@ -46,4 +46,8 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(VirtualAssembly)
+class VirtualAssemblyAdmin(admin.ModelAdmin):
     pass

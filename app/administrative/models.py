@@ -87,3 +87,11 @@ class Task(models.Model):
 
     def __str__(self):
         return "11. Tarefas"
+
+class VirtualAssembly(models.Model):
+    class Meta:
+        verbose_name = "12. Assembleia Virtual"
+        verbose_name_plural = "12. Assembleias Virtuais"
+
+    def __str__(self):
+        return "12. Assembleias Virtuais"

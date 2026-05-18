@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'gatehouse',
     'administrative',
     'financial',
+    'system',
     # Seus apps aqui
 ]
 
@@ -260,6 +261,7 @@ JAZZMIN_SETTINGS = {
         "administrative.ChartOfAccount": "fas fa-chart-pie",
         "administrative.Project": "fas fa-project-diagram",
         "administrative.Task": "fas fa-tasks",
+        "administrative.VirtualAssembly": "fa-solid fa-elevator",
         "financial.Agreement": "fas fa-handshake",
         "financial.PaymentSlip": "fas fa-file-invoice-dollar",
         "financial.Cash": "fas fa-cash-register",
@@ -271,6 +273,15 @@ JAZZMIN_SETTINGS = {
         "financial.Apportionment": "fa-solid fa-chart-pie",
         "financial.Receipt": "fas fa-receipt",
         "financial.BankTransfer": "fa-solid fa-square-poll-horizontal",
+        "system.TechnicalSupportTicket": "fas fa-wrench",
+        "system.EmailConfiguration": "fas fa-envelope",
+        "system.SMSConfiguration": "fas fa-sms",
+        "system.WhatsAppSettings": "fa-solid fa-message",
+        "system.SystemLog": "fas fa-file-alt",
+        "system.AutomatedRoutine": "fas fa-robot",
+        "system.Training": "fas fa-chalkboard-teacher",
+        "system.IntegrationToken": "fas fa-key",
+        "system.ConnectedUser": "fas fa-user-friends",
     },
     
     "show_ui_builder": False,
