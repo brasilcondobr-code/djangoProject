@@ -2,8 +2,8 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 
-from .models import Addresses, States, TypesCondominium, StructionCondominium
-from .forms import AddressesForm, StatesForm
+from .models import Addresses, States, TypesCondominium, StructionCondominium, TypesVisitorRestrictions
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm
 
 class ExportCsvMixin:
     def init(self, model, *args, **kwargs):
@@ -80,7 +80,7 @@ class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
         
     class Media:
         js = (
-            'js/custom-admin-states.js',
+            'js/custom-parameters-states.js',
             )
 
 
@@ -102,6 +102,33 @@ class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
         
     class Media:
         js = (
-            'js/custom-admin-address.js',
+            'js/custom-parameters-address.js',
             )
         
+
+@admin.register(TypesVisitorRestrictions)
+class TypesVisitorRestrictionsAdmin(admin.ModelAdmin):
+    form = TypesVisitorRestrictionsForm
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    list_per_page = 25
+    fieldsets = (
+        (None, {
+            'fields': ('description', 'is_active')
+        }),
+    )
+    readonly_fields = ('created_at', 'updated_at')
+    
+    class Meta:
+        verbose_name = "5. Tipo de Restrição para Visitante"
+        verbose_name_plural = "5. Tipos de Restrição para Visitantes"
+        ordering = ["description"]
+        unique_together = ['description']
+        db_table = 'personalities_typesvisitorrestrictions'
+        
+    class Media:
+        js = (
+            'js/custom-parameters-types-visitor-restrictions.js',
+            )

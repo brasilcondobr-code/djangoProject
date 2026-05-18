@@ -1,8 +1,8 @@
 from django import forms
+from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone, validate_url, validate_date, validate_upload_files_docs
 from core.services.hydra_cpf_service import consult_cpf
-from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone, validate_url
 
-from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor
+from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor, Resident
 
 class CondominiumUnitFormAdmin(forms.ModelForm):
     
@@ -140,7 +140,7 @@ class CondominiumUnitFormAdmin(forms.ModelForm):
 class ResidentFormAdmin(forms.ModelForm):
     
     class Meta:
-        model = CondominiumUnit
+        model = Resident
         fields = '__all__'
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'mask-email'}),
@@ -166,6 +166,10 @@ class ResidentFormAdmin(forms.ModelForm):
             'is_active': 'Ativo',
             'created_at': 'Criado em',
             'updated_at': 'Atualizado em',
+            'certificate_presentation_date': 'Data de Apresentação da Certidão',
+            'certificate_validity': 'Validade da Certidão',
+            'observations_certificate': 'Observações da Certidão',
+            'certificate_file': 'Arquivo da Certidão',
         }
         
         help_texts = {
@@ -185,6 +189,10 @@ class ResidentFormAdmin(forms.ModelForm):
             'photo': 'Selecione uma foto do(a) morador(a)',
             'created_at': 'Data de criação do(a) morador(a)',
             'updated_at': 'Data de atualização do(a) morador(a)',
+            'certificate_presentation_date': 'Digite a data de apresentação da certidão',
+            'certificate_validity': 'Digite a data de validade da certidão',
+            'observations_certificate': 'Digite as observações da certidão',
+            'certificate_file': 'Selecione o arquivo da certidão',
         }
         
         error_messages = {
@@ -257,6 +265,8 @@ class ResidentFormAdmin(forms.ModelForm):
         self.fields['phone'].widget.attrs['class'] = 'mask-phone'
         self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
         self.fields['date_of_birth'].widget.attrs['class'] = 'mask-date-of-birth'
+        if 'certificate_file' in self.fields:
+            self.fields['certificate_file'].validators.append(validate_upload_files_docs)
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
@@ -315,7 +325,19 @@ class ResidentFormAdmin(forms.ModelForm):
             if not (1930 <= dob.year <= 2050):
                 raise forms.ValidationError('A data de nascimento deve estar entre os anos 1930 e 2050.')
         return dob
-        
+
+    def clean_certificate_presentation_date(self):
+        date_val = self.cleaned_data.get('certificate_presentation_date')
+        if date_val and not validate_date(date_val):
+            raise forms.ValidationError('Data de apresentação inválida.')
+        return date_val
+
+    def clean_certificate_validity(self):
+        date_val = self.cleaned_data.get('certificate_validity')
+        if date_val and not validate_date(date_val):
+            raise forms.ValidationError('Data de validade inválida.')
+        return date_val
+
 
 class VehicleFormAdmin(forms.ModelForm):
     
@@ -432,6 +454,15 @@ class VisitorFormAdmin(forms.ModelForm):
             'is_active': 'Ativo',
             'created_at': 'Criado em',
             'updated_at': 'Atualizado em',
+            'certificate_presentation_date': 'Data de Apresentação da Certidão',
+            'certificate_validity': 'Validade da Certidão',
+            'observations_certificate': 'Observações da Certidão',
+            'certificate_file': 'Arquivo da Certidão',
+            'types_visitor_restriction': 'Tipos de Restrição',
+            'restrictionVisitor_presentation_date': 'Data de apresentação',
+            'restrictionVisitor_validity_date': 'Data de validade',
+            'restrictionVisitor_observations': 'Observações',
+            'restrictionVisitor_file': 'Arquivo',
         }
         
         help_texts = {
@@ -444,6 +475,15 @@ class VisitorFormAdmin(forms.ModelForm):
             'is_active': 'Indique se o visitante está ativo',
             'created_at': 'Data de criação do visitante',
             'updated_at': 'Data de atualização do visitante',
+            'certificate_presentation_date': 'Digite a data de apresentação da certidão',
+            'certificate_validity': 'Digite a data de validade da certidão',
+            'observations_certificate': 'Digite as observações da certidão',
+            'certificate_file': 'Selecione o arquivo da certidão',
+            'types_visitor_restriction': 'Selecione o tipo de restrição',
+            'restrictionVisitor_presentation_date': 'Digite a data de apresentação',
+            'restrictionVisitor_validity_date': 'Digite a data de validade',
+            'restrictionVisitor_observations': 'Digite as observações da restrição',
+            'restrictionVisitor_file': 'Selecione o arquivo da restrição',
         }
         
         error_messages = {
@@ -487,6 +527,10 @@ class VisitorFormAdmin(forms.ModelForm):
         self.fields['condo_unit'].widget.attrs['class'] = 'mask-condo-unit'
         self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
         self.fields['phone'].widget.attrs['class'] = 'mask-phone'
+        if 'certificate_file' in self.fields:
+            self.fields['certificate_file'].validators.append(validate_upload_files_docs)
+        if 'restrictionVisitor_file' in self.fields:
+            self.fields['restrictionVisitor_file'].validators.append(validate_upload_files_docs)
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
@@ -502,7 +546,7 @@ class VisitorFormAdmin(forms.ModelForm):
         
         logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
         
-        if not self.instance.pk or self.instance.cpf != cpf or not self.instance.situation:
+        if not self.instance.pk or (hasattr(self.instance, 'cpf') and self.instance.cpf != cpf) or not self.instance.situation:
             logger.info(f"Triggering API consultation for CPF {cpf_digits}")
             result = consult_cpf(cpf_digits)
             logger.info(f"API result for {cpf_digits}: {result}")
@@ -520,6 +564,7 @@ class VisitorFormAdmin(forms.ModelForm):
                 logger.info("API result is None")
         return cpf
 
+
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
         if not phone:
@@ -533,6 +578,37 @@ class VisitorFormAdmin(forms.ModelForm):
         if not rg:
             raise forms.ValidationError('O RG é obrigatório.')
         return rg
+
+    def clean_restrictionVisitor_presentation_date(self):
+        date_val = self.cleaned_data.get('restrictionVisitor_presentation_date')
+        if date_val and not validate_date(date_val):
+            raise forms.ValidationError('Data de apresentação inválida.')
+        return date_val
+
+    def clean_restrictionVisitor_validity_date(self):
+        validity_date = self.cleaned_data.get('restrictionVisitor_validity_date')
+        presentation_date = self.cleaned_data.get('restrictionVisitor_presentation_date')
+        
+        if validity_date:
+            if not validate_date(validity_date):
+                raise forms.ValidationError('Data de validade inválida.')
+            
+            if presentation_date and validity_date < presentation_date:
+                raise forms.ValidationError('A data de validade não pode ser anterior à data de apresentação.')
+        
+        return validity_date
+
+    def clean_certificate_presentation_date(self):
+        date_val = self.cleaned_data.get('certificate_presentation_date')
+        if date_val and not validate_date(date_val):
+            raise forms.ValidationError('Data de apresentação inválida.')
+        return date_val
+
+    def clean_certificate_validity(self):
+        date_val = self.cleaned_data.get('certificate_validity')
+        if date_val and not validate_date(date_val):
+            raise forms.ValidationError('Data de validade inválida.')
+        return date_val
 
 
 

@@ -133,10 +133,12 @@ def validate_zip_code(zip_code):
 
 def validate_date(date_str, fmt='%d/%m/%Y'):
     """
-    Validates if a string is a valid date according to the specified format.
+    Validates if a string or date object is a valid date.
+    If it's a date/datetime object, it's considered valid.
+    If it's a string, it's validated against the specified format.
     
     Args:
-        date_str (str): The date string to validate.
+        date_str (str or date): The date value to validate.
         fmt (str): The expected date format. Defaults to '%d/%m/%Y'.
         
     Returns:
@@ -144,6 +146,9 @@ def validate_date(date_str, fmt='%d/%m/%Y'):
     """
     if not date_str:
         return False
+        
+    if hasattr(date_str, 'year') and hasattr(date_str, 'month') and hasattr(date_str, 'day'):
+        return True
         
     try:
         datetime.strptime(str(date_str), fmt)
@@ -175,6 +180,15 @@ def validate_url(url):
         
     return re.match(url_regex, str(url)) is not None
 
-# ==============================================================================
-# FUTURE EXTENSIONS
-# ==============================================================================
+from django.core.exceptions import ValidationError
+
+def validate_upload_files_docs(value):
+    """
+    Validates that an uploaded file has a permitted extension.
+    Permitted: .txt, .doc, .docx, .odt, .rtf, .pdf
+    """
+    if not value or not hasattr(value, 'name'):
+        return
+    ext = value.name.split('.')[-1].lower()
+    if ext not in ['txt', 'doc', 'docx', 'odt', 'rtf', 'pdf']:
+        raise ValidationError('Apenas arquivos .txt, .doc, .docx, .odt, .rtf e .pdf são permitidos.')

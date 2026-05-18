@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States
+from .models import Addresses, States, TypesVisitorRestrictions
 
 
 class StatesForm(forms.ModelForm):
@@ -164,4 +164,45 @@ class AddressesForm(forms.ModelForm):
         self.fields['city'].widget.attrs['class'] = 'mask-city'
         self.fields['state'].widget.attrs['class'] = 'mask-state'
         self.fields['country'].widget.attrs['class'] = 'mask-country'
+
+
+class TypesVisitorRestrictionsForm(forms.ModelForm):
+    
+    class Meta:
+        model = TypesVisitorRestrictions
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Restrições',
+                'maxlength': '255',
+            }),
+        }
+        
+        labels = {
+            'description': 'Restrições',
+        }
+        
+        help_texts = {
+            'description': 'Digite as restrições',
+        }
+        
+        error_messages = {
+            'description': {
+                'required': 'As restrições é obrigatório.',
+            },
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super(TypesVisitorRestrictionsForm, self).__init__(*args, **kwargs)
+        self.fields['description'].widget.attrs.update({
+            'class': 'form-control mask-description',
+            'autofocus': True,
+        })
+        
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+        return description
 

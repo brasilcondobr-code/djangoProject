@@ -106,8 +106,8 @@ class CondominiumUnit(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["tower", "unit_number"], name="unique_unit_per_tower")
         ]
-        verbose_name = "1. Unidade"
-        verbose_name_plural = "1. Unidades"
+        verbose_name = "01. Unidade"
+        verbose_name_plural = "01. Unidades"
         unique_together = (("tower", "unit_number"),)
     
     def __str__(self):
@@ -123,10 +123,23 @@ class CondominiumUnit(models.Model):
         unit = getattr(self, "unit_number", "")
         if tower_name:
             return f" {condominium_name} - {tower_name} - {unit}".strip()
-        return f"Unidade {unit}".strip()
+        return f"-01. Unidade {unit}".strip()
     
 
 class Resident(models.Model):
+    RECEITA_STATUS_CHOICES = (
+        ('Regular', 'Regular'),
+        ('Suspenso', 'Suspenso'),
+        ('Pendente de Regularização', 'Pendente de Regularização'),
+        ('Cancelado', 'Cancelado'),
+        ('Titular Falecido', 'Titular Falecido'),
+        ('Nulo', 'Nulo'),
+    )
+    YES_NO_CHOICES = (
+        ('Sim', 'Sim'),
+        ('Não', 'Não'),
+    )
+
     ResidentTypeChoices = [
         ('owner', 'Proprietário(a)'),
         ('tenant', 'Morador(a)'),
@@ -150,38 +163,76 @@ class Resident(models.Model):
     
     situation = models.CharField(
         max_length=100,
+        choices=RECEITA_STATUS_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Situação Receita Federal"
     )
-    regular = models.BooleanField(
+    regular = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="CPF Regular"
     )
-    death = models.BooleanField(
+    death = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Óbito"
     )
     api_status = models.CharField(
-        max_length=10,
+        max_length=100,
+        default='nulo',
         null=True,
         blank=True,
         editable=False,
         verbose_name="Status da API"
     )
+    retorno_api = models.TextField(
+        default='nulo',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Retorno da API'
+    )
+    date_time_appointment = models.DateTimeField(
+        auto_now=True,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='Data/hora da consulta'
+    )
+    certificate_presentation_date = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Data de apresentação da certidão"
+    )
+    certificate_validity = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Validade da certidão"
+    )
+    observations_certificate = models.TextField(
+        null=True, 
+        blank=True, 
+        verbose_name="Observações da certidão"
+    )
+    certificate_file = models.FileField(
+        upload_to='residents/certidoes/', 
+        null=True, 
+        blank=True, 
+        verbose_name="Arquivo da certidão"
+    )
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Cri도 em")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criдо em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 
     class Meta:
         ordering = ["unit", "name", "created_at"]
-        verbose_name = "2. Morador"
-        verbose_name_plural = "2. Moradores"
+        verbose_name = "0  02. Morador"
+        verbose_name_plural = "02. Moradores"
         unique_together = (("unit", "name"), ("unit", "cpf"), ("unit", "rg"))
 
     def __str__(self):
@@ -200,29 +251,95 @@ class Visitor(models.Model):
     
     situation = models.CharField(
         max_length=100,
+        choices=Resident.RECEITA_STATUS_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Situação Receita Federal"
     )
-    regular = models.BooleanField(
+    regular = models.CharField(
+        max_length=3,
+        choices=Resident.YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="CPF Regular"
     )
-    death = models.BooleanField(
+    death = models.CharField(
+        max_length=3,
+        choices=Resident.YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Óbito"
     )
     api_status = models.CharField(
-        max_length=10,
+        max_length=100,
+        default='nulo',
         null=True,
         blank=True,
         editable=False,
         verbose_name="Status da API"
+    )
+    retorno_api = models.TextField(
+        default='nulo',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Retorno da API'
+    )
+    date_time_appointment = models.DateTimeField(
+        auto_now=True,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='Data/hora da consulta'
+    )
+    certificate_presentation_date = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Data de apresentação da certidão"
+    )
+    certificate_validity = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Validade da certidão"
+    )
+    observations_certificate = models.TextField(
+        null=True, 
+        blank=True, 
+        verbose_name="Observações da certidão"
+    )
+    certificate_file = models.FileField(
+        upload_to='residents/certidoes/', 
+        null=True, 
+        blank=True, 
+        verbose_name="Arquivo da certidão"
+    )
+    types_visitor_restriction = models.ForeignKey(
+        'parameters.TypesVisitorRestrictions', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name="Tipos de Restrição"
+    )
+    restrictionVisitor_presentation_date = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Data de apresentação"
+    )
+    restrictionVisitor_validity_date = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Data de validade"
+    )
+    restrictionVisitor_observations = models.TextField(
+        null=True, 
+        blank=True, 
+        verbose_name="Observações"
+    )
+    restrictionVisitor_file = models.FileField(
+        upload_to='residents/restrictions/', 
+        null=True, 
+        blank=True, 
+        verbose_name="Arquivo"
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -230,8 +347,8 @@ class Visitor(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "name", "created_at"]
-        verbose_name = "6. Visitante"
-        verbose_name_plural = "6. Visitantes"
+        verbose_name = "06. Visitante"
+        verbose_name_plural = "06. Visitantes"
         unique_together = (("condo_unit", "name"), ("condo_unit", "cpf"), ("condo_unit", "rg"))
 
     def __str__(self):
@@ -264,8 +381,8 @@ class RealEstateAgency(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "name", "created_at"]
-        verbose_name = "7. Imobiliária"
-        verbose_name_plural = "7. Imobiliárias"
+        verbose_name = "07. Imobiliária"
+        verbose_name_plural = "07. Imobiliárias"
         unique_together = (("condo_unit", "name"), ("condo_unit", "email"), ("condo_unit", "phone"))
 
     def __str__(self):
@@ -293,8 +410,8 @@ class Emergency(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "type", "occurred_at", "created_at"]
-        verbose_name = "4. Emergência"
-        verbose_name_plural = "4. Emergências"
+        verbose_name = "04. Emergência"
+        verbose_name_plural = "04. Emergências"
         unique_together = (("condo_unit", "type", "occurred_at"), ("condo_unit", "description", "occurred_at"))
 
     def __str__(self):
@@ -326,8 +443,8 @@ class Vehicle(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "vehicle_type", "license_plate", "created_at"]
-        verbose_name = "3. Veículo"
-        verbose_name_plural = "3. Veículos"
+        verbose_name = "03. Veículo"
+        verbose_name_plural = "03. Veículos"
         unique_together = (("condo_unit", "license_plate"), ("condo_unit", "vehicle_type", "model", "year"))
 
     def __str__(self):
@@ -360,8 +477,8 @@ class Animal(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "name", "species", "created_at"]
-        verbose_name = "5. Animal"
-        verbose_name_plural = "5. Animais"
+        verbose_name = "05. Animal"
+        verbose_name_plural = "05. Animais"
         unique_together = (("condo_unit", "name"), ("condo_unit", "species", "breed"))
 
     def __str__(self):
@@ -390,8 +507,8 @@ class Documents(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "title", "created_at"]
-        verbose_name = "8. Documento"
-        verbose_name_plural = "8. Documentos"
+        verbose_name = "08. Documento"
+        verbose_name_plural = "08. Documentos"
         unique_together = (("condo_unit", "title"), ("condo_unit", "document_type", "created_at"))
 
     def __str__(self):

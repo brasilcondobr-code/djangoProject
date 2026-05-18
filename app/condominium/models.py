@@ -20,8 +20,8 @@ class Condominium(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = "1. Condomínio"
-        verbose_name_plural = "1. Condomínios"
+        verbose_name = "01. Condomínio"
+        verbose_name_plural = "01. Condomínios"
         ordering = ["name", "code", "cnpj", "is_active", "created_at"]
         ##unique_together = [['cnpj'], ['code']]
 
@@ -36,8 +36,8 @@ class Types_collaborators(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
-        verbose_name = "2. Tipo de Colaborador"
-        verbose_name_plural = "2. Tipos de Colaboradores"
+        verbose_name = "02. Tipo de Colaborador"
+        verbose_name_plural = "02. Tipos de Colaboradores"
         ordering = ["name", "is_active", "created_at"]
         unique_together = ['name']
     
@@ -46,6 +46,19 @@ class Types_collaborators(models.Model):
 
 
 class Collaborators(models.Model):
+    RECEITA_STATUS_CHOICES = (
+        ('Regular', 'Regular'),
+        ('Suspenso', 'Suspenso'),
+        ('Pendente de Regularização', 'Pendente de Regularização'),
+        ('Cancelado', 'Cancelado'),
+        ('Titular Falecido', 'Titular Falecido'),
+        ('Nulo', 'Nulo'),
+    )
+    YES_NO_CHOICES = (
+        ('Sim', 'Sim'),
+        ('Não', 'Não'),
+    )
+
     condominium = models.ForeignKey(Condominium, related_name="collaborators", null=False, blank=False, verbose_name="Condomínio", on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome")
     cpf = models.CharField(max_length=20, null=False, blank=False, verbose_name="CPF", unique=True)
@@ -59,37 +72,76 @@ class Collaborators(models.Model):
     
     situation = models.CharField(
         max_length=100,
+        choices=RECEITA_STATUS_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Situação Receita Federal"
     )
-    regular = models.BooleanField(
+    regular = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="CPF Regular"
     )
-    death = models.BooleanField(
+    death = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Óbito"
     )
     api_status = models.CharField(
-        max_length=10,
+        max_length=100,
+        default='nulo',
         null=True,
         blank=True,
         editable=False,
         verbose_name="Status da API"
     )
+    retorno_api = models.TextField(
+        default='nulo',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="Retorno da API"
+    )
+    date_time_appointment = models.DateTimeField(
+        auto_now=True,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='Data/hora da consulta'
+    )
+    certificate_presentation_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Data de apresentação da certidão"
+    )
+    certificate_validity = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Validade da certidão"
+    )
+    observations_certificate = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Observações"
+    )
+    certificate_file = models.FileField(
+        upload_to='certidoes/',
+        null=True,
+        blank=True,
+        verbose_name="Arquivo da certidão"
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
     class Meta:
-        verbose_name = "3. Colaborador"
-        verbose_name_plural = "3. Colaboradores"
+        verbose_name = "03. Colaborador"
+        verbose_name_plural = "03. Colaboradores"
         ordering = ["name", "email", "phone_number", "created_at"]
         unique_together = [['name', 'cpf'], ['condominium', 'cpf']]
 
@@ -107,8 +159,8 @@ class DocumentCondominium(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "4. Documento do Condomínio"
-        verbose_name_plural = "4. Documentos do Condomínio"
+        verbose_name = "04. Documento do Condomínio"
+        verbose_name_plural = "04. Documentos do Condomínio"
         ordering = ["name", "created_at"]
 
     def __str__(self):

@@ -8,8 +8,8 @@ class TypesCondominium(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
-        verbose_name = "1. Tipo de Condomínio"
-        verbose_name_plural = "1. Tipos de Condomínios"
+        verbose_name = "01. Tipo de Condomínio"
+        verbose_name_plural = "01. Tipos de Condomínios"
         ordering = ["name", "is_active", "created_at"]
         unique_together = ['name']
 
@@ -24,8 +24,8 @@ class StructionCondominium(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
-        verbose_name = "2. Estrutura do Condomínio"
-        verbose_name_plural = "2. Estruturas dos Condomínios"
+        verbose_name = "02. Estrutura do Condomínio"
+        verbose_name_plural = "02. Estruturas dos Condomínios"
         ordering = ["name", "is_active", "created_at"]
         unique_together = ['name']
 
@@ -49,8 +49,8 @@ class States(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
-        verbose_name = "3. Estado"
-        verbose_name_plural = "3. Estados"
+        verbose_name = "03. Estado"
+        verbose_name_plural = "03. Estados"
         ordering = ["abbreviation", "name", "region"]
         unique_together = ['name', 'abbreviation']
 
@@ -72,8 +72,8 @@ class Addresses(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "4. Endereço"
-        verbose_name_plural = "4. Endereços"
+        verbose_name = "04. Endereço"
+        verbose_name_plural = "04. Endereços"
         ordering = ["country", 'state', 'city', 'street', 'number', 'complement', "is_active", "created_at"]
         unique_together = ['street', 'number', 'neighborhood', 'city', 'state', 'zip_code']
 
@@ -82,3 +82,19 @@ class Addresses(models.Model):
         if self.complement:
             address_line += f" - {self.complement}"
         return f"{address_line} | {self.neighborhood} | {self.city}/{self.state.abbreviation} | {self.zip_code}"
+
+
+class TypesVisitorRestrictions(models.Model):
+    description = models.CharField(max_length=100, unique=True, null=False, blank=False, verbose_name="Tipo de Restrição")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    
+    class Meta:
+        ordering = ['description']
+        verbose_name = "05. Tipo de Restrição/Visitante"
+        verbose_name_plural = "05. Tipos de Restrição/Visitantes"
+        unique_together = ['description']
+
+    def __str__(self):
+        return self.description

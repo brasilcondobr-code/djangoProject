@@ -9,8 +9,8 @@ class BusinessSector(models.Model):
     
     class Meta:
         ordering = ['description']
-        verbose_name = "1. Ramo de Atividade"
-        verbose_name_plural = "1. Ramos de Atividade"
+        verbose_name = "01. Ramo de Atividade"
+        verbose_name_plural = "01. Ramos de Atividade"
         unique_together = ['description']
 
     def __str__(self):
@@ -18,6 +18,19 @@ class BusinessSector(models.Model):
 
 
 class Entity(models.Model):
+    RECEITA_STATUS_CHOICES = (
+        ('Regular', 'Regular'),
+        ('Suspenso', 'Suspenso'),
+        ('Pendente de Regularização', 'Pendente de Regularização'),
+        ('Cancelado', 'Cancelado'),
+        ('Titular Falecido', 'Titular Falecido'),
+        ('Nulo', 'Nulo'),
+    )
+    YES_NO_CHOICES = (
+        ('Sim', 'Sim'),
+        ('Não', 'Não'),
+    )
+
     KIND_CHOICES = (
         ('PF', 'Pessoa Física'),
         ('PJ', 'Pessoa Jurídica'),
@@ -47,29 +60,46 @@ class Entity(models.Model):
     
     situation = models.CharField(
         max_length=100,
+        choices=RECEITA_STATUS_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Situação Receita Federal"
     )
-    regular = models.BooleanField(
+    regular = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
-        verbose_name="CPF Regular"
+        verbose_name="CPF/CNPJ Regular"
     )
-    death = models.BooleanField(
+    death = models.CharField(
+        max_length=3,
+        choices=YES_NO_CHOICES,
         null=True,
         blank=True,
-        editable=False,
         verbose_name="Óbito"
     )
     api_status = models.CharField(
-        max_length=10,
+        max_length=100,
+        default='nulo',
         null=True,
         blank=True,
         editable=False,
         verbose_name="Status da API"
+    )
+    retorno_api = models.TextField(
+        default='nulo',
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Retorno da API'
+    )
+    date_time_appointment = models.DateTimeField(
+        auto_now=True,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='Data/hora da consulta'
     )
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
@@ -77,8 +107,8 @@ class Entity(models.Model):
     
     class Meta:
         ordering = ['business_sector','name','cpf_cnpj']
-        verbose_name = "2. Entidade"
-        verbose_name_plural = "2. Entidades"
+        verbose_name = "02. Entidade"
+        verbose_name_plural = "02. Entidades"
         unique_together = ['business_sector', 'cpf_cnpj']
 
     def __str__(self):
