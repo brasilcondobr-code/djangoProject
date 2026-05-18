@@ -3,71 +3,63 @@ from django.db import models
 class ImportModule(models.Model):
     
     class Meta:
-        verbose_name = '1. Importação'
-        verbose_name_plural = '1. Importações'
+        verbose_name = '01. Importação'
+        verbose_name_plural = '01. Importações'
         
     def __str__(self):
-        return "Importações"
+        return "01. Importações"
 
 class ExportModule(models.Model):
     
     class Meta:
-        verbose_name = '2. Exportação'
-        verbose_name_plural = '2. Exportações'
+        verbose_name = '02. Exportação'
+        verbose_name_plural = '02. Exportações'
         
     def __str__(self):
-        return "Exportações"
+        return "02. Exportações"
         
-class LogModule(models.Model):
-    
-    class Meta:
-        verbose_name = '3. Log'
-        verbose_name_plural = '3. Logs'
-        
-    def __str__(self):
-        return "Logs"
-        
+       
 class AuditModule(models.Model):
     
     class Meta:
-        verbose_name = '4. Auditoria'
-        verbose_name_plural = '4. Auditorias'
+        verbose_name = '03. Auditoria'
+        verbose_name_plural = '03. Auditorias'
         
     def __str__(self):
-        return "Auditorias"
+        return "03. Auditorias"
         
 class ScheduledTaskModule(models.Model):
     
     class Meta:
-        verbose_name = '5. Tarefa Agendada'
-        verbose_name_plural = '5. Tarefas Agendadas'
+        verbose_name = '04. Tarefa Agendada'
+        verbose_name_plural = '04. Tarefas Agendadas'
         
     def __str__(self):
-        return "Tarefas Agendadas"
+        return "04. Tarefas Agendadas"
         
 class IntegrationModule(models.Model):
     
     class Meta:
-        verbose_name = '6. Integração'
-        verbose_name_plural = '6. Integrações'
+        verbose_name = '05. Integração'
+        verbose_name_plural = '05. Integrações'
         
     def __str__(self):
-        return "Integrações"
+        return "05. Integrações"
 
 class BackupModule(models.Model):
     
     class Meta:
-        verbose_name = '7. Backup'
-        verbose_name_plural = '7. Backups'
+        verbose_name = '06. Backup'
+        verbose_name_plural = '06. Backups'
         
     def __str__(self):
-        return "Backups"
+        return "06. Backups"
         
 class RestoreModule(models.Model):
     
     class Meta:
-        verbose_name = '8. Restauração'
-        verbose_name_plural = '8. Restaurações'
+        verbose_name = '07. Restauração'
+        verbose_name_plural = '07. Restaurações'
         
     def __str__(self):
-        return "Restaurações"
+        return "07. Restaurações"

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'reservations',
     'gatehouse',
     'administrative',
+    'financial',
     # Seus apps aqui
 ]
 
@@ -259,6 +260,17 @@ JAZZMIN_SETTINGS = {
         "administrative.ChartOfAccount": "fas fa-chart-pie",
         "administrative.Project": "fas fa-project-diagram",
         "administrative.Task": "fas fa-tasks",
+        "financial.Agreement": "fas fa-handshake",
+        "financial.PaymentSlip": "fas fa-file-invoice-dollar",
+        "financial.Cash": "fas fa-cash-register",
+        "financial.Collection": "fas fa-coins",
+        "financial.Shopping": "fas fa-shopping-cart",
+        "financial.Loan": "fas fa-hand-holding-usd",
+        "financial.NewRelease": "fas fa-money-bill-wave",
+        "financial.Payment": "fas fa-credit-card",
+        "financial.Apportionment": "fa-solid fa-chart-pie",
+        "financial.Receipt": "fas fa-receipt",
+        "financial.BankTransfer": "fa-solid fa-square-poll-horizontal",
     },
     
     "show_ui_builder": False,

@@ -2,75 +2,75 @@ from django.db import models
 
 class Bank(models.Model):
     class Meta:
-        verbose_name = "1. Banco"
-        verbose_name_plural = "1. Bancos"
+        verbose_name = "01. Banco"
+        verbose_name_plural = "01. Bancos"
 
     def __str__(self):
-        return "1. Bancos"
+        return "01. Bancos"
 
 class Circular(models.Model):
     class Meta:
-        verbose_name = "2. Circular"
-        verbose_name_plural = "2. Circulares"
+        verbose_name = "02. Circular"
+        verbose_name_plural = "02. Circulares"
 
     def __str__(self):
-        return "2. Circulares"
+        return "02. Circulares"
 
 class Contract(models.Model):
     class Meta:
-        verbose_name = "3. Contrato"
-        verbose_name_plural = "3. Contratos"
+        verbose_name = "03. Contrato"
+        verbose_name_plural = "03. Contratos"
 
     def __str__(self):
-        return "3. Contratos"
+        return "03. Contratos"
 
 class Infraction(models.Model):
     class Meta:
-        verbose_name = "4. Infração"
-        verbose_name_plural = "4. Infrações"
+        verbose_name = "04. Infração"
+        verbose_name_plural = "04. Infrações"
 
     def __str__(self):
-        return "4. Infrações"
+        return "04. Infrações"
 
 class Meter(models.Model):
     class Meta:
-        verbose_name = "5. Medidor"
-        verbose_name_plural = "5. Medidores"
+        verbose_name = "05. Medidor"
+        verbose_name_plural = "05. Medidores"
 
     def __str__(self):
-        return "5. Medidores"
+        return "05. Medidores"
 
 class Notification(models.Model):
     class Meta:
-        verbose_name = "6. Notificação"
-        verbose_name_plural = "6. Notificações"
+        verbose_name = "06. Notificação"
+        verbose_name_plural = "06. Notificações"
 
     def __str__(self):
-        return "6. Notificações"
+        return "06. Notificações"
 
 class Patrimony(models.Model):
     class Meta:
-        verbose_name = "7. Patrimônio"
-        verbose_name_plural = "7. Patrimônios"
+        verbose_name = "07. Patrimônio"
+        verbose_name_plural = "07. Patrimônios"
 
     def __str__(self):
-        return "7. Patrimônios"
+        return "07. Patrimônios"
 
 class BudgetForecast(models.Model):
     class Meta:
-        verbose_name = "8. Previsão Orçamentária"
-        verbose_name_plural = "8. Previsões Orçamentárias"
+        verbose_name = "08. Previsão Orçamentária"
+        verbose_name_plural = "08. Previsões Orçamentárias"
 
     def __str__(self):
-        return "8. Previsões Orçamentárias"
+        return "08. Previsões Orçamentárias"
 
 class ChartOfAccount(models.Model):
     class Meta:
-        verbose_name = "9. Plano de Conta"
-        verbose_name_plural = "9. Plano de Contas"
+        verbose_name = "09. Plano de Conta"
+        verbose_name_plural = "09. Plano de Contas"
 
     def __str__(self):
-        return "9. Plano de Contas"
+        return "09. Plano de Contas"
 
 class Project(models.Model):
     class Meta:

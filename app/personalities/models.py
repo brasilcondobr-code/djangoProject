@@ -9,8 +9,8 @@ class BusinessSector(models.Model):
     
     class Meta:
         ordering = ['description']
-        verbose_name = "1. Ramo de Atividade"
-        verbose_name_plural = "1. Ramos de Atividade"
+        verbose_name = "01. Ramo de Atividade"
+        verbose_name_plural = "01. Ramos de Atividade"
         unique_together = ['description']
 
     def __str__(self):
@@ -107,8 +107,8 @@ class Entity(models.Model):
     
     class Meta:
         ordering = ['business_sector','name','cpf_cnpj']
-        verbose_name = "2. Entidade"
-        verbose_name_plural = "2. Entidades"
+        verbose_name = "02. Entidade"
+        verbose_name_plural = "02. Entidades"
         unique_together = ['business_sector', 'cpf_cnpj']
 
     def __str__(self):

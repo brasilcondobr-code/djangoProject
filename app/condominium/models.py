@@ -20,8 +20,8 @@ class Condominium(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = "1. Condomínio"
-        verbose_name_plural = "1. Condomínios"
+        verbose_name = "01. Condomínio"
+        verbose_name_plural = "01. Condomínios"
         ordering = ["name", "code", "cnpj", "is_active", "created_at"]
         ##unique_together = [['cnpj'], ['code']]
 
@@ -36,8 +36,8 @@ class Types_collaborators(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
-        verbose_name = "2. Tipo de Colaborador"
-        verbose_name_plural = "2. Tipos de Colaboradores"
+        verbose_name = "02. Tipo de Colaborador"
+        verbose_name_plural = "02. Tipos de Colaboradores"
         ordering = ["name", "is_active", "created_at"]
         unique_together = ['name']
     
@@ -140,8 +140,8 @@ class Collaborators(models.Model):
 
 
     class Meta:
-        verbose_name = "3. Colaborador"
-        verbose_name_plural = "3. Colaboradores"
+        verbose_name = "03. Colaborador"
+        verbose_name_plural = "03. Colaboradores"
         ordering = ["name", "email", "phone_number", "created_at"]
         unique_together = [['name', 'cpf'], ['condominium', 'cpf']]
 
@@ -159,8 +159,8 @@ class DocumentCondominium(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "4. Documento do Condomínio"
-        verbose_name_plural = "4. Documentos do Condomínio"
+        verbose_name = "04. Documento do Condomínio"
+        verbose_name_plural = "04. Documentos do Condomínio"
         ordering = ["name", "created_at"]
 
     def __str__(self):

@@ -3,80 +3,80 @@ from django.db import models
 class Shift(models.Model):
 
     class Meta:
-        verbose_name = "1. Plantão"
-        verbose_name_plural = "1. Plantões"
+        verbose_name = "01. Plantão"
+        verbose_name_plural = "01. Plantões"
 
     def __str__(self):
-        return "1. Plantões"
+        return "01. Plantões"
 
 class ServiceTransition(models.Model):
 
     class Meta:
-        verbose_name = "2. Passagem de Serviço"
-        verbose_name_plural = "2. Passagens de Serviços"
+        verbose_name = "02. Passagem de Serviço"
+        verbose_name_plural = "02. Passagens de Serviços"
 
     def __str__(self):
-        return "2. Passagens de Serviços"
+        return "02. Passagens de Serviços"
 
 class UsefulPhoneNumber(models.Model):
 
     class Meta:
-        verbose_name = "3. Telefone Útil"
-        verbose_name_plural = "3. Telefones Úteis"
+        verbose_name = "03. Telefone Útil"
+        verbose_name_plural = "03. Telefones Úteis"
 
     def __str__(self):
-        return "3. Telefones Úteis"
+        return "03. Telefones Úteis"
 
 class Order(models.Model):
 
     class Meta:
-        verbose_name = "4. Encomenda"
-        verbose_name_plural = "4. Encomendas"
+        verbose_name = "04. Encomenda"
+        verbose_name_plural = "04. Encomendas"
 
     def __str__(self):
-        return "4. Encomendas"
+        return "04. Encomendas"
 
 class VisitorsRegister(models.Model):
 
     class Meta:
-        verbose_name = "5. Reg. Visitante"
-        verbose_name_plural = "5. Reg. Visitantes"
+        verbose_name = "05. Reg. Visitante"
+        verbose_name_plural = "05. Reg. Visitantes"
 
     def __str__(self):
-        return "5. Reg. Visitantes"
+        return "05. Reg. Visitantes"
 
 class Correspondence(models.Model):
 
     class Meta:
-        verbose_name = "6. Correspondência"
-        verbose_name_plural = "6. Correspondências"
+        verbose_name = "06. Correspondência"
+        verbose_name_plural = "06. Correspondências"
 
     def __str__(self):
-        return "6. Correspondências"
+        return "06. Correspondências"
 
 class Occurrence(models.Model):
 
     class Meta:
-        verbose_name = "7. Ocorrência"
-        verbose_name_plural = "7. Ocorrências"
+        verbose_name = "07. Ocorrência"
+        verbose_name_plural = "07. Ocorrências"
 
     def __str__(self):
-        return "7. Ocorrências"
+        return "07. Ocorrências"
 
 class Bag(models.Model):
 
     class Meta:
-        verbose_name = "8. Malote"
-        verbose_name_plural = "8. Malotes"
+        verbose_name = "08. Malote"
+        verbose_name_plural = "08. Malotes"
 
     def __str__(self):
-        return "8. Malotes"
+        return "08. Malotes"
 
 class ElectronicTimeClock(models.Model):
 
     class Meta:
-        verbose_name = "9. Ponto Eletrônico"
-        verbose_name_plural = "9. Pontos Eletrônicos"
+        verbose_name = "09. Ponto Eletrônico"
+        verbose_name_plural = "09. Pontos Eletrônicos"
 
     def __str__(self):
-        return "9. Ponto Eletrônico"
+        return "09. Ponto Eletrônico"

@@ -106,8 +106,8 @@ class CondominiumUnit(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["tower", "unit_number"], name="unique_unit_per_tower")
         ]
-        verbose_name = "1. Unidade"
-        verbose_name_plural = "1. Unidades"
+        verbose_name = "01. Unidade"
+        verbose_name_plural = "01. Unidades"
         unique_together = (("tower", "unit_number"),)
     
     def __str__(self):
@@ -123,7 +123,7 @@ class CondominiumUnit(models.Model):
         unit = getattr(self, "unit_number", "")
         if tower_name:
             return f" {condominium_name} - {tower_name} - {unit}".strip()
-        return f"Unidade {unit}".strip()
+        return f"-01. Unidade {unit}".strip()
     
 
 class Resident(models.Model):
@@ -231,8 +231,8 @@ class Resident(models.Model):
 
     class Meta:
         ordering = ["unit", "name", "created_at"]
-        verbose_name = "2. Morador"
-        verbose_name_plural = "2. Moradores"
+        verbose_name = "0  02. Morador"
+        verbose_name_plural = "02. Moradores"
         unique_together = (("unit", "name"), ("unit", "cpf"), ("unit", "rg"))
 
     def __str__(self):
@@ -347,8 +347,8 @@ class Visitor(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "name", "created_at"]
-        verbose_name = "6. Visitante"
-        verbose_name_plural = "6. Visitantes"
+        verbose_name = "06. Visitante"
+        verbose_name_plural = "06. Visitantes"
         unique_together = (("condo_unit", "name"), ("condo_unit", "cpf"), ("condo_unit", "rg"))
 
     def __str__(self):
@@ -381,8 +381,8 @@ class RealEstateAgency(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "name", "created_at"]
-        verbose_name = "7. Imobiliária"
-        verbose_name_plural = "7. Imobiliárias"
+        verbose_name = "07. Imobiliária"
+        verbose_name_plural = "07. Imobiliárias"
         unique_together = (("condo_unit", "name"), ("condo_unit", "email"), ("condo_unit", "phone"))
 
     def __str__(self):
@@ -410,8 +410,8 @@ class Emergency(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "type", "occurred_at", "created_at"]
-        verbose_name = "4. Emergência"
-        verbose_name_plural = "4. Emergências"
+        verbose_name = "04. Emergência"
+        verbose_name_plural = "04. Emergências"
         unique_together = (("condo_unit", "type", "occurred_at"), ("condo_unit", "description", "occurred_at"))
 
     def __str__(self):
@@ -443,8 +443,8 @@ class Vehicle(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "vehicle_type", "license_plate", "created_at"]
-        verbose_name = "3. Veículo"
-        verbose_name_plural = "3. Veículos"
+        verbose_name = "03. Veículo"
+        verbose_name_plural = "03. Veículos"
         unique_together = (("condo_unit", "license_plate"), ("condo_unit", "vehicle_type", "model", "year"))
 
     def __str__(self):
@@ -477,8 +477,8 @@ class Animal(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "name", "species", "created_at"]
-        verbose_name = "5. Animal"
-        verbose_name_plural = "5. Animais"
+        verbose_name = "05. Animal"
+        verbose_name_plural = "05. Animais"
         unique_together = (("condo_unit", "name"), ("condo_unit", "species", "breed"))
 
     def __str__(self):
@@ -507,8 +507,8 @@ class Documents(models.Model):
 
     class Meta:
         ordering = ["condo_unit", "title", "created_at"]
-        verbose_name = "8. Documento"
-        verbose_name_plural = "8. Documentos"
+        verbose_name = "08. Documento"
+        verbose_name_plural = "08. Documentos"
         unique_together = (("condo_unit", "title"), ("condo_unit", "document_type", "created_at"))
 
     def __str__(self):

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BackupModule, ImportModule, ExportModule, LogModule, AuditModule, RestoreModule, ScheduledTaskModule, IntegrationModule
+from .models import BackupModule, ImportModule, ExportModule, AuditModule, RestoreModule, ScheduledTaskModule, IntegrationModule
 
 @admin.register(ImportModule)
 class ImportModuleAdmin(admin.ModelAdmin):
@@ -7,10 +7,6 @@ class ImportModuleAdmin(admin.ModelAdmin):
 
 @admin.register(ExportModule)
 class ExportModuleAdmin(admin.ModelAdmin):
-    pass
-
-@admin.register(LogModule)
-class LogModuleAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(AuditModule)
