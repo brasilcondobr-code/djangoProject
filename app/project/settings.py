@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'residents',
     'personalities',
     'parameters',
+    'data_management',
     # Seus apps aqui
 ]
 
@@ -221,6 +222,14 @@ JAZZMIN_SETTINGS = {
         "residents.Documents": "fa-solid fa-bag-shopping",
         "personalities.Entity": "fa-solid fa-boxes-stacked",
         "personalities.BusinessSector": "fa-solid fa-chess",
+        "data_management.ImportModule": "fas fa-file-import",
+        "data_management.ExportModule": "fas fa-file-export",
+        "data_management.LogModule": "fas fa-list",
+        "data_management.AuditModule": "fas fa-history",
+        "data_management.ScheduledTaskModule": "fas fa-clock",
+        "data_management.IntegrationModule": "fas fa-plug",
+        "data_management.BackupModule": "fas fa-save",
+        "data_management.RestoreModule": "fas fa-undo"
     },
     
     "show_ui_builder": False,
