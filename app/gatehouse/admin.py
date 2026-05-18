@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
-    Shift, ServiceTransition, UsefulPhoneNumber, Order, 
-    VisitorsRegister, Correspondence, Occurrence, Bag, Circular, Task
+    ElectronicTimeClock, Shift, ServiceTransition, UsefulPhoneNumber, Order, 
+    VisitorsRegister, Correspondence, Occurrence, Bag,
 )
 
 @admin.register(Shift)
@@ -36,10 +36,7 @@ class OccurrenceAdmin(admin.ModelAdmin):
 class BagAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(Circular)
-class CircularAdmin(admin.ModelAdmin):
+@admin.register(ElectronicTimeClock)
+class ElectronicTimeClockAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(Task)
-class TaskAdmin(admin.ModelAdmin):
-    pass
