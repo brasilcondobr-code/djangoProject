@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'parameters',
     'data_management',
     'reservations',
+    'gatehouse',
     # Seus apps aqui
 ]
 
@@ -236,6 +237,7 @@ JAZZMIN_SETTINGS = {
         "reservations.Rentals": "fa-solid fa-location-arrow",
         "reservations.MaintenanceReservations": "fas fa-tools",
         "reservations.MoveReservations": "fas fa-truck-moving",
+        "reservations.Reforms": "fas fa-hammer",
     },
     
     "show_ui_builder": False,

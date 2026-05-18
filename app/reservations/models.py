@@ -26,3 +26,12 @@ class MoveReservations(models.Model):
 
     def __str__(self):
         return "3. Mudanças"
+
+class Reforms(models.Model):
+
+    class Meta:
+        verbose_name = "4. Reforma"
+        verbose_name_plural = "4. Reformas"
+
+    def __str__(self):
+        return "4. Reformas"

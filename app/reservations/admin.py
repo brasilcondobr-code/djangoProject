@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Rentals, MaintenanceReservations, MoveReservations
+from .models import Reforms, Rentals, MaintenanceReservations, MoveReservations
 
 @admin.register(Rentals)
 class RentalsAdmin(admin.ModelAdmin):
@@ -11,4 +11,8 @@ class MaintenanceReservationsAdmin(admin.ModelAdmin):
 
 @admin.register(MoveReservations)
 class MoveReservationsAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Reforms)
+class ReformsAdmin(admin.ModelAdmin):
     pass
