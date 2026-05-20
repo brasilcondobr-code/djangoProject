@@ -56,6 +56,7 @@ class BusinessSectorAdmin(ExportCsvMixin, admin.ModelAdmin):
         
     class Media:
         js = (
+            'js/utils.js',
             'js/custom-personalities-business-sector.js',
             )
     
@@ -99,7 +100,7 @@ class EntityAdmin(ExportCsvMixin, admin.ModelAdmin):
         
     class Media:
         js = (
-            'https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js',
+            'js/utils.js',
             'js/custom-personalities-entity.js',
         )
         

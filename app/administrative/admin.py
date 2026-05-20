@@ -42,6 +42,7 @@ class BankAdmin(admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
+            'js/utils.js',
             'js/custom-administrative-bank.js',
         )
 
