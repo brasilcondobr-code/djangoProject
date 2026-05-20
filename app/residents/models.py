@@ -92,12 +92,9 @@ class CondominiumUnit(models.Model):
 
     for_sale = models.BooleanField(default=False, verbose_name="Para venda")
     for_rent = models.BooleanField(default=False, verbose_name="Para aluguel")
-
     sale_price = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, verbose_name="Preço de venda")
     rent_price = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, verbose_name="Preço de aluguel")
-
     notes = models.TextField(blank=True, verbose_name="Observações")
-
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
 

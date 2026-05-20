@@ -44,7 +44,7 @@ class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
-            'js/custom-admin-condominium.js',
+            'js/custom-condominium-condominium.js',
         )
     
     class Meta:
@@ -96,7 +96,7 @@ class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
-            'js/custom-admin-collaborators.js',
+            'js/custom-condominium-collaborators.js',
         )
         
     class Meta:

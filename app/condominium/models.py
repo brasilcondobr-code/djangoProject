@@ -1,5 +1,5 @@
 from django.db import models
-from parameters.models import Addresses, States, TypesCondominium, StructionCondominium
+from parameters.models import Addresses, TypesCondominium, StructionCondominium
 
 # Create your models here.
 

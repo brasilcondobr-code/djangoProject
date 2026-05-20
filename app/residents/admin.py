@@ -57,7 +57,7 @@ class VisitorAdmin(ExportCSVMixin, admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
-            'js/custom-admin-visitor.js',
+            'js/custom-resident-visitor.js',
         )
 
 
@@ -77,7 +77,7 @@ class RealEstateAgencyAdmin(ExportCSVMixin, admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
-            'js/custom-admin-realestateagency.js',
+            'js/custom-resident-realestateagency.js',
         )
 
 
@@ -111,7 +111,7 @@ class VehicleAdmin(ExportCSVMixin, admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
-            'js/custom-admin-vehicle.js',
+            'js/custom-resident-vehicle.js',
         )
 
 
@@ -152,7 +152,7 @@ class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
-            'js/custom-admin-condominium-unit.js',
+            'js/custom-resident-condominium-unit.js',
         )
 
 
@@ -186,7 +186,7 @@ class ResidentAdmin(ExportCSVMixin, admin.ModelAdmin):
         js = (
             'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
-            'js/custom-admin-resident.js',
+            'js/custom-resident-resident.js',
         )
 
 
