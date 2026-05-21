@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
-    Bank, Circular, Contract, Infraction, Meter, 
-    Notification, Patrimony, BudgetForecast, ChartOfAccount, Project, Task
+    Bank, Circular, Documents, Infraction, Meter, 
+    Notification, Patrimony, BudgetForecast, ChartOfAccount, Task, VirtualAssembly
 )
 from .forms import BankForm
 
@@ -50,8 +50,8 @@ class BankAdmin(admin.ModelAdmin):
 class CircularAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(Contract)
-class ContractAdmin(admin.ModelAdmin):
+@admin.register(Documents)
+class DocumentsAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(Infraction)
@@ -78,10 +78,10 @@ class BudgetForecastAdmin(admin.ModelAdmin):
 class ChartOfAccountAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    pass
-
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(VirtualAssembly)
+class VirtualAssemblyAdmin(admin.ModelAdmin):
     pass

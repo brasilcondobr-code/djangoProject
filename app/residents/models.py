@@ -1,11 +1,12 @@
 import decimal
-from email.policy import default
-
+import decimal
 from django.db import models
 from condominium.models import Condominium
+from parameters.models import ResidentType
 
 # Create your models here.
 class FloorChoices(models.TextChoices):
+
     INFERIOR = "inferior", "Inferior"
     TERREO = "terreo", "Térreo"
     ONE = "1", "1° andar"
@@ -136,16 +137,18 @@ class Resident(models.Model):
         ('Sim', 'Sim'),
         ('Não', 'Não'),
     )
-
-    ResidentTypeChoices = [
-        ('owner', 'Proprietário(a)'),
-        ('tenant', 'Morador(a)'),
-        ('occupant', 'Ocupante'),
-    ]
     
     unit = models.ForeignKey(CondominiumUnit, on_delete=models.CASCADE, related_name="residents", verbose_name="Unidade")
-    type_of_resident = models.CharField(max_length=20, choices=ResidentTypeChoices, default='tenant', null=True, blank=True, verbose_name="Tipo de morador")
+    type_of_resident = models.ForeignKey(
+        ResidentType,
+        related_name='resident',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name='Tipo de morador'
+    )
     name = models.CharField(max_length=250, verbose_name="Nome")
+
     email = models.EmailField(verbose_name="Email")
     phone = models.CharField(max_length=20, verbose_name="Telefone")
     cpf = models.CharField(max_length=14, verbose_name="CPF")

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType
 
 
 class StatesForm(forms.ModelForm):
@@ -204,5 +204,47 @@ class TypesVisitorRestrictionsForm(forms.ModelForm):
         description = self.cleaned_data.get('description')
         if not description:
             raise forms.ValidationError('A descrição é obrigatória.')
+        return description
+
+
+class ResidentTypeForm(forms.ModelForm):
+    class Meta:
+        model = ResidentType
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+        }
+        error_messages = {
+            'description': {
+                'required': 'A descrição é obrigatória.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+        
+        # RN001: Remover espaços extras e validar unicidade case-insensitive
+        description = description.strip()
+        
+        # Verifica se já existe outro registro com a mesma descrição (ignorando case)
+        # Exclui o próprio objeto se estivermos em um Update
+        instance = self.instance
+        queryset = ResidentType.objects.filter(description__iexact=description)
+        if instance:
+            queryset = queryset.exclude(pk=instance.pk)
+            
+        if queryset.exists():
+            raise forms.ValidationError('Já existe um tipo de residente com esta descrição.')
+            
         return description
 

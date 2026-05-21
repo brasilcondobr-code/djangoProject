@@ -68,13 +68,13 @@ class Circular(models.Model):
     def __str__(self):
         return "02. Circulares"
 
-class Contract(models.Model):
+class Documents(models.Model):
     class Meta:
-        verbose_name = "03. Contrato"
-        verbose_name_plural = "03. Contratos"
+        verbose_name = "03. Documento"
+        verbose_name_plural = "03. Documentos"
 
     def __str__(self):
-        return "03. Contratos"
+        return "03. Documentos"
 
 class Infraction(models.Model):
     class Meta:
@@ -124,27 +124,19 @@ class ChartOfAccount(models.Model):
     def __str__(self):
         return "09. Plano de Contas"
 
-class Project(models.Model):
-    class Meta:
-        verbose_name = "10. Projeto"
-        verbose_name_plural = "10. Projetos"
-
-    def __str__(self):
-        return "10. Projetos"
-
 class Task(models.Model):
     class Meta:
-        verbose_name = "11. Tarefa"
-        verbose_name_plural = "11. Tarefas"
+        verbose_name = "10. Tarefa"
+        verbose_name_plural = "10. Tarefas"
 
     def __str__(self):
-        return "11. Tarefas"
+        return "10. Tarefas"
 
 
 class VirtualAssembly(models.Model):
     class Meta:
-        verbose_name = "12. Assembleia Virtual"
-        verbose_name_plural = "12. Assembleias Virtuais"
+        verbose_name = "11. Assembleia Virtual"
+        verbose_name_plural = "11. Assembleias Virtuais"
 
     def __str__(self):
-        return "12. Assembleias Virtuais"
+        return "11. Assembleias Virtuais"

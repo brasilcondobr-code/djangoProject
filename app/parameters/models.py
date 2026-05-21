@@ -98,3 +98,33 @@ class TypesVisitorRestrictions(models.Model):
 
     def __str__(self):
         return self.description
+
+
+class ResidentType(models.Model):
+    description = models.CharField(
+        verbose_name='Descrição',
+        max_length=255,
+        unique=True,
+        null=False,
+        blank=False
+    )
+
+    is_active = models.BooleanField(
+        verbose_name='Ativo',
+        default=True
+    )
+
+    class Meta:
+        verbose_name='Tipo de Residente'
+        verbose_name_plural='06. Tipos de Residentes'
+
+        unique_together = [
+            ('description',)
+        ]
+
+        ordering = [
+            'description'
+        ]
+
+    def __str__(self):
+        return self.description

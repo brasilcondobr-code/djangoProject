@@ -3,6 +3,7 @@ from core.services.validators import validate_cpf, validate_cnpj, validate_email
 from core.services.hydra_cpf_service import consult_cpf
 
 from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor, Resident
+from parameters.models import ResidentType
 
 class CondominiumUnitFormAdmin(forms.ModelForm):
     
@@ -261,6 +262,8 @@ class ResidentFormAdmin(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if 'type_of_resident' in self.fields:
+            self.fields['type_of_resident'].queryset = ResidentType.objects.filter(is_active=True).order_by('description')
         self.fields['email'].widget.attrs['class'] = 'mask-email'
         self.fields['phone'].widget.attrs['class'] = 'mask-phone'
         self.fields['cpf'].widget.attrs['class'] = 'mask-cpf'
