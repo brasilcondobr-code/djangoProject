@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'administrative',
     'financial',
     'system',
-    # Seus apps aqui
+    'email_service',
 ]
 
 MIDDLEWARE = [
@@ -282,6 +282,10 @@ JAZZMIN_SETTINGS = {
         "system.Training": "fas fa-chalkboard-teacher",
         "system.IntegrationToken": "fas fa-key",
         "system.ConnectedUser": "fas fa-user-friends",
+        "email_service.SMTP_Settings": "fas fa-envelope",
+        "email_service.UsageProfiles": "fas fa-user-friends",
+        "email_service.ShippingQueue": "fas fa-truck",
+        "email_service.EmailHistory": "fas fa-history",
     },
     
     "show_ui_builder": False,
