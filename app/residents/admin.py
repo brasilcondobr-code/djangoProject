@@ -139,7 +139,6 @@ class AnimalAdmin(ExportCSVMixin, admin.ModelAdmin):
         )
 
 
-
 @admin.register(CondominiumUnit)
 class CondominiumUnitAdmin(ExportCSVMixin, admin.ModelAdmin):
     form = CondominiumUnitFormAdmin

@@ -1,6 +1,12 @@
 from django.views import View
 
-class SMTP_SettingsView(View):
+class TypesProviderView(View):
+    pass
+
+class ConnectionStatusView(View):
+    pass
+
+class SMTPSettingsView(View):
     pass
 
 class UsageProfilesView(View):
@@ -9,5 +15,10 @@ class UsageProfilesView(View):
 class ShippingQueueView(View):
     pass
 
+class EmailQueueView(View):
+    pass
+
 class EmailHistoryView(View):
     pass
+
+
