@@ -284,7 +284,7 @@ JAZZMIN_SETTINGS = {
         "system.ConnectedUser": "fas fa-user-friends",
         "email_service.TypesProvider": "fas fa-server",
         "email_service.ConnectionStatus": "fas fa-signal",
-        "email_service.SMTP_Settings": "fas fa-envelope",
+        "email_service.SMTPConfiguration": "fas fa-envelope",
         "email_service.UsageProfiles": "fas fa-user-friends",
         "email_service.ShippingQueue": "fas fa-truck",
         "email_service.EmailHistory": "fas fa-history",

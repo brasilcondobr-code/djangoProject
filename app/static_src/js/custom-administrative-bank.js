@@ -14,7 +14,3 @@
         BrasilCondoUtils.applyMask('.mask-phone', 'phone');
     });
 })(django.jQuery);
-
-
-
-
