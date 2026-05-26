@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import ConnectionStatus, TypesProvider, SMTPConfiguration
+from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles
 
 class TypesProviderForm(forms.ModelForm):
     class Meta:
@@ -97,7 +97,7 @@ class SMTPConfigurationForm(forms.ModelForm):
             'smtp_host': forms.TextInput(attrs={'class': 'mask-smtp_host', 'placeholder': 'smtp.gmail.com'}),
             'smtp_port': forms.NumberInput(attrs={'class': 'mask-smtp_port', 'placeholder': '587'}),
             'username': forms.TextInput(attrs={'class': 'mask-username', 'placeholder': 'usuario@email.com'}),
-            'password': forms.PasswordInput(attrs={'class': 'mask-password'}),
+            'password': forms.TextInput(attrs={'class': 'mask-password'}),
             'use_tls': forms.Select(),
             'use_ssl': forms.Select(),
             'smtp_authentication': forms.Select(),
@@ -106,7 +106,7 @@ class SMTPConfigurationForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(),
             'api_url': forms.URLInput(attrs={'class': 'mask-api_url', 'placeholder': 'https://api.provider.com'}),
             'api_key': forms.TextInput(attrs={'class': 'mask-api_key'}),
-            'api_secret': forms.PasswordInput(attrs={'class': 'mask-api_secret'}),
+            'api_secret': forms.TextInput(attrs={'class': 'mask-api_secret'}),
             'api_version': forms.TextInput(attrs={'class': 'mask-api_version'}),
             'emails_per_hour': forms.NumberInput(attrs={'class': 'mask-number'}),
             'emails_per_day': forms.NumberInput(attrs={'class': 'mask-number'}),
@@ -229,120 +229,57 @@ class ConnectionStatusForm(forms.ModelForm):
         self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
 
 
-class EmailProviderForm(forms.ModelForm):
+class UsageProfilesForm(forms.ModelForm):
     class Meta:
-        model = TypesProvider
+        model = UsageProfiles
         fields = '__all__'
         widgets = {
-            'description': forms.TextInput(attrs={'class': 'mask-description'}),
-            'provider_code': forms.TextInput(attrs={'class': 'mask-provider_code'}),
-            'provider_type': forms.Select(attrs={'class': 'mask-provider_type'}),
-            'smtp_host': forms.TextInput(attrs={'class': 'mask-smtp_host'}),
-            'smtp_port': forms.NumberInput(attrs={'class': 'mask-smtp_port'}),
-            'username': forms.TextInput(attrs={'class': 'mask-username'}),
-            'password': forms.TextInput(attrs={'class': 'mask-password'}),
-            'use_tls': forms.CheckboxInput(attrs={'class': 'mask-use_tls'}),
-            'use_ssl': forms.CheckboxInput(attrs={'class': 'mask-use_ssl'}),
+            'purpose': forms.TextInput(attrs={'class': 'mask-purpose', 'placeholder': 'Ex: Marketing, Transacional'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'mask-is_active'}),
-            'smtp_authentication': forms.CheckboxInput(attrs={'class': 'mask-smtp_authentication'}),
-            'api_supported': forms.CheckboxInput(attrs={'class': 'mask-api_supported'}),
-            'is_default': forms.CheckboxInput(attrs={'class': 'mask-is_default'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'mask-is_active'}),
-            
-            
-            'api_url': forms.URLInput(attrs={'class': 'mask-api_url'}),
-            'api_key': forms.TextInput(attrs={'class': 'mask-api_key'}),
-            'api_secret': forms.TextInput(attrs={'class': 'mask-api_secret'}),
-            'api_version': forms.TextInput(attrs={'class': 'mask-api_version'}),
-            'emails_per_hour': forms.NumberInput(attrs={'class': 'mask-emails_per_hour'}),
-            'emails_per_day': forms.NumberInput(attrs={'class': 'mask-emails_per_day'}),
-            'max_recipients_per_email': forms.NumberInput(attrs={'class': 'mask-max_recipients_per_email'}),
-            'test_email_address': forms.EmailInput(attrs={'class': 'mask-test_email_address'}),
-            'connection_status': forms.Select(attrs={'class': 'mask-connection_status'}),
+            'created_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'updated_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
         
         labels = {
-            'provider_code': 'Código do Fornecedor',
-            'description': 'Descrição',
+            'purpose': 'Propósito',
             'is_active': 'Ativo',
-            'api_url': 'URL da API',
-            'api_key': 'Chave da API',
-            'api_secret': 'Segredo da API',
-            'api_version': 'Versão da API',
-            'emails_per_hour': 'Limite de E-mails por Hora',
-            'emails_per_day': 'Limite de E-mails por Dia',
-            'max_recipients_per_email': 'Máximo de Destinatários por E-mail',
-            'test_email_address': 'E-mail para Testes',
-            'connection_status': 'Status de Conexão',
+            'created_at': 'Data de Criação',
+            'updated_at': 'Data de Atualização',
         }
         
         help_texts = {
-            'provider_code': 'Digite o código do fornecedor',
-            'description': 'Digite a descrição do fornecedor',
-            'is_active': 'Fornecedor ativo',
-            'api_url': 'Digite a URL da API (se aplicável)',
-            'api_key': 'Digite a chave da API (se aplicável)',
-            'api_secret': 'Digite o segredo da API (se aplicável)',
-            'api_version': 'Digite a versão da API (se aplicável)',
-            'emails_per_hour': 'Defina o limite de e-mails por hora (se aplicável)',
-            'emails_per_day': 'Defina o limite de e-mails por dia (se aplicável)',
-            'max_recipients_per_email': 'Defina o máximo de destinatários por e-mail (se aplicável)',
-            'test_email_address': 'Digite um e-mail para testes de conexão',
-            'connection_status': 'Selecione o status de conexão',
+            'purpose': 'Informe a finalidade de utilização deste perfil.',
+            'is_active': 'Status de conexão ativo',
+            'created_at': 'Data de Criação',
+            'updated_at': 'Data de Atualização',
         }
         
         error_messages = {
-            'provider_code': {
-                'max_length': 'O código do fornecedor deve ter no máximo 50 caracteres.',
-                'unique': 'O código do fornecedor deve ser único.',
-            },
-            'description': {
-                'max_length': 'A descrição deve ter no máximo 100 caracteres.',
-                'unique': 'A descrição deve ser única.',
+            'purpose': {
+                'max_length': 'O propósitos deve ter no máximo 255 caracteres.',
             },
             'is_active': {
                 'invalid': 'Selecione uma opção válida.',
             },
-            'api_url': {
-                'invalid': 'Digite uma URL válida.',
-            },
-            'api_key': {
-                'max_length': 'A chave da API deve ter no.maxcdn 255 caracteres.',
-            },
-            'api_secret': {
-                'max_length': 'O segredo da API deve ter no.maxcdn 255 caracteres.',
-            },
-            'api_version': {
-                'max_length': 'A versão da API deve ter no.maxcdn 255 caracteres.',
-            },
-            'emails_per_hour': {
-                'invalid': 'Digite um valor numérico.',
-            },
-            'emails_per_day': {
-                'invalid': 'Digite um valor numérico.',
-            },
-            'max_recipients_per_email': {
-                'invalid': 'Digite um valor numérico.',
-            },
-            'test_email_address': {
-                'invalid': 'Digite um e-mail válido para testes.',
-            },
-            'connection_status': {
-                'invalid': 'Selecione uma opção válida.',
-            },
         }
-        
+    
+    def clean_purpose(self):
+        purpose = self.cleaned_data.get('purpose')
+        if not purpose:
+            raise forms.ValidationError('O propósitos é obrigatório.')
+        if len(purpose) > 255:
+            raise forms.ValidationError('O propósitos deve ter no máximo 255 caracteres.')
+        return purpose.strip()
+    
+    def clean_status(self):
+        status = self.cleaned_data.get('status')
+        if not status:
+            raise forms.ValidationError('O status de conexão é obrigatório.')
+        if len(status) > 255:
+            raise forms.ValidationError('O status de conexão deve ter no máximo 255 caracteres.')
+        return status
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['provider_code'].widget.attrs['class'] = 'mask-provider_code'
-        self.fields['description'].widget.attrs['class'] = 'mask-description'
+        self.fields['purpose'].widget.attrs['class'] = 'mask-purpose'
         self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
-        self.fields['api_url'].widget.attrs['class'] = 'mask-api_url'
-        self.fields['api_key'].widget.attrs['class'] = 'mask-api_key'
-        self.fields['api_secret'].widget.attrs['class'] = 'mask-api_secret'
-        self.fields['api_version'].widget.attrs['class'] = 'mask-api_version'
-        self.fields['emails_per_hour'].widget.attrs['class'] = 'mask-emails_per_hour'
-        self.fields['emails_per_day'].widget.attrs['class'] = 'mask-emails_per_day'
-        self.fields['max_recipients_per_email'].widget.attrs['class'] = 'mask-max_recipients_per_email'
-        self.fields['test_email_address'].widget.attrs['class'] = 'mask-test_email_address'
-        self.fields['connection_status'].widget.attrs['class'] = 'mask-connection_status'

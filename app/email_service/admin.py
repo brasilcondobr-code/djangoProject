@@ -102,7 +102,66 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
 
 @admin.register(UsageProfiles)
 class UsageProfilesAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        'purpose',
+        'is_active',
+        'created_at',
+        'updated_at',
+    )
+    list_filter = (
+        'is_active',
+    )
+    search_fields = (
+        'purpose',
+    )
+    ordering = (
+        'purpose',
+    )
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+    )
+    fieldsets = (
+        (
+            'Principal',
+            {
+                'fields': (
+                    'purpose',
+                    'is_active'
+                )
+            }
+        ),
+        (
+            'Auditoria',
+            {
+                'fields': (
+                    'created_at',
+                    'updated_at'
+                )
+            }
+        ),
+    )
+
+    @admin.action(description='Ativar registros selecionados')
+    def activate_profiles(self, request, queryset):
+        queryset.update(is_active=True)
+
+    @admin.action(description='Desativar registros selecionados')
+    def deactivate_profiles(self, request, queryset):
+        queryset.update(is_active=False)
+
+    actions = ['activate_profiles', 'deactivate_profiles']
+    
+    class Meta:
+        model = UsageProfiles
+        verbose_name = "03. Perfil de Utilização"
+        verbose_name_plural = "03. Perfis de Utilização"
+        
+    class Media:
+        js = (
+            'js/custom-emailservice-usageprofiles.js',
+            )
+
 
 @admin.register(ShippingQueue)
 class ShippingQueueAdmin(admin.ModelAdmin):
