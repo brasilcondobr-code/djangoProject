@@ -1,7 +1,7 @@
-from django.contrib import admin
-
+from django.contrib import admin, messages
 from .forms import ConnectionStatusForm, TypesProviderForm, SMTPConfigurationForm
 from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, ShippingQueue, EmailHistory
+from core.services.smtp_validator_service import SMTPValidator
 
 @admin.register(TypesProvider)
 class TypesProviderAdmin(admin.ModelAdmin):
@@ -50,7 +50,10 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
         'smtp_host',
         'smtp_port',
         'is_default',
-        'is_active'
+        'is_active',
+        'connection_status',
+        'last_connection_tested_at',
+        'validation_attempts'
     )
     search_fields = (
         'description',
@@ -60,12 +63,20 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
     list_filter = (
         'provider_type',
         'is_default',
-        'is_active'
+        'is_active',
+        'connection_status',
+        'use_tls',
+        'use_ssl'
     )
     readonly_fields = (
         'created_at',
         'updated_at',
-        'last_connection_tested_at'
+        'last_connection_tested_at',
+        'last_successful_connection_at',
+        'last_error_message',
+        'last_validation_message',
+        'last_response_time_ms',
+        'validation_attempts'
     )
     
     fieldsets = (
@@ -86,7 +97,7 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
         ('Testes e Monitoramento', {
-            'fields': ('test_email_address', 'last_connection_tested_at', 'connection_status'),
+            'fields': ('test_email_address', 'last_connection_tested_at', 'connection_status', 'last_error_message', 'last_test_duration', 'last_successful_connection_at', 'last_validation_message', 'last_response_time_ms', 'validation_attempts', 'connection_timeout'),
             'classes': ('collapse',),
         }),
         ('Auditoria', {
@@ -95,9 +106,38 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
         }),
     )
 
+    actions = ['validate_smtp_connection']
+
+    @admin.action(description="Validar conexão SMTP")
+    def validate_smtp_connection(self, request, queryset):
+        success_count = 0
+        failed_count = 0
+
+        for smtp in queryset:
+            result = SMTPValidator.validate(
+                smtp_config=smtp,
+                user=request.user
+            )
+
+            if result["success"]:
+                success_count += 1
+            else:
+                failed_count += 1
+
+        if failed_count == 0:
+            messages.success(
+                request,
+                f"Validação concluída: {success_count} sucesso(s), {failed_count} falha(s)"
+            )
+        else:
+            messages.warning(
+                request,
+                f"Validação concluída: {success_count} sucesso(s), {failed_count} falha(s)"
+            )
+
     class Media:
         js = (
-            'js/custom-emailservice-emailprovider.js',
+            'js/custom-emailservice-smtpconfiguration.js',
             )
 
 @admin.register(UsageProfiles)

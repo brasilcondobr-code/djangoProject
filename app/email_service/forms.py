@@ -114,6 +114,8 @@ class SMTPConfigurationForm(forms.ModelForm):
             'test_email_address': forms.EmailInput(attrs={'class': 'mask-email'}),
             'last_connection_tested_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'connection_status': forms.Select(),
+            'last_error_message': forms.Textarea(attrs={'class': 'mask-last_error_message', 'rows': 3}),
+            'last_test_duration': forms.NumberInput(attrs={'class': 'mask-number', 'placeholder': 'Tempo em segundos'}),
         }
         
         labels = {
@@ -140,50 +142,89 @@ class SMTPConfigurationForm(forms.ModelForm):
             'test_email_address': 'E-mail para testes',
             'last_connection_tested_at': 'Último teste',
             'connection_status': 'Status conexão',
+            'last_error_message': 'Mensagem de erro',
+            'last_test_duration': 'Tempo de teste',
         }
 
         help_texts = {
             'description': 'Descrição curta para identificação do provedor.',
             'provider_code': 'Código único do provedor para integração.',
+            'provider_type': 'Tipo de provedor.',
             'smtp_host': 'Endereço do servidor SMTP.',
             'smtp_port': 'Porta de conexão do servidor SMTP.',
-            'test_email_address': 'E-mail utilizado para validar a conexão.',
+            'username': 'Nome de usuário para autenticação SMTP.',
+            'password': 'Senha para autenticação SMTP.',
+            'use_tls': 'Indica se a conexão deve usar TLS.',
+            'use_ssl': 'Indica se a conexão deve usar SSL.',
+            'smtp_authentication': 'Indica se a autenticação SMTP é necessária.',
+            'api_supported': 'Indica se o provedor suporta integração via API.',
+            'is_default': 'Indica se esta configuração é a padrão.',
+            'is_active': 'Indica se esta configuração está ativa.',
+            'api_url': 'URL base para chamadas de API.',
+            'api_key': 'Chave de acesso para autenticação API.',
+            'api_secret': 'Segredo para autenticação API.',
+            'api_version': 'Versão da API utilizada.',
+            'emails_per_hour': 'Número máximo de e-mails que podem ser enviados por hora.',
+            'emails_per_day': 'Número máximo de e-mails que podem ser enviados por dia.',
+            'max_recipients_per_email': 'Número máximo de destinatários permitidos por e-mail.',
+            'test_email_address': 'Endereço de e-mail para envio de testes.',
+            'last_connection_tested_at': 'Data e hora do último teste de conexão.',
+            'connection_status': 'Status atual da conexão.',
+            'last_error_message': 'Última mensagem de erro registrada durante testes de conexão.',
+            'last_test_duration': 'Duração do último teste de conexão em segundos.',
         }
 
     def clean(self):
         cleaned_data = super().clean()
-        
+
         use_tls = cleaned_data.get('use_tls')
         use_ssl = cleaned_data.get('use_ssl')
-        smtp_authentication = cleaned_data.get('smtp_authentication')
-        api_supported = cleaned_data.get('api_supported')
-        username = cleaned_data.get('username')
-        password = cleaned_data.get('password')
-        api_url = cleaned_data.get('api_url')
-        api_key = cleaned_data.get('api_key')
-        api_secret = cleaned_data.get('api_secret')
-        api_version = cleaned_data.get('api_version')
 
-        # RN005: Não permitir SSL e TLS simultaneamente
         if use_tls and use_ssl:
-            raise ValidationError('Não permitir SSL e TLS simultaneamente.')
+            raise ValidationError('TLS e SSL não podem ser utilizados simultaneamente.')
 
-        # RN004: Se smtp_authentication = True, então username e password obrigatórios
+        smtp_authentication = cleaned_data.get('smtp_authentication')
+
         if smtp_authentication:
-            if not username:
-                self.add_error('username', 'O nome de usuário é obrigatório quando a autenticação SMTP está ativa.')
-            if not password:
-                self.add_error('password', 'A senha é obrigatória quando a autenticação SMTP está ativa.')
+            if not cleaned_data.get('username'):
+                raise ValidationError('Usuário obrigatório.')
 
-        # RN003: Se api_supported = False, então campos API não são obrigatórios (implicitly handled by blank=True)
-        # If api_supported is True, we might want them to be required.
-        if api_supported:
-            if not api_url:
-                self.add_error('api_url', 'A URL da API é obrigatória quando o suporte a API está ativo.')
-            if not api_key:
-                self.add_error('api_key', 'A chave da API é obrigatória quando o suporte a API está ativo.')
+            if not cleaned_data.get('password'):
+                raise ValidationError('Senha obrigatória.')
 
         return cleaned_data
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        field_classes = {
+            'description': 'mask-description',
+            'provider_code': 'mask-provider_code',
+            'smtp_host': 'mask-smtp_host',
+            'smtp_port': 'mask-smtp_port',
+            'username': 'mask-username',
+            'password': 'mask-password',
+            'use_tls': 'mask-use_tls',
+            'use_ssl': 'mask-use_ssl',
+            'smtp_authentication': 'mask-smtp_authentication',
+            'api_supported': 'mask-api_supported',
+            'is_default': 'mask-is_default',
+            'is_active': 'mask-is_active',
+            'api_url': 'mask-api_url',
+            'api_key': 'mask-api_key',
+            'api_secret': 'mask-api_secret',
+            'api_version': 'mask-api_version',
+            'emails_per_hour': 'mask-number',
+            'emails_per_day': 'mask-number',
+            'max_recipients_per_email': 'mask-number',
+            'test_email_address': 'mask-email',
+            'last_connection_tested_at': 'mask-last_connection_tested_at',
+            'connection_status': 'mask-connection_status',
+            'last_error_message': 'mask-last_error_message',
+            'last_test_duration': 'mask-last_test_duration',
+        }
+        for field_name, class_name in field_classes.items():
+            if field_name in self.fields:
+                self.fields[field_name].widget.attrs['class'] = class_name
 
 
 

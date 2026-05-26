@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 
 class TypesProvider(models.Model):
     provider = models.CharField(max_length=255, verbose_name="Provedor")
@@ -191,6 +192,35 @@ class SMTPConfiguration(models.Model):
         null=True,
         blank=True,
         verbose_name='Tempo teste (segundos)'
+    )
+    last_successful_connection_at = models.DateTimeField(
+        verbose_name='Última conexão bem-sucedida',
+        null=True,
+        blank=True
+    )
+    last_validation_message = models.TextField(
+        verbose_name='Última mensagem de validação',
+        blank=True
+    )
+    last_response_time_ms = models.IntegerField(
+        verbose_name='Último tempo de resposta (ms)',
+        null=True,
+        blank=True
+    )
+    last_validated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Validado por'
+    )
+    validation_attempts = models.IntegerField(
+        default=0,
+        verbose_name='Tentativas de validação'
+    )
+    connection_timeout = models.IntegerField(
+        default=30,
+        verbose_name='Timeout de conexão (s)'
     )
 
     class Meta:
