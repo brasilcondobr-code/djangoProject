@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+import uuid
 
 class TypesProvider(models.Model):
     provider = models.CharField(max_length=255, verbose_name="Provedor")
@@ -31,15 +32,17 @@ class ConnectionStatus(models.Model):
     
     def __str__(self):
         return f"{self.status}"
-    
+
 class TypesPriority(models.Model):
     priority = models.CharField(max_length=255, verbose_name="Prioridade")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    
     class Meta:
         verbose_name = "03. Tipo de Prioridade"
         verbose_name_plural = "03. Tipos de Prioridade"
+        
     def __str__(self):
         return f"{self.priority}"
 
@@ -80,7 +83,7 @@ class SMTPConfiguration(models.Model):
         blank=False
     )
     username = models.CharField(
-        verbose_name='Nome de Usuário',
+        verbose_name='Usuário',
         max_length=255,
         blank=True,
         null=True
@@ -268,7 +271,7 @@ class UsageProfiles(models.Model):
         auto_now=True,
         verbose_name='Data de Atualização'
     )
-
+    
     class Meta:
         verbose_name = '05. Perfil de Uso'
         verbose_name_plural = '05. Perfis de Uso'
@@ -279,10 +282,10 @@ class UsageProfiles(models.Model):
                 name='unique_usage_profile_purpose'
             )
         ]
-
+    
     def __str__(self):
         return self.purpose
-
+    
     def clean(self):
         super().clean()
         if self.purpose:
@@ -290,17 +293,199 @@ class UsageProfiles(models.Model):
         
         if not self.purpose or not self.purpose.strip():
             raise ValidationError("O campo Propósito é obrigatório.")
-
+    
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
 class ShippingQueue(models.Model):
+    condominium = models.ForeignKey(
+        'condominium.Condominium',
+        on_delete=models.CASCADE,
+        verbose_name='Condomínio',
+        null=True,
+        blank=True
+    )
+    module_origin = models.CharField(
+        max_length=100,
+        verbose_name='Origem do módulo',
+        null=True,
+        blank=True
+    )
+    reference_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Referência ID'
+    )
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        null=True,
+        blank=True
+    )
+    subject = models.CharField(
+        max_length=255,
+        verbose_name='Assunto',
+        null=True,
+        blank=True
+    )
+    to_email = models.EmailField(
+        verbose_name='Destinatário',
+        null=True,
+        blank=True
+    )
+    cc = models.TextField(
+        blank=True,
+        verbose_name='CC',
+        null=True
+    )
+    bcc = models.TextField(
+        blank=True,
+        verbose_name='BCC',
+        null=True
+    )
+    reply_to = models.EmailField(
+        null=True,
+        blank=True,
+        verbose_name='Responder para'
+    )
+    message = models.TextField(
+        verbose_name='Mensagem',
+        null=True,
+        blank=True
+    )
+    html_message = models.TextField(
+        blank=True,
+        verbose_name='Mensagem HTML',
+        null=True
+    )
+    attachments = models.FileField(
+        upload_to='email_attachments/',
+        null=True,
+        blank=True,
+        verbose_name='Anexos'
+    )
+    smtp_configuration = models.ForeignKey(
+        'SMTPConfiguration',
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Configuração SMTP'
+    )
+    usage_profile = models.ForeignKey(
+        'UsageProfiles',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Perfil de uso'
+    )
+    status = models.ForeignKey(
+        ConnectionStatus,
+        related_name='shipping_queue',
+        on_delete=models.CASCADE,
+        verbose_name='Status conexão',
+        null=True,
+        blank=True
+    )
+    priority = models.ForeignKey(
+        TypesPriority,
+        on_delete=models.CASCADE,
+        verbose_name='Tipo de Prioridade',
+        null=True,
+        blank=True
+    )
+    scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Agendado para'
+    )
+    processing_started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Processamento iniciado em'
+    )
+    sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Enviado em'
+    )
+    retry_count = models.IntegerField(
+        default=0,
+        verbose_name='Tentativas'
+    )
+    max_retry_attempts = models.IntegerField(
+        default=3,
+        verbose_name='Máximo tentativas'
+    )
+    next_retry_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Próxima tentativa'
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Ativo'
+    )
+    last_error_message = models.TextField(
+        blank=True,
+        verbose_name='Último erro',
+        null=True
+    )
+    provider_response = models.TextField(
+        blank=True,
+        verbose_name='Resposta do provedor',
+        null=True
+    )
+    logs = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Logs',
+        null=True
+    )
+    response_time_ms = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Tempo de resposta (ms)'
+    )
+    provider_message_id = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='ID mensagem do provedor',
+        null=True
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='email_queue_created',
+        verbose_name='Criado por'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em',
+        null=True,
+        blank=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Atualizado em',
+        null=True,
+        blank=True
+    )
+
     class Meta:
         verbose_name = "06. Fila de Envio"
         verbose_name_plural = "06. Filas de Envio"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['module_origin', 'reference_id', 'to_email'],
+                name='unique_queue_email_per_reference'
+            )
+        ]
+
     def __str__(self):
-        return "06. Fila de Envio"
+        return f"{self.subject} - {self.to_email}"
 
 class EmailHistory(models.Model):
     class Meta:
@@ -308,6 +493,3 @@ class EmailHistory(models.Model):
         verbose_name_plural = "07. Históricos de E-mails"
     def __str__(self):
         return "07. Histórico de E-mails"
-
-
-

@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, TypesPriority
+from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, ShippingQueue
+import uuid
 
 class TypesProviderForm(forms.ModelForm):
     class Meta:
@@ -42,7 +43,7 @@ class TypesProviderForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['provider'].widget.attrs['class'] = 'mask-provider'
         self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
-
+        
 
 class ConnectionStatusForm(forms.ModelForm):
     class Meta:
@@ -84,47 +85,7 @@ class ConnectionStatusForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['status'].widget.attrs['class'] = 'mask-status'
         self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
-
-class TypesPriorityForm(forms.ModelForm):
-    class Meta:
-        model = TypesPriority
-        fields = '__all__'
-        widgets = {
-            'priority': forms.TextInput(attrs={'class': 'mask-priority', 'placeholder': 'Ex: Alta, Media, Baixa'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'mask-is_active'}),
-        }
         
-        labels = {
-            'priority': 'Tipo de Prioridade',
-            'is_active': 'Ativo',
-        }
-        
-        help_texts = {
-            'priority': 'Digite o tipo de prioridade',
-            'is_active': 'Tipo de prioridade ativo',
-        }
-        
-        error_messages = {
-            'priority': {
-                'max_length': 'O tipo de prioridade deve ter no.maxcdn 255 caracteres.',
-            },
-            'is_active': {
-                'invalid': 'Selecione uma opção válida.',
-            },
-        }
-    
-    def clean_priority(self):
-        priority = self.cleaned_data.get('priority')
-        if not priority:
-            raise forms.ValidationError('O tipo de prioridade é obrigatório.')
-        if len(priority) > 255:
-            raise forms.ValidationError('O tipo de prioridade deve ter no máximo 255 caracteres.')
-        return priority
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['priority'].widget.attrs['class'] = 'mask-priority'
-        self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
 
 class SMTPConfigurationForm(forms.ModelForm):
     class Meta:
@@ -164,7 +125,7 @@ class SMTPConfigurationForm(forms.ModelForm):
             'provider_type': 'Tipo de Provedor',
             'smtp_host': 'Host SMTP',
             'smtp_port': 'Porta SMTP',
-            'username': 'Nome de Usuário',
+            'username': 'Usuário',
             'password': 'Senha',
             'use_tls': 'Utilizar TLS',
             'use_ssl': 'Utilizar SSL',
@@ -185,14 +146,14 @@ class SMTPConfigurationForm(forms.ModelForm):
             'last_error_message': 'Mensagem de erro',
             'last_test_duration': 'Tempo de teste',
         }
-
+        
         help_texts = {
             'description': 'Descrição curta para identificação do provedor.',
             'provider_code': 'Código único do provedor para integração.',
             'provider_type': 'Tipo de provedor.',
             'smtp_host': 'Endereço do servidor SMTP.',
             'smtp_port': 'Porta de conexão do servidor SMTP.',
-            'username': 'Nome de usuário para autenticação SMTP.',
+            'username': 'Usuário para autenticação SMTP.',
             'password': 'Senha para autenticação SMTP.',
             'use_tls': 'Indica se a conexão deve usar TLS.',
             'use_ssl': 'Indica se a conexão deve usar SSL.',
@@ -213,24 +174,41 @@ class SMTPConfigurationForm(forms.ModelForm):
             'last_error_message': 'Última mensagem de erro registrada durante testes de conexão.',
             'last_test_duration': 'Duração do último teste de conexão em segundos.',
         }
+        
+        error_messages = {}
 
     def clean(self):
         cleaned_data = super().clean()
-
+        
         use_tls = cleaned_data.get('use_tls')
         use_ssl = cleaned_data.get('use_ssl')
-
-        if use_tls and use_ssl:
-            raise ValidationError('TLS e SSL não podem ser utilizados simultaneamente.')
-
         smtp_authentication = cleaned_data.get('smtp_authentication')
+        api_supported = cleaned_data.get('api_supported')
+        username = cleaned_data.get('username')
+        password = cleaned_data.get('password')
+        api_url = cleaned_data.get('api_url')
+        api_key = cleaned_data.get('api_key')
+        api_secret = cleaned_data.get('api_secret')
+        api_version = cleaned_data.get('api_version')
 
+        # RN005: Não permitir SSL e TLS simultaneamente
+        if use_tls and use_ssl:
+            raise ValidationError('Não permitir SSL e TLS simultaneamente.')
+
+        # RN004: Se smtp_authentication = True, então username e password obrigatórios
         if smtp_authentication:
-            if not cleaned_data.get('username'):
-                raise ValidationError('Usuário obrigatório.')
+            if not username:
+                self.add_error('username', 'O usuário é obrigatório quando a autenticação SMTP está ativa.')
+            if not password:
+                self.add_error('password', 'A senha é obrigatória quando a autenticação SMTP está ativa.')
 
-            if not cleaned_data.get('password'):
-                raise ValidationError('Senha obrigatória.')
+        # RN003: Se api_supported = False, então campos API não são obrigatórios (implicitly handled by blank=True)
+        # If api_supported is True, we might want them to be required.
+        if api_supported:
+            if not api_url:
+                self.add_error('api_url', 'A URL da API é obrigatória quando o suporte a API está ativo.')
+            if not api_key:
+                self.add_error('api_key', 'A chave da API é obrigatória quando o suporte a API está ativo.')
 
         return cleaned_data
     
@@ -265,50 +243,7 @@ class SMTPConfigurationForm(forms.ModelForm):
         for field_name, class_name in field_classes.items():
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs['class'] = class_name
-
-
-
-class ConnectionStatusForm(forms.ModelForm):
-    class Meta:
-        model = ConnectionStatus
-        fields = '__all__'
-        widgets = {
-            'status': forms.TextInput(attrs={'class': 'mask-status'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'mask-is_active'}),
-        }
         
-        labels = {
-            'status': 'Status de Conexão',
-            'is_active': 'Ativo',
-        }
-        
-        help_texts = {
-            'status': 'Digite o status de conexão',
-            'is_active': 'Status de conexão ativo',
-        }
-        
-        error_messages = {
-            'status': {
-                'max_length': 'O status de conexão deve ter no.maxcdn 255 caracteres.',
-            },
-            'is_active': {
-                'invalid': 'Selecione uma opção válida.',
-            },
-        }
-    
-    def clean_status(self):
-        status = self.cleaned_data.get('status')
-        if not status:
-            raise forms.ValidationError('O status de conexão é obrigatório.')
-        if len(status) > 255:
-            raise forms.ValidationError('O status de conexão deve ter no máximo 255 caracteres.')
-        return status
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['status'].widget.attrs['class'] = 'mask-status'
-        self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
-
 
 class UsageProfilesForm(forms.ModelForm):
     class Meta:
@@ -352,15 +287,79 @@ class UsageProfilesForm(forms.ModelForm):
             raise forms.ValidationError('O propósitos deve ter no máximo 255 caracteres.')
         return purpose.strip()
     
-    def clean_status(self):
-        status = self.cleaned_data.get('status')
-        if not status:
-            raise forms.ValidationError('O status de conexão é obrigatório.')
-        if len(status) > 255:
-            raise forms.ValidationError('O status de conexão deve ter no máximo 255 caracteres.')
-        return status
-    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['purpose'].widget.attrs['class'] = 'mask-purpose'
         self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
+
+
+class ShippingQueueForm(forms.ModelForm):
+    class Meta:
+        model = ShippingQueue
+        fields = '__all__'
+        widgets = {
+            'subject': forms.TextInput(attrs={'class': 'mask-subject'}),
+            'to_email': forms.EmailInput(attrs={'class': 'mask-email'}),
+            'cc': forms.Textarea(attrs={'rows': 2, 'class': 'mask-text'}),
+            'bcc': forms.Textarea(attrs={'rows': 2, 'class': 'mask-text'}),
+            'reply_to': forms.EmailInput(attrs={'class': 'mask-email'}),
+            'message': forms.Textarea(attrs={'rows': 5, 'class': 'mask-text'}),
+            'html_message': forms.Textarea(attrs={'rows': 5, 'class': 'mask-text'}),
+            'attachments': forms.FileInput(),
+            'scheduled_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'next_retry_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'processing_started_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'sent_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+        labels = {
+            'subject': 'Assunto',
+            'to_email': 'Destinatário',
+            'cc': 'CC',
+            'bcc': 'BCC',
+            'reply_to': 'Responder para',
+            'message': 'Mensagem',
+            'html_message': 'Mensagem HTML',
+            'attachments': 'Anexos',
+            'scheduled_at': 'Agendado para',
+            'next_retry_at': 'Próxima tentativa',
+            'processing_started_at': 'Processamento iniciado em',
+            'sent_at': 'Enviado em',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Validação de duplicidade básica
+        to_email = cleaned_data.get('to_email')
+        subject = cleaned_data.get('subject')
+        module_origin = cleaned_data.get('module_origin')
+        reference_id = cleaned_data.get('reference_id')
+        is_active = cleaned_data.get('is_active')
+
+        if to_email and subject and module_origin and reference_id and is_active:
+            from email_service.models import ShippingQueue
+            duplicate = ShippingQueue.objects.filter(
+                to_email=to_email,
+                subject=subject,
+                module_origin=module_origin,
+                reference_id=reference_id,
+                is_active=True
+            ).exists()
+            
+            if duplicate:
+                raise ValidationError("Já existe um envio pendente para este destinatário, assunto, origem e referência.")
+
+        return cleaned_data
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Adicionar classes de máscara para os campos de texto se necessário
+        if 'subject' in self.fields:
+            self.fields['subject'].widget.attrs['class'] = 'mask-subject'
+        if 'to_email' in self.fields:
+            self.fields['to_email'].widget.attrs['class'] = 'mask-email'
+        if 'message' in self.fields:
+            self.fields['message'].widget.attrs['class'] = 'mask-text'
+        if 'html_message' in self.fields:
+            self.fields['html_message'].widget.attrs['class'] = 'mask-text'

@@ -6,7 +6,10 @@ class TypesProviderView(View):
 class ConnectionStatusView(View):
     pass
 
-class SMTPSettingsView(View):
+class TypesPriorityView(View):
+    pass
+
+class SMTPConfigurationView(View):
     pass
 
 class UsageProfilesView(View):
@@ -14,11 +17,4 @@ class UsageProfilesView(View):
 
 class ShippingQueueView(View):
     pass
-
-class EmailQueueView(View):
-    pass
-
-class EmailHistoryView(View):
-    pass
-
 
