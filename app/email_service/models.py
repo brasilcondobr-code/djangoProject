@@ -31,6 +31,17 @@ class ConnectionStatus(models.Model):
     
     def __str__(self):
         return f"{self.status}"
+    
+class TypesPriority(models.Model):
+    priority = models.CharField(max_length=255, verbose_name="Prioridade")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    class Meta:
+        verbose_name = "03. Tipo de Prioridade"
+        verbose_name_plural = "03. Tipos de Prioridade"
+    def __str__(self):
+        return f"{self.priority}"
 
 class SMTPConfiguration(models.Model):
     # Aba: Main (Principal)

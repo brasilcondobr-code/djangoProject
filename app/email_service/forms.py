@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles
+from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, TypesPriority
 
 class TypesProviderForm(forms.ModelForm):
     class Meta:
@@ -85,6 +85,46 @@ class ConnectionStatusForm(forms.ModelForm):
         self.fields['status'].widget.attrs['class'] = 'mask-status'
         self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
 
+class TypesPriorityForm(forms.ModelForm):
+    class Meta:
+        model = TypesPriority
+        fields = '__all__'
+        widgets = {
+            'priority': forms.TextInput(attrs={'class': 'mask-priority', 'placeholder': 'Ex: Alta, Media, Baixa'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'mask-is_active'}),
+        }
+        
+        labels = {
+            'priority': 'Tipo de Prioridade',
+            'is_active': 'Ativo',
+        }
+        
+        help_texts = {
+            'priority': 'Digite o tipo de prioridade',
+            'is_active': 'Tipo de prioridade ativo',
+        }
+        
+        error_messages = {
+            'priority': {
+                'max_length': 'O tipo de prioridade deve ter no.maxcdn 255 caracteres.',
+            },
+            'is_active': {
+                'invalid': 'Selecione uma opção válida.',
+            },
+        }
+    
+    def clean_priority(self):
+        priority = self.cleaned_data.get('priority')
+        if not priority:
+            raise forms.ValidationError('O tipo de prioridade é obrigatório.')
+        if len(priority) > 255:
+            raise forms.ValidationError('O tipo de prioridade deve ter no máximo 255 caracteres.')
+        return priority
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['priority'].widget.attrs['class'] = 'mask-priority'
+        self.fields['is_active'].widget.attrs['class'] = 'mask-is_active'
 
 class SMTPConfigurationForm(forms.ModelForm):
     class Meta:

@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
-from .forms import ConnectionStatusForm, TypesProviderForm, SMTPConfigurationForm
-from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, ShippingQueue, EmailHistory
+from .forms import ConnectionStatusForm, TypesPriorityForm, TypesProviderForm, SMTPConfigurationForm
+from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, ShippingQueue, EmailHistory, TypesPriority
 from core.services.smtp_validator_service import SMTPValidator
 
 @admin.register(TypesProvider)
@@ -39,6 +39,24 @@ class ConnectionStatusAdmin(admin.ModelAdmin):
     class Media:
         js = (
             'js/custom-emailservice-connectionstatus.js',
+            )
+
+@admin.register(TypesPriority)
+class TypesPriorityAdmin(admin.ModelAdmin):
+    form = TypesPriorityForm
+    list_display = ('priority', 'is_active')
+    search_fields = ('priority',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    
+    class Meta:
+        model = TypesPriority
+        verbose_name = "03. Tipo de Prioridade"
+        verbose_name_plural = "03. Tipos de Prioridade"
+        
+    class Media:
+        js = (
+            'js/custom-emailservice-typespriority.js',
             )
 
 @admin.register(SMTPConfiguration)
