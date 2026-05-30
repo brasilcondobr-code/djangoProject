@@ -68,6 +68,19 @@
         [  ] Status de superusuários
         Grupos              Sindicos
 
+    
+
+    RabiitMQ
+        URL                 http://localhost:15672/
+        Username            guest
+        Password            guest
+
+    
+
+    Flower (monitoramento do Celery)
+        URL                 http://localhost:5555/
+
+
 
 ==============================================================================================================================================
 
