@@ -1,6 +1,13 @@
 from django import forms
-from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone, validate_upload_files_docs, validate_date
-from .models import Collaborators, Condominium, DocumentCondominium
+from shared.validators import (
+    validate_cpf, 
+    validate_cnpj, 
+    validate_email, 
+    validate_phone, 
+    validate_upload_files_docs, 
+    validate_date
+)
+from domains.condominium.models import Collaborator, Condominium, DocumentCondominium
 
 class CondominiumFormAdmin(forms.ModelForm):
 
@@ -90,7 +97,7 @@ class CondominiumFormAdmin(forms.ModelForm):
 
 class CollaboratorsFormAdmin(forms.ModelForm):
     class Meta:
-        model = Collaborators
+        model = Collaborator
         fields = '__all__'
         widgets = {
             'cpf': forms.TextInput(attrs={'class': 'mask-cpf'}),
@@ -175,7 +182,7 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         self.fields['email'].widget.attrs['class'] = 'mask-email'
         if 'certificate_file' in self.fields:
             self.fields['certificate_file'].validators.append(validate_upload_files_docs)
-
+        
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
         if cpf:
@@ -188,7 +195,7 @@ class CollaboratorsFormAdmin(forms.ModelForm):
         if email and not validate_email(email):
             raise forms.ValidationError('O e-mail informado é inválido.')
         return email
-        
+
     def clean_phone_number(self):
         phone = self.cleaned_data.get('phone_number')
         if phone and not validate_phone(phone):
@@ -244,7 +251,7 @@ class DocumentCondominiumFormAdmin(forms.ModelForm):
                 'required': 'O condomínio é obrigatório.',
             },
             'name': {
-                'max_length': 'O nome do documento deve ter no máximo 255 caracteres.',
+                'max_length': 'O nome do documento deve ter no máximo 255 caracteres.',
             },
             'file': {
                 'required': 'O arquivo do documento é obrigatório.',

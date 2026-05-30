@@ -1,6 +1,6 @@
 from django.db import models
-from parameters.models import Addresses
-from condominium.models import Condominium
+from domains.parameters.models.addresses import Addresses
+from domains.condominium.models.condominium import Condominium
 
 ACCOUNT_TYPE_CHOICES = (
     ('checking_account', 'Conta Corrente'),
@@ -50,6 +50,7 @@ class Bank(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="Atualizado em")
 
     class Meta:
+        app_label = 'administrative'
         verbose_name = "01. Banco"
         verbose_name_plural = "01. Bancos"
         unique_together = [
@@ -62,6 +63,7 @@ class Bank(models.Model):
 
 class Circular(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "02. Circular"
         verbose_name_plural = "02. Circulares"
 
@@ -70,6 +72,7 @@ class Circular(models.Model):
 
 class Documents(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "03. Documento"
         verbose_name_plural = "03. Documentos"
 
@@ -78,6 +81,7 @@ class Documents(models.Model):
 
 class Infraction(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "04. Infração"
         verbose_name_plural = "04. Infrações"
 
@@ -86,6 +90,7 @@ class Infraction(models.Model):
 
 class Meter(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "05. Medidor"
         verbose_name_plural = "05. Medidores"
 
@@ -94,6 +99,7 @@ class Meter(models.Model):
 
 class Notification(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "06. Notificação"
         verbose_name_plural = "06. Notificações"
 
@@ -102,6 +108,7 @@ class Notification(models.Model):
 
 class Patrimony(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "07. Patrimônio"
         verbose_name_plural = "07. Patrimônios"
 
@@ -110,6 +117,7 @@ class Patrimony(models.Model):
 
 class BudgetForecast(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "08. Previsão Orçamentária"
         verbose_name_plural = "08. Previsões Orçamentárias"
 
@@ -118,6 +126,7 @@ class BudgetForecast(models.Model):
 
 class ChartOfAccount(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "09. Plano de Conta"
         verbose_name_plural = "09. Plano de Contas"
 
@@ -126,17 +135,19 @@ class ChartOfAccount(models.Model):
 
 class Task(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "10. Tarefa"
         verbose_name_plural = "10. Tarefas"
 
     def __str__(self):
         return "10. Tarefas"
 
-
 class VirtualAssembly(models.Model):
     class Meta:
+        app_label = 'administrative'
         verbose_name = "11. Assembleia Virtual"
         verbose_name_plural = "11. Assembleias Virtuais"
 
     def __str__(self):
         return "11. Assembleias Virtuais"
+

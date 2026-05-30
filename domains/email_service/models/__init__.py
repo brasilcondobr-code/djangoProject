@@ -130,7 +130,7 @@ class SMTPConfiguration(models.Model):
         verbose_name='Atualizado em',
         auto_now=True
     )
-
+    
     # Aba: API Configuration (Configuração API)
     api_url = models.URLField(
         verbose_name='URL API',
@@ -156,7 +156,7 @@ class SMTPConfiguration(models.Model):
         null=True,
         blank=True
     )
-
+    
     # Aba: Limits (Limites)
     emails_per_hour = models.IntegerField(
         verbose_name='Limite por hora',
@@ -173,7 +173,7 @@ class SMTPConfiguration(models.Model):
         null=True,
         blank=True
     )
-
+    
     # Aba: Testing and Monitoring (Testes e Monitoramento)
     test_email_address = models.EmailField(
         verbose_name='E-mail para testes',
@@ -236,16 +236,16 @@ class SMTPConfiguration(models.Model):
         default=30,
         verbose_name='Timeout de conexão (s)'
     )
-
+    
     class Meta:
         verbose_name = '04. Configuração SMTP'
         verbose_name_plural = '04. Configurações SMTP'
         ordering = ['description']
         unique_together = ('description', 'provider_code')
-
+    
     def __str__(self):
         return f'{self.description} - {self.provider_code}'
-
+    
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
@@ -471,7 +471,7 @@ class ShippingQueue(models.Model):
         null=True,
         blank=True
     )
-
+    
     class Meta:
         verbose_name = "06. Fila de Envio"
         verbose_name_plural = "06. Filas de Envio"
@@ -481,7 +481,7 @@ class ShippingQueue(models.Model):
                 name='unique_queue_email_per_reference'
             )
         ]
-
+    
     def __str__(self):
         return f"{self.subject} - {self.to_email}"
 

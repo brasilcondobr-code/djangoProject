@@ -1,12 +1,48 @@
-from django.contrib import admin
-from .models import (
-    Bank, Circular, Documents, Infraction, Meter, 
-    Notification, Patrimony, BudgetForecast, ChartOfAccount, Task, VirtualAssembly
-)
-from .forms import BankForm
+import csv
 
+from django.contrib import admin
+from django.http import HttpResponse
+
+from .forms import BankForm
+from domains.administrative.models import Bank
+from domains.administrative.models.circular import Circular
+from domains.administrative.models.documents import Documents
+from domains.administrative.models.infraction import Infraction
+from domains.administrative.models.meter import Meter
+from domains.administrative.models.notification import Notification
+from domains.administrative.models.patrimony import Patrimony
+from domains.administrative.models.budget_forecast import BudgetForecast
+from domains.administrative.models.chart_of_account import ChartOfAccount
+from domains.administrative.models.task import Task
+from domains.administrative.models.virtual_assembly import VirtualAssembly
+
+class ExportCsvMixin:
+    
+    def init(self, model, *args, **kwargs):
+        self.model = model
+        super().__init__(*args, **kwargs)
+    
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        field_names = [field.name for field in meta.fields]
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
+        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+        
+        # Gera o cabeçalho dinamicamente usando o 'verbose_name' configurado no Model
+        writer.writerow([field.verbose_name.title() for field in meta.fields])
+        
+        for obj in queryset:
+            row = [getattr(obj, field) for field in field_names]
+            writer.writerow(row)
+        return response
+    
+    export_as_csv.short_description = "Exportar para CSV"
+
+# Register your models here.
 @admin.register(Bank)
-class BankAdmin(admin.ModelAdmin):
+class BankAdmin(ExportCsvMixin, admin.ModelAdmin):
     form = BankForm
     list_display = ('compe', 'bank_name', 'agency', 'account_number', 'account_digit', 'is_active')
     search_fields = ('bank_name', 'account_number', 'iban')
@@ -44,7 +80,10 @@ class BankAdmin(admin.ModelAdmin):
             'admin/js/jquery.init.js',
             'js/utils.js',
             'js/custom-administrative-bank.js',
-        )
+            )
+    
+    
+    
 
 @admin.register(Circular)
 class CircularAdmin(admin.ModelAdmin):

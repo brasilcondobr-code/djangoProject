@@ -4,7 +4,8 @@ from django.contrib import admin
 from django.http import HttpResponse
 
 from .forms import BusinessSectorForm, EntityForm
-from .models import BusinessSector, Entity
+from domains.personalities.models.entity import Entity
+from domains.personalities.models.business_sector import BusinessSector
 
 class ExportCsvMixin:
     

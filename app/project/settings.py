@@ -31,18 +31,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'condominium',
-    'residents',
-    'personalities',
-    'parameters',
-    'data_management',
-    'reservations',
-    'gatehouse',
-    'administrative',
-    'financial',
-    'system',
+    'domains.condominium',
+    'domains.residents',
+    'domains.personalities',
+    'domains.parameters',
+    'domains.data_management',
+    'domains.reservations',
+    'domains.gatehouse',
+    'domains.financial',
+    'domains.administrative',
+    'domains.system',
     'domains.email_service',
     'django_celery_results',
+
+
+
+
 ]
 
 

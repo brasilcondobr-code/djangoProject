@@ -1,0 +1,1 @@
+from .personalities_validator import PersonalitiesValidator

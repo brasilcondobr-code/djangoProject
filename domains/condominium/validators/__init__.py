@@ -1,0 +1,2 @@
+from .condominium_validator import CondominiumValidator
+from .collaborator_validator import CollaboratorValidator

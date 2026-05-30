@@ -2,8 +2,8 @@ from django import forms
 from core.services.validators import validate_cpf, validate_cnpj, validate_email, validate_phone, validate_url, validate_date, validate_upload_files_docs
 from core.services.hydra_cpf_service import consult_cpf
 
-from .models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor, Resident
-from parameters.models import ResidentType
+from domains.residents.models import CondominiumUnit, RealEstateAgency, Vehicle, Visitor, Resident
+from domains.parameters.models import ResidentType
 
 class CondominiumUnitFormAdmin(forms.ModelForm):
     

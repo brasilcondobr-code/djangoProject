@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from .models import CondominiumUnit
+from domains.residents.selectors import CondominiumUnitSelector
 
 # Create your views here.
 def get_unit_identification(request):
@@ -10,9 +10,12 @@ def get_unit_identification(request):
     }
     if unit_id:
         try:
-            unit = CondominiumUnit.objects.get(id=unit_id)
-            data['identification'] = unit.identification or ""
-        except CondominiumUnit.DoesNotExist:
-            data['error'] = 'Unidade não encontrada'
+            unit = CondominiumUnitSelector.get_by_id(unit_id)
+            if unit:
+                data['identification'] = unit.identification or ""
+            else:
+                data['error'] = 'Unidade não encontrada'
+        except Exception as e:
+            data['error'] = str(e)
     
     return JsonResponse(data)

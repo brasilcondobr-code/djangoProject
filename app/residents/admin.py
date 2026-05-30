@@ -1,8 +1,8 @@
 import csv
 from django.http import HttpResponse
 from django.contrib import admin
-from .models import Documents, Visitor, RealEstateAgency, Emergency, Vehicle, Animal, CondominiumUnit, Resident
-from .forms import CondominiumUnitFormAdmin, RealEstateAgencyFormAdmin, ResidentFormAdmin, VehicleFormAdmin, VisitorFormAdmin
+from domains.residents.models import Documents, Visitor, RealEstateAgency, Emergency, Vehicle, Animal, CondominiumUnit, Resident
+from domains.residents.forms import CondominiumUnitFormAdmin, RealEstateAgencyFormAdmin, ResidentFormAdmin, VehicleFormAdmin, VisitorFormAdmin
 
 class ExportCSVMixin:
     def init(self, model, *args, **kwargs):

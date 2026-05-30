@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Reforms, Rentals, MaintenanceReservations, MoveReservations
+from domains.reservations.models import Reforms, Rentals, MaintenanceReservations, MoveReservations
 
 @admin.register(Rentals)
 class RentalsAdmin(admin.ModelAdmin):
