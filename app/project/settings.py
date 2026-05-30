@@ -41,10 +41,22 @@ INSTALLED_APPS = [
     'administrative',
     'financial',
     'system',
-    'email_service',
+    'domains.email_service',
+    'django_celery_results',
 ]
 
+
+# Celery Configuration
+CELERY_TIMEZONE = 'America/Sao_Paulo'
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'amqp://guest:guest@rabbitmq:5672//')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'django-db')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Middleware
 MIDDLEWARE = [
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -252,6 +264,7 @@ JAZZMIN_SETTINGS = {
         "gatehouse.ElectronicTimeClock": "fa-solid fa-clipboard",
         "administrative.Bank": "fas fa-university",
         "administrative.Circular": "fas fa-bullhorn",
+        "administrative.Documents": "fas fa-file-alt",
         "administrative.Contract": "fas fa-file-contract",
         "administrative.Infraction": "fas fa-gavel",
         "administrative.Meter": "fas fa-tachometer-alt",
@@ -288,7 +301,8 @@ JAZZMIN_SETTINGS = {
         "email_service.SMTPConfiguration": "fas fa-envelope",
         "email_service.UsageProfiles": "fas fa-user-friends",
         "email_service.ShippingQueue": "fas fa-truck",
-    },
+        "django_celery_results.GroupResult": "fas fa-layer-group",
+        "django_celery_results.TaskResult": "fas fa-tasks",    },
     
     "show_ui_builder": False,
 }

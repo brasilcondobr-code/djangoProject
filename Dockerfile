@@ -23,6 +23,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copia o restante do código do projeto
 COPY ./app /app
+COPY ./domains /app/domains
+COPY ./infrastructure /app/infrastructure
 COPY ./scripts /scripts
 
 # Garante que o script seja executável

@@ -2,9 +2,12 @@ services:
   web:
     build: .
     container_name: django_project_web
-    command: /scripts/command.sh
+    entrypoint: /scripts/command.sh
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./app:/app
+      - ./domains:/app/domains
+      - ./infrastructure:/app/infrastructure
       - ./scripts:/scripts
       - ./data/web/static:/app/staticfiles
       - ./data/web/media:/app/media
@@ -14,6 +17,7 @@ services:
       - ./dotenv_files/.env
     depends_on:
       - db
+      - rabbitmq
     networks:
       - django-network
 
@@ -27,6 +31,63 @@ services:
       - "5432:5432"
     env_file:
       - ./dotenv_files/.env
+    networks:
+      - django-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: django_project_rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - django-network
+
+  celery_worker:
+    build: .
+    container_name: django_project_celery_worker
+    entrypoint: /scripts/command.sh
+    command: celery -A project worker -l info
+    volumes:
+      - ./app:/app
+      - ./domains:/app/domains
+      - ./infrastructure:/app/infrastructure
+      - ./scripts:/scripts
+    env_file:
+      - ./dotenv_files/.env
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - django-network
+
+  celery_beat:
+    build: .
+    container_name: django_project_celery_beat
+    entrypoint: /scripts/command.sh
+    command: celery -A project beat -l info
+    volumes:
+      - ./app:/app
+      - ./domains:/app/domains
+      - ./infrastructure:/app/infrastructure
+      - ./scripts:/scripts
+    env_file:
+      - ./dotenv_files/.env
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - django-network
+
+  flower:
+    image: mher/flower
+    container_name: django_project_flower
+    command: celery --broker=amqp://guest:guest@rabbitmq:5672// flower
+    ports:
+      - "5555:5555"
+    depends_on:
+      - rabbitmq
     networks:
       - django-network
 

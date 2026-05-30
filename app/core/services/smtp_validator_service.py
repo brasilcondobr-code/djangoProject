@@ -5,7 +5,7 @@ import ssl
 from django.core.mail import get_connection
 from django.utils import timezone
 from django.contrib.auth.models import User
-from email_service.models import ConnectionStatus
+from domains.email_service.models import ConnectionStatus
 from .email_test_service import EmailTestService
 
 logger = logging.getLogger(__name__)
