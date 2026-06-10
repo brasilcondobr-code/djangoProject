@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-from residents.views import get_unit_identification
+from domains.residents.views import get_unit_identification
 
 from .views import home, get_unit_data, get_weather_cities, get_weather, get_weather_by_ip, get_condo_indicators
 

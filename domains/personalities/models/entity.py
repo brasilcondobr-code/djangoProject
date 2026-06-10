@@ -1,5 +1,5 @@
 from django.db import models
-from domains.personalities.models.business_sector import BusinessSector
+from .business_sector import BusinessSector
 
 class Entity(models.Model):
     class Meta:

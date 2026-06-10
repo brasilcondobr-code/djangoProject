@@ -3,7 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from domains.residents.models import CondominiumUnit, Resident, Vehicle, Animal, Visitor
 from domains.condominium.models import Condominium, Collaborator
-from personalities.models import Entity
+from domains.personalities.models import Entity
 from domains.parameters.models import Addresses
 
 # Cidade padrão para fallback (ambiente local ou falha na geolocalização)
