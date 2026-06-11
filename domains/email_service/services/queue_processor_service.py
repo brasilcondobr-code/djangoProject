@@ -7,7 +7,6 @@ from domains.email_service.services.provider_router_service import ProviderRoute
 from domains.email_service.services.retry_service import RetryService
 from domains.email_service.utils.json_log_builder import JsonLogBuilder
 from domains.email_service.repositories.queue_repository import QueueRepository
-from domains.email_service.repositories.history_repository import HistoryRepository
 from domains.email_service.selectors.queue_selector import ShippingQueueSelector
 
 logger = logging.getLogger(__name__)
@@ -37,12 +36,11 @@ class QueueProcessorService:
         """
         Processa um único item da fila de forma atômica.
         """
-        # Usamos transação atômica para garantir que o status e auditoria sejam atualizados juntos
         with transaction.atomic():
-            # Recarrega o item para evitar race conditions usando o Repository
+            # 1. Recarrega o item com lock para evitar race conditions
             item = QueueRepository.get_for_update(queue_item.pk)
             
-            # 1. Validações iniciais de negócio
+            # 2. Validações iniciais de negócio
             if not item.is_active:
                 return {"success": False, "message": "Item inativo."}
             
@@ -52,64 +50,56 @@ class QueueProcessorService:
 
             # Iniciar processamento
             item.processing_started_at = timezone.now()
-            QueueRepository.save(item)
-
-            # Garantir que logs seja uma lista para histórico
+            
+            # Garantir que logs seja uma lista e adicionar log de início
             current_logs = item.logs if isinstance(item.logs, list) else []
-            processing_log = JsonLogBuilder.build_event("processing_started", "Iniciando processamento do envio")
-            current_logs.append(processing_log)
+            current_logs.append(JsonLogBuilder.build_event("processing_started", "Iniciando processamento do envio"))
 
-            # 2. Executar o envio
+            # 3. Executar o envio
             result = ProviderRouterService.route_and_send(item)
             
-            # 3. Atualizar Auditoria e Status
+            # 4. Atualizar Auditoria e Status
             item.response_time_ms = result.get("response_time_ms", 0)
             
-            # --- Lógica de Histórico para Provider Response ---
-            new_provider_res_data = result.get("provider_response", {})
-            HistoryRepository.append_provider_response(item.pk, new_provider_res_data)
-            
-            # Atualiza o objeto em memória para os próximos passos
-            # (Como HistoryRepository faz um save, precisamos recarregar ou atualizar o objeto local)
-            item = QueueRepository.get_by_id(item.pk)
-            item.provider_response = item.provider_response # already updated by repository
-
-            item.provider_message_id = result.get("provider_message_id", "")
-            
-            # Mesclar logs do service com logs locais
+            # Mesclar logs do service
             service_logs = result.get("logs", [])
             if isinstance(service_logs, list):
                 current_logs.extend(service_logs)
-            
-            # Atualizar o campo logs com a lista completa
             item.logs = current_logs
 
+            # Tratar resposta do provedor
+            provider_res_data = result.get("provider_response", {})
+            if provider_res_data:
+                timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+                res_str = str(provider_res_data)
+                if item.provider_response:
+                    item.provider_response = f"{item.provider_response}\n[{timestamp}] {res_str}"
+                else:
+                    item.provider_response = f"[{timestamp}] {res_str}"
+            
             if result["success"]:
                 # SUCESSO
-                # Procurar status 'Enviado' (ou similar)
                 sent_status = ConnectionStatus.objects.filter(status__iexact="Enviado").first()
                 if sent_status:
                     item.status = sent_status
                 
                 item.sent_at = timezone.now()
-                
-                # Histórico de erro (limpamos o erro atual pois foi sucesso)
                 item.last_error_message = ""
                 logger.info(f"Item {item.uuid} enviado com sucesso.")
             else:
                 # FALHA
                 error_msg = result.get("error", "Erro desconhecido")
-                HistoryRepository.append_error(item.pk, error_msg)
+                timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
                 
-                # Recarrega para ter o erro atualizado
-                item = QueueRepository.get_by_id(item.pk)
-                item.last_error_message = item.last_error_message # already updated by repository
+                # Atualizar último erro
+                if item.last_error_message:
+                    item.last_error_message = f"{item.last_error_message}\n[{timestamp}] {error_msg}"
+                else:
+                    item.last_error_message = f"[{timestamp}] {error_msg}"
 
                 # Verificar se deve tentar novamente
                 if RetryService.should_retry(item):
                     item.retry_count += 1
-                    
-                    # Procurar status 'Retentativa'
                     retry_status = ConnectionStatus.objects.filter(status__iexact="Retentativa").first()
                     if retry_status:
                         item.status = retry_status
@@ -119,7 +109,6 @@ class QueueProcessorService:
                 else:
                     # Falha definitiva
                     item.is_active = False
-                    # Procurar status 'Falha'
                     failed_status = ConnectionStatus.objects.filter(status__iexact="Falha").first()
                     if failed_status:
                         item.status = failed_status
@@ -146,7 +135,3 @@ class QueueProcessorService:
         Cancela os itens da fila.
         """
         QueueRepository.cancel(queryset)
-
-
-
-

@@ -117,11 +117,10 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
             )
 
     def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
         if obj.is_default:
             from domains.email_service.services.smtp_service import SMTPService
             SMTPService.set_default_configuration(obj.pk)
-        else:
-            super().save_model(request, obj, form, change)
     
 @admin.register(UsageProfiles)
 class UsageProfilesAdmin(admin.ModelAdmin):
@@ -211,6 +210,10 @@ class ShippingQueueAdmin(admin.ModelAdmin):
         'provider_message_id',
         'created_at',
         'updated_at',
+        'sent_at',
+        'next_retry_at',
+        'last_error_message',
+        'logs',
     )
     fieldsets = (
         ('Principal', {
@@ -254,7 +257,7 @@ class ShippingQueueAdmin(admin.ModelAdmin):
     
     @admin.action(description="Realizar envio")
     def perform_send(self, request, queryset):
-        from domains.email_service.tasks.email_tasks import process_single_email_task
+        from domains.email_service.tasks import process_single_email_task
         count = queryset.count()
         for item in queryset:
             process_single_email_task.delay(item.id)

@@ -91,6 +91,16 @@ services:
     networks:
       - django-network
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: brasil_condo_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - django-network
+
 networks:
   django-network:
     driver: bridge
