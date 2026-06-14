@@ -6,3 +6,4 @@ requests
 cryptography
 celery
 django-celery-results
+django-ckeditor

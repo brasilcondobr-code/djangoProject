@@ -30,8 +30,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'ckeditor',
+    'ckeditor_uploader',
     'core',
     'domains.condominium',
+
     'domains.residents',
     'domains.personalities',
     'domains.parameters',
@@ -366,3 +369,13 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Brasil Condo <no-reply@brasilcondo.local>')
 SERVER_EMAIL = os.environ.get('SERVER_EMAIL', 'Brasil Condo <server@brasilcondo.local>')
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+    },
+}
+
+CKEDITOR_UPLOAD_PATH = "uploads/"
