@@ -104,7 +104,6 @@ class CircularAdmin(admin.ModelAdmin):
 
     class Media:
         js = (
-            'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
             'js/utils.js',
             'js/custom-circular-residents.js',

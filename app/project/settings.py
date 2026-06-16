@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ckeditor',
     'ckeditor_uploader',
-    'core',
+    'core.apps.CoreConfig',
     'domains.condominium',
 
     'domains.residents',
@@ -130,13 +130,13 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 ## STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 
 # Local onde você salva os arquivos estáticos durante o desenvolvimento
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static_src'),
+    os.path.join(BASE_DIR, 'staticfiles'),
 ]
 
 # Media files
