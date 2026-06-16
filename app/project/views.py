@@ -1,10 +1,10 @@
 import requests
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
-from residents.models import CondominiumUnit, Resident, Vehicle, Animal, Visitor
-from condominium.models import Condominium, Collaborators
-from personalities.models import Entity
-from parameters.models import Addresses
+from domains.residents.models import CondominiumUnit, Resident, Vehicle, Animal, Visitor
+from domains.condominium.models import Condominium, Collaborator
+from domains.personalities.models import Entity
+from domains.parameters.models import Addresses
 
 # Cidade padrão para fallback (ambiente local ou falha na geolocalização)
 DEFAULT_CITY = 'Campinas'
@@ -19,7 +19,7 @@ def get_condo_indicators(request):
     try:
         indicators = {
             'unidades': CondominiumUnit.objects.count(),
-            'colaboradores': Collaborators.objects.count(),
+            'colaboradores': Collaborator.objects.count(),
             'moradores': Resident.objects.count(),
             'veiculos': Vehicle.objects.count(),
             'animais': Animal.objects.count(),

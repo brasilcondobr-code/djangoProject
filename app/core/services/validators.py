@@ -178,9 +178,21 @@ def validate_url(url):
         r'(?::\d+)?' # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
         
-    return re.match(url_regex, str(url)) is not None
+
+def validate_iban(iban):
+    """
+    Validates a basic IBAN format.
+    A simple regex for demonstration; in a real scenario, a more complex 
+    check (modulo 97) would be implemented.
+    """
+    if not iban:
+        return False
+    # Basic IBAN regex: Country code (2 letters), Check digits (2 digits), and then 11-30 alphanumeric characters.
+    iban_regex = r'^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$'
+    return bool(re.match(iban_regex, str(iban).replace(' ', '').upper()))
 
 from django.core.exceptions import ValidationError
+# ... rest of the file ...
 
 def validate_upload_files_docs(value):
     """

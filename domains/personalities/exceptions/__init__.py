@@ -1,0 +1,1 @@
+from .personalities_exceptions import PersonalitiesException, PersonalitiesNotFoundError

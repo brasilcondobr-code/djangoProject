@@ -1,0 +1,1 @@
+from .resident_exceptions import ResidentException, ResidentNotFoundError

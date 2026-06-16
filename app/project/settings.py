@@ -30,21 +30,40 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
-    'condominium',
-    'residents',
-    'personalities',
-    'parameters',
-    'data_management',
-    'reservations',
-    'gatehouse',
-    'administrative',
-    'financial',
-    'system',
-    # Seus apps aqui
+    'ckeditor',
+    'ckeditor_uploader',
+    'core.apps.CoreConfig',
+    'domains.condominium',
+
+    'domains.residents',
+    'domains.personalities',
+    'domains.parameters',
+    'domains.data_management',
+    'domains.reservations',
+    'domains.gatehouse',
+    'domains.financial',
+    'domains.administrative',
+    'domains.system',
+    'domains.email_service',
+    'django_celery_results',
+
+
+
+
 ]
 
+
+# Celery Configuration
+CELERY_TIMEZONE = 'America/Sao_Paulo'
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'amqp://guest:guest@rabbitmq:5672//')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'django-db')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Middleware
 MIDDLEWARE = [
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -111,13 +130,13 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 ## STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 
 # Local onde você salva os arquivos estáticos durante o desenvolvimento
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static_src'),
+    os.path.join(BASE_DIR, 'staticfiles'),
 ]
 
 # Media files
@@ -252,6 +271,7 @@ JAZZMIN_SETTINGS = {
         "gatehouse.ElectronicTimeClock": "fa-solid fa-clipboard",
         "administrative.Bank": "fas fa-university",
         "administrative.Circular": "fas fa-bullhorn",
+        "administrative.Documents": "fas fa-file-alt",
         "administrative.Contract": "fas fa-file-contract",
         "administrative.Infraction": "fas fa-gavel",
         "administrative.Meter": "fas fa-tachometer-alt",
@@ -282,11 +302,17 @@ JAZZMIN_SETTINGS = {
         "system.Training": "fas fa-chalkboard-teacher",
         "system.IntegrationToken": "fas fa-key",
         "system.ConnectedUser": "fas fa-user-friends",
+        "email_service.TypesProvider": "fas fa-server",
+        "email_service.ConnectionStatus": "fas fa-signal",
+        "email_service.TypesPriority": "fas fa-sort-amount-up",
+        "email_service.SMTPConfiguration": "fas fa-envelope",
+        "email_service.UsageProfiles": "fas fa-user-friends",
+        "email_service.ShippingQueue": "fas fa-truck",
+        "django_celery_results.GroupResult": "fas fa-layer-group",
+        "django_celery_results.TaskResult": "fas fa-tasks",
     },
-    
     "show_ui_builder": False,
 }
-
 
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
@@ -319,3 +345,37 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     }
 }
+
+# Email Settings
+EMAIL_PROVIDER = os.environ.get('EMAIL_PROVIDER', 'smtp')
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 1025))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Brasil Condo <no-reply@brasilcondo.local>')
+SERVER_EMAIL = os.environ.get('SERVER_EMAIL', 'Brasil Condo <server@brasilcondo.local>')
+
+# Email Settings
+EMAIL_PROVIDER = os.environ.get('EMAIL_PROVIDER', 'smtp')
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 1025))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Brasil Condo <no-reply@brasilcondo.local>')
+SERVER_EMAIL = os.environ.get('SERVER_EMAIL', 'Brasil Condo <server@brasilcondo.local>')
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+    },
+}
+
+CKEDITOR_UPLOAD_PATH = "uploads/"

@@ -3,3 +3,7 @@ psycopg2==2.9.9
 django-jazzmin
 Pillow
 requests
+cryptography
+celery
+django-celery-results
+django-ckeditor

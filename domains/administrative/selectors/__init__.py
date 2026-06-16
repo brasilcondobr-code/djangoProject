@@ -1,0 +1,1 @@
+from domains.administrative.selectors.bank_selector import BankSelector

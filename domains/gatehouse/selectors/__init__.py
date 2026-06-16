@@ -1,0 +1,1 @@
+from domains.gatehouse.selectors.gatehouse_selector import GatehouseSelector

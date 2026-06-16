@@ -1,0 +1,1 @@
+from domains.financial.exceptions.financial_exceptions import FinancialException

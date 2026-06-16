@@ -1,0 +1,1 @@
+from domains.gatehouse.repositories.gatehouse_repository import GatehouseRepository

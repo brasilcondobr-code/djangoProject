@@ -1,0 +1,1 @@
+from .residents_validator import ResidentValidator

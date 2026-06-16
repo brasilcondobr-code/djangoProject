@@ -68,6 +68,25 @@
         [  ] Status de superusuários
         Grupos              Sindicos
 
+    
+
+    RabiitMQ
+        URL                 http://localhost:15672/
+        Username            guest
+        Password            guest
+
+    
+
+    Flower (monitoramento do Celery)
+        URL                 http://localhost:5555/
+
+
+    Mailpit
+        Interface Web (para você visualizar os e-mails): http://localhost:8025
+        Servidor SMTP (para o Django/Celery enviar e-mails):
+        Dentro do Docker (comunicação entre containers): mailpit:1025
+        Fora do Docker (via localhost): localhost:1025
+
 
 ==============================================================================================================================================
 
