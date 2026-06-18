@@ -5,10 +5,7 @@ services:
     entrypoint: /scripts/command.sh
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./app:/app
-      - ./domains:/app/domains
-      - ./infrastructure:/app/infrastructure
-      - ./scripts:/scripts
+      - .:/app
       - ./data/web/static:/app/staticfiles
       - ./data/web/media:/app/media
     ports:
@@ -50,10 +47,7 @@ services:
     entrypoint: /scripts/command.sh
     command: celery -A project worker -l info
     volumes:
-      - ./app:/app
-      - ./domains:/app/domains
-      - ./infrastructure:/app/infrastructure
-      - ./scripts:/scripts
+      - .:/app
     env_file:
       - ./dotenv_files/.env
     depends_on:
@@ -68,10 +62,7 @@ services:
     entrypoint: /scripts/command.sh
     command: celery -A project beat -l info
     volumes:
-      - ./app:/app
-      - ./domains:/app/domains
-      - ./infrastructure:/app/infrastructure
-      - ./scripts:/scripts
+      - .:/app
     env_file:
       - ./dotenv_files/.env
     depends_on:

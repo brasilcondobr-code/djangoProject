@@ -21,10 +21,15 @@ COPY requirements.txt .
 # Instala as dependências do Python
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copia o restante do código do projeto
-COPY ./app /app
+# Copia o código necessário
+COPY ./core /app/core
 COPY ./domains /app/domains
 COPY ./infrastructure /app/infrastructure
+COPY ./project /app/project
+COPY ./shared /app/shared
+COPY ./templates /app/templates
+COPY ./media /app/media
+COPY ./manage.py /app/manage.py
 COPY ./scripts /scripts
 
 # Garante que o script seja executável

@@ -19,18 +19,14 @@ class ExportCsvMixin:
         super().__init__(*args, **kwargs)
     
     def export_as_csv(self, request, queryset):
-        meta = self.model._meta
-        field_names = [field.name for field in meta.fields]
-        
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
+        response['Content-Disposition'] = f'attachment; filename={self.model}.csv'
         writer = csv.writer(response, quoting=csv.QUOTE_ALL)
         
-        # Gera o cabeçalho dinamicamente usando o 'verbose_name' configurado no Model
-        writer.writerow([field.verbose_name.title() for field in meta.fields])
+        writer.writerow([field.verbose_name.title() for field in self.model.fields])
         
         for obj in queryset:
-            row = [getattr(obj, field) for field in field_names]
+            row = [getattr(obj, field) for field in self.model.fields]
             writer.writerow(row)
         return response
     
@@ -46,8 +42,7 @@ class BankAdmin(ExportCsvMixin, admin.ModelAdmin):
     
     fieldsets = (
         ('Principal', {
-            'fields': (
-                'compe', 'bank_name', 'account_type', 'initial_balance', 
+            'fields': ('compe', 'bank_name', 'account_type', 'initial_balance', 
                 'initial_balance_date', 'account_name', 'iban', 'agency', 
                 'account_number', 'account_digit', 'bank_address', 'is_active'
             )
@@ -58,13 +53,13 @@ class BankAdmin(ExportCsvMixin, admin.ModelAdmin):
         ('Sacado Avalista', {
             'fields': (
                 'full_name_drawn', 'cpf_drawn', 'rg_drawn', 
-                'phone_drawn', 'email_drawn', 'addresses_drawn'
+                'phone_drawn', 'email_drawn', 'addresses_drawn',
             )
         }),
         ('Gerente', {
             'fields': (
                 'full_name_manager', 'phone1_manager', 'phone2_manager', 
-                'phone3_manager', 'email_manager'
+                'phone3_manager', 'email_manager',
             )
         }),
     )
@@ -104,6 +99,7 @@ class CircularAdmin(admin.ModelAdmin):
 
     class Media:
         js = (
+            'admin/js/vendor/jquery/jquery.js',
             'admin/js/jquery.init.js',
             'js/utils.js',
             'js/custom-circular-residents.js',
