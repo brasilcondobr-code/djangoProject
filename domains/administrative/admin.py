@@ -1,4 +1,7 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 from domains.administrative.models import Bank
 from domains.administrative.forms import BankForm, CircularForm
 from domains.administrative.models.circular import Circular
@@ -99,19 +102,44 @@ class CircularAdmin(admin.ModelAdmin):
 
     class Media:
         js = (
-            'admin/js/vendor/jquery/jquery.js',
-            'admin/js/jquery.init.js',
             'js/utils.js',
-            'js/custom-circular-residents.js',
+            'js/custom-administrative-circular-residents-v3.js',
         )
 
     @admin.action(description="Enviar Fila E-mail")
     def send_to_email_queue(self, request, queryset):
         from domains.administrative.services.circular_email_queue_service import CircularEmailQueueService
-        total = 0
+        
+        total_queued = 0
+        total_residents_processed = 0
+        total_no_email = 0
+        total_already_queued = 0
+        total_errors = 0
+        skipped_count = 0
+
         for circular in queryset:
-            total += CircularEmailQueueService.queue_circular_emails(circular)
-        self.message_user(request, f"Sucesso! {total} e-mails foram colocados na fila de envio.")
+            if not circular.title or not circular.circular_content or not circular.residents.exists():
+                skipped_count += 1
+                continue
+
+            res = CircularEmailQueueService.queue_circular_emails(circular)
+            total_queued += res['queued']
+            total_residents_processed += res['total_residents']
+            total_no_email += res['no_email']
+            total_already_queued += res['already_queued']
+            total_errors += res['errors']
+
+        msg = (
+            f"Processamento concluído:\n"
+            f"- Circulares processadas: {len(queryset)}\n"
+            f"- Circulares ignoradas (inválidas/sem residentes): {skipped_count}\n"
+            f"- E-mails colocados na fila: {total_queued}\n"
+            f"- Residentes com e-mail inválido/ausente: {total_no_email}\n"
+            f"- E-mails já na fila: {total_already_queued}\n"
+            f"- Falhas no processamento: {total_errors}\n"
+            f"- Total de residentes considerados: {total_residents_processed}"
+        )
+        self.message_user(request, msg)
 
 @admin.register(Documents)
 class DocumentsAdmin(admin.ModelAdmin):

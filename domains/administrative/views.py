@@ -2,13 +2,20 @@ import logging
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
-from domains.residents.models import Resident
+
 from domains.parameters.models import ResidentType
+from domains.residents.models import Resident
 
 logger = logging.getLogger(__name__)
 
+
 @staff_member_required
 def get_residents_by_type(request):
+    """
+    AJAX endpoint para buscar residentes filtrados pelo tipo.
+    Retorna formato próprio e formato compatível com Select2.
+    """
+
     logger.info(
         "Iniciando busca AJAX de residentes por tipo.",
         extra={
@@ -31,58 +38,88 @@ def get_residents_by_type(request):
 
         return JsonResponse(
             {
-                "error": "type_id is required",
+                "success": False,
+                "residents": [],
+                "results": [],
+                "count": 0,
+                "message": "type_id is required",
             },
             status=400,
         )
 
-    type_id_int = None
-
-    # Tenta converter para INT (Caminho ideal)
     try:
-        type_id_int = int(type_id_raw)
-        logger.info(f"type_id convertido para INT: {type_id_int}")
-    except (ValueError, TypeError):
-        # Se não for INT, pode ser a descrição (ex: 'Morador(a)')
-        logger.info(f"type_id não é um inteiro ('{type_id_raw}'). Tentando buscar por descrição...")
-        
         try:
-            resident_type = ResidentType.objects.get(description=type_id_raw)
-            type_id_int = resident_type.id
-            logger.info(f"Tipo encontrado por descrição: {resident_type.description} (ID: {type_id_int})")
-        except ResidentType.DoesNotExist:
-            logger.warning(
-                "type_id não é um inteiro e não corresponde a nenhuma descrição de ResidentType.",
-                extra={
-                    "received_value": type_id_raw,
-                },
-            )
-            return JsonResponse(
-                {
-                    "error": "Invalid type_id format or description not found",
-                },
-                status=400,
-            )
+            type_id = int(type_id_raw)
+        except (ValueError, TypeError):
+            resident_type = ResidentType.objects.get(description__iexact=type_id_raw)
+            type_id = resident_type.id
 
-    # Executa o filtro
-    residents_queryset = Resident.objects.filter(
-        type_of_resident_id=type_id_int
-    ).order_by("name")
+        residents_queryset = Resident.objects.filter(
+            type_of_resident_id=type_id
+        ).order_by("name")
 
-    residents = list(
-        residents_queryset.values(
-            "id",
-            "name",
-            "email",
+        residents_data = [
+            {
+                "id": resident.id,
+                "name": resident.name,
+                "text": resident.name,
+            }
+            for resident in residents_queryset
+        ]
+
+        select2_results = [
+            {
+                "id": resident["id"],
+                "text": resident["name"],
+            }
+            for resident in residents_data
+        ]
+
+        logger.info(
+            "Busca AJAX de residentes finalizada.",
+            extra={
+                "type_id_used": type_id,
+                "total_residents": len(residents_data),
+            },
         )
-    )
 
-    logger.info(
-        "Busca AJAX de residentes finalizada.",
-        extra={
-            "type_id_used": type_id_int,
-            "total_residents": len(residents),
-        },
-    )
+        return JsonResponse(
+            {
+                "success": True,
+                "residents": residents_data,
+                "results": select2_results,
+                "count": len(residents_data),
+                "message": "" if residents_data else "Nenhum residente encontrado para o tipo selecionado.",
+            }
+        )
 
-    return JsonResponse(residents, safe=False)
+    except ResidentType.DoesNotExist:
+        logger.warning(f"Tipo de residente não encontrado: {type_id_raw}")
+
+        return JsonResponse(
+            {
+                "success": False,
+                "residents": [],
+                "results": [],
+                "count": 0,
+                "message": "Tipo de residente não encontrado.",
+            },
+            status=404,
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Erro na busca AJAX de residentes: {str(e)}",
+            exc_info=True,
+        )
+
+        return JsonResponse(
+            {
+                "success": False,
+                "residents": [],
+                "results": [],
+                "count": 0,
+                "message": "Não foi possível carregar os residentes neste momento. Tente novamente.",
+            },
+            status=500,
+        )

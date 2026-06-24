@@ -1,6 +1,7 @@
 from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
 class ParametersAppConfig(AppConfig):
     name = 'domains.parameters'
     label = 'parameters'
-    verbose_name = '00. Parâmetros'
+    verbose_name = _('01. Parâmetros')

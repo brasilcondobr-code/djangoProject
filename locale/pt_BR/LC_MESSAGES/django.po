@@ -1,0 +1,11 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: pt_BR\n"
+
+msgid "Authentication and Authorization"
+msgstr "00. Autenticação e Autorização"
+
+msgid "Celery Results"
+msgstr "11. Resultados do Celery"
