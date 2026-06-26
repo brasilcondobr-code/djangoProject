@@ -1,16 +1,9 @@
 (function($) {
     'use strict';
 
-    function log(message, data) {
-        console.log('[Circular AJAX] ' + message, data || '');
-    }
-
-    function warn(message, data) {
-        console.warn('[Circular AJAX] ' + message, data || '');
-    }
-
+    // Função para extrair o valor de qualquer forma possível
     function getTypeValue($typeSelect) {
-        // TENTATIVA 1: DOM Nativo (A mais confiável)
+        // 1. TENTATIVA NATIVA (DOM)
         const nativeSelect = $typeSelect[0];
         if (nativeSelect) {
             const nativeValue = nativeSelect.value;
@@ -19,21 +12,21 @@
             }
         }
 
-        // TENTATIVA 2: jQuery .val()
+        // 2. TENTATIVA VIA JQUERY .val()
         const jVal = $typeSelect.val();
         const finalJVal = Array.isArray(jVal) ? (jVal[0] || '') : jVal;
         if (finalJVal && finalJVal !== '' && finalJVal !== '---------') {
             return finalJVal;
         }
 
-        // TENTATIVA 3: Option Selecionada
+        // 3. TENTATIVA VIA OPÇÃO SELECIONADA
         const selectedOpt = $typeSelect.find('option:selected');
         const optVal = selectedOpt.val();
         if (optVal && optVal !== '' && optVal !== '---------') {
             return optVal;
         }
 
-        // TENTATIVA 4: Select2 Data
+        // 4. TENTATIVA VIA SELECT2 DATA
         try {
             if (typeof $typeSelect.select2 === 'function') {
                 const s2Data = $typeSelect.select2('data');
@@ -44,7 +37,7 @@
             }
         } catch (e) {}
 
-        // TENTATIVA 5: Texto Visível (Fallback Absoluto)
+        // 5. TENTATIVA VIA TEXTO VISÍVEL (Fallback Absoluto)
         const selectedText = selectedOpt.text() ? selectedOpt.text().trim() : '';
         if (selectedText && selectedText !== '' && selectedText !== '---------') {
             return selectedText;
@@ -58,27 +51,22 @@
     }
 
     function clearResidents($residentSelect) {
-        log('Limpando campo Residentes');
         $residentSelect.empty();
         refreshSelect2($residentSelect);
     }
 
     function setResidentsState($residentSelect, state) {
         if (state === 'loading') {
-            log('Estado: CARREGANDO...');
             $residentSelect.prop('disabled', true);
         } else if (state === 'enabled') {
-            log('Estado: HABILITADO');
             $residentSelect.prop('disabled', false);
         } else {
-            log('Estado: DESABILITADO');
             $residentSelect.prop('disabled', true);
         }
         refreshSelect2($residentSelect);
     }
 
     function appendResidents($residentSelect, residents) {
-        log(' Populando ' + residents.length + ' residentes');
         residents.forEach(function(resident) {
             const option = new Option(
                 resident.name || resident.text,
@@ -108,7 +96,6 @@
         if (!$typeSelect.length || !$residentSelect.length) return;
 
         if (!typeValue) {
-            warn('Tipo vazio. Desabilitando residentes.');
             clearResidents($residentSelect);
             setResidentsState($residentSelect, 'disabled');
             lastLoadedType = null;
@@ -121,8 +108,6 @@
 
         lastLoadedType = typeValue;
         const ajaxUrl = getAjaxUrl($typeSelect);
-
-        log('DISPARANDO AJAX para tipo: ' + typeValue);
 
         clearResidents($residentSelect);
         setResidentsState($residentSelect, 'loading');
@@ -137,12 +122,10 @@
             dataType: 'json',
             data: { type_id: typeValue },
             success: function(response) {
-                log('Resposta AJAX recebida:', response);
                 if (response && response.success && response.residents && response.residents.length > 0) {
                     appendResidents($residentSelect, response.residents);
                     setResidentsState($residentSelect, 'enabled');
                 } else {
-                    warn(response.message || 'Nenhum residente encontrado.');
                     setResidentsState($residentSelect, 'disabled');
                 }
             },
@@ -153,40 +136,35 @@
         });
     }
 
+    function setupMutationObserver($typeSelect) {
+        const targetNode = $typeSelect.next('.select2-container').find('.select2-selection__rendered');
+        if (!targetNode.length) return;
+
+        const config = { childList: true, characterData: true, subtree: true };
+
+        const callback = function(mutationsList, observer) {
+            for (const mutation of mutationsList) {
+                const val = getTypeValue($typeSelect);
+                loadResidentsByType(val, { force: true });
+                break; 
+            }
+        };
+
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode[0], config);
+    }
+
     function bindEvents() {
         $(document).off('.circularResidents');
 
-        // Evento Select2: O mais preciso para cliques no widget
-        $(document).on('select2:select', '#id_types_residents', function(e) {
-            log('SINAL: [select2:select] detectado');
-            const data = e.params.data;
-            if (data && data.id) {
-                loadResidentsByType(data.id, { force: true });
-            }
+        $(document).on('change', '#id_types_residents', function() {
+            const val = getTypeValue($(this));
+            loadResidentsByType(val, { force: true });
         });
 
-        // Evento Change: Implementamos um "Retry Loop" para lidar com a assincronia do Django Admin/Jazzmin
-        $(document).on('change', '#id_types_residents', function() {
-            const $el = $(this);
-            log('SINAL: [change] detectado. Iniciando loop de captura de valor...');
-            
-            let attempts = 0;
-            const maxAttempts = 10; // Tenta por até 1.5 segundos
-            
-            const tryCapture = setInterval(function() {
-                attempts++;
-                const val = getTypeValue($el);
-                
-                if (val) {
-                    log('Sucesso na tentativa ' + attempts + '. Valor encontrado: ' + val);
-                    clearInterval(tryCapture);
-                    loadResidentsByType(val, { force: true });
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(tryCapture);
-                    warn('Falha após ' + maxAttempts + ' tentativas. O valor permaneceu vazio.');
-                    loadResidentsByType('', { force: true });
-                }
-            }, 150);
+        $(document).on('select2:select', '#id_types_residents', function() {
+            const val = getTypeValue($(this));
+            loadResidentsByType(val, { force: true });
         });
     }
 
@@ -198,7 +176,9 @@
 
         clearResidents($residentSelect);
         setResidentsState($residentSelect, 'disabled');
+
         bindEvents();
+        setupMutationObserver($typeSelect);
 
         const initialVal = getTypeValue($typeSelect);
         if (initialVal) {

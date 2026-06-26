@@ -2,97 +2,85 @@
     'use strict';
 
     function log(message, data) {
-        if (typeof data !== 'undefined') {
-            console.log('[Circular AJAX] ' + message, data);
-        } else {
-            console.log('[Circular AJAX] ' + message);
-        }
+        console.log('[Circular AJAX] ' + message, data || '');
     }
 
     function warn(message, data) {
-        if (typeof data !== 'undefined') {
-            console.warn('[Circular AJAX] ' + message, data);
-        } else {
-            console.warn('[Circular AJAX] ' + message);
-        }
+        console.warn('[Circular AJAX] ' + message, data || '');
     }
 
-    function getSelect2Text($select) {
+    // Função para extrair o valor de qualquer forma possível
+    function getTypeValue($typeSelect) {
+        log('--- TENTANDO EXTRAIR VALOR ---');
+        
+        // 1. Tenta o valor do elemento nativo (se sincronizado)
+        const nativeValue = $typeSelect[0]?.value;
+        if (nativeValue && nativeValue !== '' && nativeValue !== '---------') {
+            log('Sucesso via DOM Nativo:', nativeValue);
+            return nativeValue;
+        }
+
+        // 2. Tenta o .val() do jQuery
+        const jVal = $typeSelect.val();
+        const finalJVal = Array.isArray(jVal) ? (jVal[0] || '') : jVal;
+        if (finalJVal && finalJVal !== '' && finalJVal !== '---------') {
+            log('Sucesso via jQuery .val():', finalJVal);
+            return finalJVal;
+        }
+
+        // 3. Tenta a opção selecionada no DOM
+        const selectedOpt = $typeSelect.find('option:selected');
+        const optVal = selectedOpt.val();
+        if (optVal && optVal !== '' && optVal !== '---------') {
+            log('Sucesso via Option Selected:', optVal);
+            return optVal;
+        }
+
+        // 4. Tenta extrair o texto VISÍVEL do widget Select2 (A solução definitiva para dessincronia)
         try {
-            if ($select.hasClass('select2-hidden-accessible') && typeof $select.select2 === 'function') {
-                const data = $select.select2('data');
-
-                if (data && data.length > 0 && data[0].text) {
-                    const text = String(data[0].text).trim();
-
-                    if (text && text !== '---------' && text !== '---------') {
-                        return text;
-                    }
+            const s2Container = $typeSelect.next('.select2-container');
+            if (s2Container.length) {
+                const visibleText = s2Container.find('.select2-selection__rendered').text().trim();
+                log('Tentativa via Texto Visível do Widget:', visibleText);
+                if (visibleText && visibleText !== '' && visibleText !== '---------') {
+                    log('Sucesso via Texto Visível!');
+                    return visibleText; 
                 }
             }
         } catch (e) {
-            warn('Não foi possível ler texto do Select2.', e);
+            warn('Erro ao ler texto do Select2', e);
         }
 
-        return '';
-    }
-
-    function getTypeValue($typeSelect) {
-        let value = $typeSelect.val();
-
-        if (Array.isArray(value)) {
-            value = value.length > 0 ? value[0] : '';
-        }
-
-        if (value) {
-            return value;
-        }
-
-        const selectedOptionValue = $typeSelect.find('option:selected').val();
-
-        if (selectedOptionValue) {
-            return selectedOptionValue;
-        }
-
-        const select2Text = getSelect2Text($typeSelect);
-
-        if (select2Text) {
-            warn('O campo Tipo de Residente está sem value. Usando texto como fallback.', select2Text);
-            return select2Text;
-        }
-
+        log('--- FALHA TOTAL: Nenhum valor identificado ---');
         return '';
     }
 
     function refreshSelect2($select) {
         $select.trigger('change');
-
-        if ($select.hasClass('select2-hidden-accessible')) {
-            $select.trigger('change.select2');
-        }
     }
 
     function clearResidents($residentSelect) {
-        log('Limpando residentes anteriores');
-
+        log('Limpando campo Residentes');
         $residentSelect.empty();
         refreshSelect2($residentSelect);
     }
 
-    function setResidentsLoading($residentSelect, loading) {
-        if (loading) {
-            log('Aplicando estado de carregamento');
+    function setResidentsState($residentSelect, state) {
+        if (state === 'loading') {
+            log('Estado: CARREGANDO...');
+            $residentSelect.prop('disabled', true);
+        } else if (state === 'enabled') {
+            log('Estado: HABILITADO');
+            $residentSelect.prop('disabled', false);
         } else {
-            log('Removendo estado de carregamento');
+            log('Estado: DESABILITADO');
+            $residentSelect.prop('disabled', true);
         }
-
-        $residentSelect.prop('disabled', loading);
         refreshSelect2($residentSelect);
     }
 
     function appendResidents($residentSelect, residents) {
-        log('Populando campo Residentes');
-
+        log(' Populando ' + residents.length + ' residentes');
         residents.forEach(function(resident) {
             const option = new Option(
                 resident.name || resident.text,
@@ -100,21 +88,14 @@
                 false,
                 false
             );
-
             $residentSelect.append(option);
         });
-
         refreshSelect2($residentSelect);
     }
 
     function getAjaxUrl($typeSelect) {
-        const urlFromField = $typeSelect.data('residents-url');
-
-        if (urlFromField) {
-            return urlFromField;
-        }
-
-        return '/administrative/ajax/get-residents-by-type/';
+        const url = $typeSelect.data('residents-url');
+        return url || '/administrative/ajax/get-residents-by-type/';
     }
 
     let lastLoadedType = null;
@@ -122,185 +103,132 @@
 
     function loadResidentsByType(typeValue, options) {
         options = options || {};
-
         const force = Boolean(options.force);
         const $typeSelect = $('#id_types_residents');
         const $residentSelect = $('#id_residents');
 
-        if (!$typeSelect.length) {
-            console.error('[Circular AJAX] Campo Tipo de Residente localizado: NÃO');
-            return;
-        }
-
-        if (!$residentSelect.length) {
-            console.error('[Circular AJAX] Campo Residentes localizado: NÃO');
-            return;
-        }
+        if (!$typeSelect.length || !$residentSelect.length) return;
 
         if (!typeValue) {
-            warn('Nenhum tipo informado. Residentes não serão carregados.');
+            warn('Valor vazio. Desabilitando residentes.');
             clearResidents($residentSelect);
+            setResidentsState($residentSelect, 'disabled');
+            lastLoadedType = null;
             return;
         }
 
         if (!force && String(lastLoadedType) === String(typeValue)) {
-            log('Tipo já carregado. Ignorando nova chamada.', typeValue);
             return;
         }
 
         lastLoadedType = typeValue;
-
         const ajaxUrl = getAjaxUrl($typeSelect);
 
-        log('Disparando carregamento de residentes', {
-            type_id: typeValue
-        });
+        log('DISPARANDO AJAX -> Tipo: ' + typeValue + ' | URL: ' + ajaxUrl);
 
         clearResidents($residentSelect);
-        setResidentsLoading($residentSelect, true);
+        setResidentsState($residentSelect, 'loading');
 
         if (currentRequest && currentRequest.readyState !== 4) {
-            log('Cancelando requisição AJAX anterior');
             currentRequest.abort();
         }
-
-        const fullUrlForLog = ajaxUrl + '?type_id=' + encodeURIComponent(typeValue);
-        log('Iniciando chamada Ajax ' + fullUrlForLog);
 
         currentRequest = $.ajax({
             url: ajaxUrl,
             method: 'GET',
             dataType: 'json',
-            data: {
-                type_id: typeValue
-            },
+            data: { type_id: typeValue },
             success: function(response) {
-                log('Retorno Ajax recebido', response);
-
-                setResidentsLoading($residentSelect, false);
-
+                log('Resposta AJAX recebida:', response);
                 if (response && response.success && response.residents && response.residents.length > 0) {
-                    log('Quantidade de residentes retornados ' + response.count);
                     appendResidents($residentSelect, response.residents);
+                    setResidentsState($residentSelect, 'enabled');
                 } else {
-                    warn(response.message || 'Nenhum residente encontrado para o tipo selecionado.');
-                    refreshSelect2($residentSelect);
+                    warn(response.message || 'Nenhum residente encontrado.');
+                    setResidentsState($residentSelect, 'disabled');
                 }
             },
             error: function(xhr, status, error) {
-                if (status === 'abort') {
-                    return;
-                }
-
-                console.error('[Circular AJAX] Erro ao carregar residentes:', {
-                    status: status,
-                    error: error,
-                    responseText: xhr.responseText
-                });
-
-                setResidentsLoading($residentSelect, false);
-
-                alert('Não foi possível carregar os residentes neste momento. Tente novamente.');
+                if (status === 'abort') return;
+                setResidentsState($residentSelect, 'disabled');
             }
         });
     }
 
-    let scheduledInitialLoad = null;
+    // NOVA ABORDAGEM: MutationObserver
+    // Monitora mudanças no HTML do widget Select2, ignorando a necessidade de eventos de 'change'
+    function setupMutationObserver($typeSelect) {
+        log('Configurando MutationObserver para detectar mudanças visuais...');
+        
+        const targetNode = $typeSelect.next('.select2-container').find('.select2-selection__rendered');
+        
+        if (!targetNode.length) {
+            warn('Elemento visual do Select2 não encontrado para observação.');
+            return;
+        }
 
-    function scheduleInitialLoad(delay) {
-        window.setTimeout(function() {
-            const $typeSelect = $('#id_types_residents');
-            const $residentSelect = $('#id_residents');
+        const config = { childList: true, characterData: true, subtree: true };
 
-            if (!$typeSelect.length || !$residentSelect.length) {
-                return;
+        const callback = function(mutationsList, observer) {
+            for (const mutation of mutationsList) {
+                log('Mudança detectada no texto do Select2!');
+                const val = getTypeValue($typeSelect);
+                loadResidentsByType(val, { force: true });
+                break; 
             }
+        };
 
-            const typeValue = getTypeValue($typeSelect);
-
-            if (typeValue) {
-                log('Tipo de Residente já preenchido no carregamento inicial ' + typeValue);
-                log('Disparando carregamento inicial de residentes');
-                loadResidentsByType(typeValue, { force: true });
-            } else {
-                log('Nenhum tipo preenchido no carregamento inicial.');
-            }
-        }, delay);
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode[0], config);
+        log('MutationObserver ativo e monitorando o campo Tipo de Residente.');
     }
 
     function bindEvents() {
         $(document).off('.circularResidents');
 
-        $(document).on(
-            'change.circularResidents select2:select.circularResidents',
-            '#id_types_residents',
-            function() {
-                const $typeSelect = $(this);
-                const typeValue = getTypeValue($typeSelect);
+        // Mantemos o change como fallback
+        $(document).on('change', '#id_types_residents', function() {
+            const val = getTypeValue($(this));
+            loadResidentsByType(val, { force: true });
+        });
 
-                if (scheduledInitialLoad) {
-                    window.clearTimeout(scheduledInitialLoad);
-                }
-
-                if (typeValue) {
-                    log('Tipo selecionado: ' + typeValue);
-                    loadResidentsByType(typeValue, { force: true });
-                } else {
-                    log('Tipo selecionado: vazio. Limpando residentes.');
-                    lastLoadedType = null;
-                    clearResidents($('#id_residents'));
-                }
-            }
-        );
+        // Evento específico do Select2
+        $(document).on('select2:select', '#id_types_residents', function() {
+            const val = getTypeValue($(this));
+            loadResidentsByType(val, { force: true });
+        });
     }
 
     function initCircularResidentsAjax() {
-        log('DOM carregado');
+        log('Iniciando sistema de filtragem...');
 
         const $typeSelect = $('#id_types_residents');
         const $residentSelect = $('#id_residents');
 
-        if (!$typeSelect.length) {
-            console.error('[Circular AJAX] Campo Tipo de Residente localizado: NÃO');
+        if (!$typeSelect.length || !$residentSelect.length) {
+            warn('Campos não encontrados.');
             return;
         }
 
-        log('Campo Tipo de Residente localizado', {
-            id: $typeSelect.attr('id'),
-            name: $typeSelect.attr('name'),
-            value: $typeSelect.val(),
-            select2Text: getSelect2Text($typeSelect)
-        });
-
-        if (!$residentSelect.length) {
-            console.error('[Circular AJAX] Campo Residentes localizado: NÃO');
-            return;
-        }
-
-        log('Campo Residentes localizado', {
-            id: $residentSelect.attr('id'),
-            name: $residentSelect.attr('name'),
-            multiple: $residentSelect.prop('multiple')
-        });
+        clearResidents($residentSelect);
+        setResidentsState($residentSelect, 'disabled');
 
         bindEvents();
+        
+        // Tenta configurar o observador de mudanças visuais
+        setupMutationObserver($typeSelect);
 
-        /*
-         * Jazzmin/Select2 pode terminar a inicialização depois do DOM ready.
-         * Por isso fazemos algumas tentativas leves.
-         */
-        scheduleInitialLoad(100);
-        scheduleInitialLoad(500);
-        scheduleInitialLoad(1000);
+        const initialVal = getTypeValue($typeSelect);
+        if (initialVal) {
+            loadResidentsByType(initialVal, { force: true });
+        }
     }
 
     if (typeof django !== 'undefined' && django.jQuery) {
+        const $ = django.jQuery;
         $(document).ready(initCircularResidentsAjax);
         $(window).on('load', function() {
-            scheduleInitialLoad(300);
+            setTimeout(initCircularResidentsAjax, 500);
         });
-    } else {
-        console.error('[Circular AJAX] django.jQuery não está disponível.');
     }
-
 })(django.jQuery);

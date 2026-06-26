@@ -82,7 +82,10 @@ class CircularForm(forms.ModelForm):
         self.fields["title"].required = True
         self.fields["circular_content"].required = True
 
-        self.fields["residents"].queryset = Resident.objects.none()
+        # Garantir que o campo residents seja tratado como ModelMultipleChoiceField para evitar erros de tipo
+        residents_field = self.fields["residents"]
+        if isinstance(residents_field, forms.ModelMultipleChoiceField):
+            residents_field.queryset = Resident.objects.none()
 
         resident_type_id = self._resolve_resident_type_id()
 
@@ -93,20 +96,21 @@ class CircularForm(forms.ModelForm):
                 if not self.is_bound:
                     self.fields["types_residents"].initial = resident_type_id
 
-                self.fields["residents"].queryset = Resident.objects.filter(
-                    type_of_resident_id=resident_type_id
-                ).order_by("name")
+                if isinstance(residents_field, forms.ModelMultipleChoiceField):
+                    residents_field.queryset = Resident.objects.filter(
+                        type_of_resident_id=resident_type_id
+                    ).order_by("name")
 
             except (TypeError, ValueError):
-                self.fields["residents"].queryset = Resident.objects.none()
+                if isinstance(residents_field, forms.ModelMultipleChoiceField):
+                    residents_field.queryset = Resident.objects.none()
 
     def _resolve_resident_type_id(self):
         """
         Resolve o tipo de residente considerando:
         1. POST/GET do formulário;
         2. instância existente;
-        3. valor inicial;
-        4. tipo padrão Morador(a) na tela de adicionar.
+        3. valor inicial.
         """
 
         if self.data.get("types_residents"):
@@ -118,13 +122,6 @@ class CircularForm(forms.ModelForm):
         initial_type = self.initial.get("types_residents")
         if initial_type:
             return initial_type
-
-        if not self.is_bound and not self.instance.pk:
-            default_type_id = ResidentType.objects.filter(
-                description__iexact="Morador(a)"
-            ).values_list("id", flat=True).first()
-
-            return default_type_id
 
         return None
 
