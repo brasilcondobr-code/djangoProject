@@ -2,8 +2,8 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 
-from .models import Addresses, States, TypesCondominium, StructionCondominium, TypesVisitorRestrictions, ResidentType
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm
+from .models import Addresses, States, TypesCondominium, StructionCondominium, TypesVisitorRestrictions, ResidentType, DocumentType
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm
 
 class ExportCsvMixin:
     def init(self, model, *args, **kwargs):
@@ -136,6 +136,15 @@ class TypesVisitorRestrictionsAdmin(admin.ModelAdmin):
 @admin.register(ResidentType)
 class ResidentTypeAdmin(admin.ModelAdmin):
     form = ResidentTypeForm
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    list_per_page = 25
+
+@admin.register(DocumentType)
+class DocumentTypeAdmin(admin.ModelAdmin):
+    form = DocumentTypeForm
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)

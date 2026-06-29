@@ -3,7 +3,7 @@ import csv
 from django.contrib import admin
 from django.http import HttpResponse
 from domains.administrative.models import Bank
-from domains.administrative.forms import BankForm, CircularForm
+from domains.administrative.forms import BankForm, CircularForm, DocumentsForm
 from domains.administrative.models.circular import Circular
 from domains.administrative.models.documents import Documents
 from domains.administrative.models.infraction import Infraction
@@ -143,7 +143,63 @@ class CircularAdmin(admin.ModelAdmin):
 
 @admin.register(Documents)
 class DocumentsAdmin(admin.ModelAdmin):
-    pass
+    form = DocumentsForm
+
+    list_display = (
+        "title",
+        "condominium",
+        "document_type",
+        "registration_date",
+        "is_active",
+        "created_at",
+    )
+
+    list_filter = (
+        "condominium",
+        "document_type",
+        "is_active",
+        "registration_date",
+    )
+
+    search_fields = (
+        "title",
+        "observations",
+        "condominium__name",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    fieldsets = (
+        (
+            "Principal",
+            {
+                "fields": (
+                    "condominium",
+                    "document_type",
+                    "title",
+                    "registration_date",
+                    "file",
+                    "observations",
+                    "is_active",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": (
+                    "collapse",
+                ),
+            },
+        ),
+    )
 
 @admin.register(Infraction)
 class InfractionAdmin(admin.ModelAdmin):
