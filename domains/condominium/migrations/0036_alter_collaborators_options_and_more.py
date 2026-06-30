@@ -19,10 +19,6 @@ class Migration(migrations.Migration):
             options={'ordering': ['name', 'code', 'cnpj', 'is_active', 'created_at'], 'verbose_name': '01. Condomínio', 'verbose_name_plural': '01. Condomínios'},
         ),
         migrations.AlterModelOptions(
-            name='documentcondominium',
-            options={'ordering': ['name', 'created_at'], 'verbose_name': '04. Documento do Condomínio', 'verbose_name_plural': '04. Documentos do Condomínio'},
-        ),
-        migrations.AlterModelOptions(
             name='types_collaborators',
             options={'ordering': ['name', 'is_active', 'created_at'], 'verbose_name': '02. Tipo de Colaborador', 'verbose_name_plural': '02. Tipos de Colaboradores'},
         ),

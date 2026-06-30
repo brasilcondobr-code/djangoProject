@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Detalhes do Tipo de Infração</h2>
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Descrição:</strong> {{ infractions_type.description }}</p>
+            <p><strong>Tipo:</strong> {{ infractions_type.get_infraction_type_display }}</p>
+            <p><strong>Ativo:</strong> {{ infractions_type.is_active|yesno:"Sim,Não" }}</p>
+        </div>
+    </div>
+    <div class="mt-3">
+        <a href="{% url 'infractions-type-list' %}" class="btn btn-secondary">Voltar</a>
+        <a href="{% url 'infractions-type-update' infractions_type.pk %}" class="btn btn-warning">Editar</a>
+    </div>
+</div>
+{% endblock %}

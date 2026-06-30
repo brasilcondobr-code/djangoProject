@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType
 
 
 
@@ -268,5 +268,52 @@ class DocumentTypeForm(forms.ModelForm):
             raise forms.ValidationError('Já existe um tipo de documento com esta descrição.')
             
         return description
+
+class InfractionsTypeForm(forms.ModelForm):
+    class Meta:
+        model = InfractionsType
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição',
+            }),
+            'infraction_type': forms.Select(attrs={
+                'class': 'form-control',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'infraction_type': 'Tipo de Infração',
+            'is_active': 'Ativo',
+        }
+        error_messages = {
+            'description': {
+                'required': 'A descrição é obrigatória.',
+            },
+            'infraction_type': {
+                'required': 'O tipo de infração é obrigatório.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+        
+        # RN001: Remover espaços extras e validar unicidade case-insensitive
+        description = description.strip()
+        
+        instance = self.instance
+        queryset = InfractionsType.objects.filter(description__iexact=description)
+        if instance:
+            queryset = queryset.exclude(pk=instance.pk)
+            
+        if queryset.exists():
+            raise forms.ValidationError('Já existe um tipo de infração com esta descrição.')
+            
+        return description
+
 
 
