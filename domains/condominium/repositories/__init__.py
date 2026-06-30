@@ -1,4 +1,3 @@
 from .condominium_repository import CondominiumRepository
 from .types_collaborator_repository import TypesCollaboratorRepository
 from .collaborator_repository import CollaboratorRepository
-from .document_condominium_repository import DocumentCondominiumRepository

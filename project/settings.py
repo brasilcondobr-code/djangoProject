@@ -242,7 +242,6 @@ JAZZMIN_SETTINGS = {
         "condominium.Condominium": "fas fa-building",
         "condominium.TypesCollaborator": "fa-solid fa-anchor-circle-exclamation",
         "condominium.Collaborator": "fa-solid fa-person-half-dress",
-        "condominium.DocumentCondominium": "fa-solid fa-file-invoice",
         "parameters.Addresses": "fas fa-map-marked-alt",
         "parameters.States": "fas fa-flag",
         "parameters.TypesCondominium": "fas fa-home",

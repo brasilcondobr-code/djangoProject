@@ -1,3 +1,2 @@
 from .condominium_service import CondominiumService
 from .collaborator_service import CollaboratorService
-from .document_condominium_service import DocumentCondominiumService
