@@ -9,10 +9,16 @@ def get_unit_identification(request):
     
     try:
         unit = get_object_or_404(CondominiumUnit, pk=unit_id)
+        
+        # Construct the visual identification (Tower - Unit)
+        tower = unit.tower or ''
+        unit_number = unit.unit_number or ''
+        visual_id = f"{tower} - {unit_number}".strip(' -') if tower and unit_number else (tower or unit_number or '')
+        
         return JsonResponse({
-            'identification': unit.identification or '',
-            'tower': unit.tower or '',
-            'unit_number': unit.unit_number or '',
+            'identification': unit.identification or visual_id,
+            'tower': tower,
+            'unit_number': unit_number,
             'floor': unit.floor or '',
             'condominium': unit.condominium.name if unit.condominium else ''
         })
