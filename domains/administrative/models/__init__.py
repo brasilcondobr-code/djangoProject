@@ -3,7 +3,6 @@ from domains.administrative.models.circular import Circular
 from domains.administrative.models.documents import Documents
 from domains.administrative.models.infraction import Infraction
 from domains.administrative.models.meter import Meter
-from domains.administrative.models.notification import Notification
 from domains.administrative.models.patrimony import Patrimony
 from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount

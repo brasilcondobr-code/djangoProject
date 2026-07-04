@@ -6,7 +6,6 @@ from domains.administrative.models import Bank, Infraction
 from domains.administrative.models.circular import Circular
 from domains.administrative.models.documents import Documents
 from domains.administrative.models.meters import Meters
-from domains.administrative.models.notification import Notification
 from domains.administrative.models.patrimony import Patrimony
 from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount
@@ -17,6 +16,7 @@ from domains.administrative.forms.infraction_form import InfractionsForm
 from domains.administrative.forms.meter_form import MetersForm
 from domains.administrative.services.infraction_service import InfractionService
 from domains.administrative.services.meter_service import MeterService
+
  
 class ExportCsvMixin:
 
@@ -517,13 +517,9 @@ class InfractionAdmin(admin.ModelAdmin):
 
 
 
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
-    pass
-
-
 @admin.register(Patrimony)
 class PatrimonyAdmin(admin.ModelAdmin):
+
     pass
 
 @admin.register(BudgetForecast)
