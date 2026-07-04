@@ -69,7 +69,7 @@
         function buscarIdentificacaoAjax(unitId) {
             $.ajax({
                 url: '/ajax/get-unit-identification/',
-                data: { 'unit_id': unitId },
+                data: { 'id': unitId },
                 dataType: 'json',
                 success: function(data) {
                     if (data.identification) {

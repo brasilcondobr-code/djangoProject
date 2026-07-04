@@ -1,11 +1,11 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
-
+ 
 from domains.administrative.models import Bank, Infraction
 from domains.administrative.models.circular import Circular
 from domains.administrative.models.documents import Documents
-from domains.administrative.models.meter import Meter
+from domains.administrative.models.meters import Meters
 from domains.administrative.models.notification import Notification
 from domains.administrative.models.patrimony import Patrimony
 from domains.administrative.models.budget_forecast import BudgetForecast
@@ -14,9 +14,12 @@ from domains.administrative.models.task import Task
 from domains.administrative.models.virtual_assembly import VirtualAssembly
 from domains.administrative.forms import BankForm, CircularForm, DocumentsForm
 from domains.administrative.forms.infraction_form import InfractionsForm
+from domains.administrative.forms.meter_form import MetersForm
 from domains.administrative.services.infraction_service import InfractionService
-
+from domains.administrative.services.meter_service import MeterService
+ 
 class ExportCsvMixin:
+
     def init(self, model, *args, **kwargs):
         self.model = model
         super().__init__(*args, **kwargs)
@@ -36,6 +39,82 @@ class ExportCsvMixin:
     export_as_csv.short_description = "Exportar para CSV"
 
 
+@admin.register(Meters)
+class MeterAdmin(admin.ModelAdmin):
+    form = MetersForm
+
+    list_display = (
+        "condominium",
+        "meterType",
+        "composition",
+        "releaseDate",
+        "previousValue",
+        "currentValue",
+        "Consumption",
+        "Value",
+        "is_active",
+        "created_at",
+    )
+
+    list_filter = (
+        "condominium",
+        "meterType",
+        "composition",
+        "is_active",
+        "releaseDate",
+        "created_at",
+    )
+
+    search_fields = (
+        "composition",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    fieldsets = (
+        (
+            "Principal",
+            {
+                "fields": (
+                    "condominium",
+                    "releaseDate",
+                    "meterType",
+                    "composition",
+                    "previousValue",
+                    "currentValue",
+                    "Consumption",
+                    "Value",
+                    "file",
+                    "is_active",
+                ),
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": (
+                    "collapse",
+                ),
+            },
+        ),
+    )
+
+    class Media:
+        js = (
+            "js/meters_admin.js",
+        )
+
+    def get_queryset(self, request):
+        return MeterService.get_admin_queryset()
+
+ 
 @admin.register(Bank)
 class BankAdmin(ExportCsvMixin, admin.ModelAdmin):
     form = BankForm
@@ -438,13 +517,10 @@ class InfractionAdmin(admin.ModelAdmin):
 
 
 
-@admin.register(Meter)
-class MeterAdmin(admin.ModelAdmin):
-    pass
-
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
     pass
+
 
 @admin.register(Patrimony)
 class PatrimonyAdmin(admin.ModelAdmin):

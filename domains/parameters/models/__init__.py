@@ -6,3 +6,4 @@ from .types_visitor_restrictions import TypesVisitorRestrictions
 from .resident_type import ResidentType
 from .document_type import DocumentType
 from .infractions_type import InfractionsType
+from .meter_type import MeterType
