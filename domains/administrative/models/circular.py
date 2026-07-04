@@ -2,6 +2,7 @@ from django.db import models
 from core.services.validators import validate_date
 from domains.email_service.models import ConnectionStatus, SMTPConfiguration
 from domains.residents.models import CondominiumUnit
+from domains.parameters.models import ResidentType
 
 class Circular(models.Model):
     # Aba: Principal
@@ -9,6 +10,12 @@ class Circular(models.Model):
         CondominiumUnit,
         related_name="circulars",
         verbose_name="Condomínio",
+        blank=True,
+    )
+    types_residents = models.ManyToManyField(
+        ResidentType,
+        related_name="circulars",
+        verbose_name="Tipos de Residentes",
         blank=True,
     )
 

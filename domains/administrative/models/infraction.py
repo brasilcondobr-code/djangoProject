@@ -1,11 +1,11 @@
 from django.db import models
-
+ 
 from domains.residents.models import CondominiumUnit
-from domains.parameters.models import InfractionsType
+from domains.parameters.models import InfractionsType, ResidentType
 from domains.email_service.models import ConnectionStatus, SMTPConfiguration
 from domains.administrative.validators import validate_infraction_file_extension
 from shared.validators import validate_date
-
+ 
 class Infraction(models.Model):
     condominium = models.ManyToManyField(
         CondominiumUnit,
@@ -13,6 +13,13 @@ class Infraction(models.Model):
         verbose_name="Condomínio",
         blank=True,
     )
+    types_residents = models.ManyToManyField(
+        ResidentType,
+        related_name="infractions",
+        verbose_name="Tipos de Residentes",
+        blank=True,
+    )
+
 
     releaseDate = models.DateField(
         validators=[validate_date],

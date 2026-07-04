@@ -18,6 +18,11 @@ class CircularForm(forms.ModelForm):
                     "class": "form-control",
                 }
             ),
+            "types_residents": forms.SelectMultiple(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
             "title": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -36,6 +41,7 @@ class CircularForm(forms.ModelForm):
 
         labels = {
             "condominium": "Condomínio",
+            "types_residents": "Tipos de Residentes",
             "release_date": "Data de Lançamento",
             "title": "Título",
             "circular_content": "Conteúdo da Circular",
@@ -47,6 +53,9 @@ class CircularForm(forms.ModelForm):
         error_messages = {
             "condominium": {
                 "required": "O condomínio é obrigatório.",
+            },
+            "types_residents": {
+                "required": "A seleção de tipos de residentes é obrigatória.",
             },
             "release_date": {
                 "required": "A data de lançamento é obrigatória.",
@@ -63,10 +72,17 @@ class CircularForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["condominium"].required = True
-        self.fields["release_date"].required = True
-        self.fields["title"].required = True
-        self.fields["circular_content"].required = True
+        required_fields = [
+            "condominium",
+            "types_residents",
+            "release_date",
+            "title",
+            "circular_content",
+        ]
+
+        for field_name in required_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
 
         # Default status to 'Pendente' on creation
         if not self.instance.pk and "connection_status" in self.fields:

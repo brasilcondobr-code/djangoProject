@@ -84,11 +84,11 @@ class CircularAdmin(admin.ModelAdmin):
     search_fields = ('title', 'circular_content')
     readonly_fields = ('created_at', 'updated_at', 'logs')
     actions = ['send_to_email_queue']
-    filter_horizontal = ('condominium',)
+    filter_horizontal = ('condominium', 'types_residents')
 
     fieldsets = (
         ('Principal', {
-            'fields': ('condominium', 'release_date', 'title', 'circular_content', 'is_active')
+            'fields': ('condominium', 'types_residents', 'release_date', 'title', 'circular_content', 'is_active')
         }),
         ('Configurações', {
             'fields': ('email_smtp_configuration', 'connection_status', 'logs'),
@@ -135,11 +135,17 @@ class CircularAdmin(admin.ModelAdmin):
             if not units.exists():
                 skipped_no_units += 1
                 continue
-
+            
             # Get all residents from all selected units
             residents = Resident.objects.filter(unit__in=units)
             
+            # Filter by resident types if specified
+            resident_types = circular.types_residents.all()
+            if resident_types.exists():
+                residents = residents.filter(type_of_resident__in=resident_types)
+            
             if not residents.exists():
+
                 skipped_no_residents += 1
                 continue
 
@@ -285,7 +291,7 @@ class InfractionAdmin(admin.ModelAdmin):
         "logs",
     )
     actions = ['send_to_email_queue']
-    filter_horizontal = ('condominium',)
+    filter_horizontal = ('condominium', 'types_residents')
 
     fieldsets = (
         (
@@ -293,6 +299,7 @@ class InfractionAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "condominium",
+                    "types_residents",
                     "releaseDate",
                     "infractions_type",
                     "title",
@@ -366,6 +373,11 @@ class InfractionAdmin(admin.ModelAdmin):
 
             # Get all residents from all selected units
             residents = Resident.objects.filter(unit__in=units)
+            
+            # Filter by resident types if specified
+            resident_types = infraction.types_residents.all()
+            if resident_types.exists():
+                residents = residents.filter(type_of_resident__in=resident_types)
             
             if not residents.exists():
                 skipped_no_residents += 1

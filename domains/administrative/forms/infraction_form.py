@@ -19,6 +19,11 @@ class InfractionsForm(forms.ModelForm):
                     "class": "form-control",
                 }
             ),
+            "types_residents": forms.SelectMultiple(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
             "releaseDate": forms.DateInput(
                 attrs={
                     "class": "form-control",
@@ -50,6 +55,7 @@ class InfractionsForm(forms.ModelForm):
 
         labels = {
             "condominium": "Condomínio",
+            "types_residents": "Tipos de Residentes",
             "releaseDate": "Data de Lançamento",
             "infractions_type": "Tipo de Infração",
             "title": "Título",
@@ -70,6 +76,9 @@ class InfractionsForm(forms.ModelForm):
         error_messages = {
             "condominium": {
                 "required": "O condomínio é obrigatório.",
+            },
+            "types_residents": {
+                "required": "A seleção de tipos de residentes é obrigatória.",
             },
             "releaseDate": {
                 "required": "A data de lançamento é obrigatória.",
@@ -92,6 +101,7 @@ class InfractionsForm(forms.ModelForm):
 
         required_fields = [
             "condominium",
+            "types_residents",
             "releaseDate",
             "infractions_type",
             "title",
