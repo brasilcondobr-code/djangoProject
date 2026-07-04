@@ -1,6 +1,6 @@
 from django.urls import path
-from domains.administrative.views import get_residents_by_type
+from domains.administrative.views.get_residents_by_type import get_residents_by_type
 
 urlpatterns = [
-    path('ajax/get-residents-by-type/', get_residents_by_type, name='get_residents_by_type'),
+    path('ajax/residents-by-type/', get_residents_by_type, name='get_residents_by_type'),
 ]

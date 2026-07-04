@@ -547,7 +547,8 @@ class VisitorFormAdmin(forms.ModelForm):
         import logging
         logger = logging.getLogger(__name__)
         
-        logger.info(f"Validating CPF for {self.instance}: digits={cpf_digits}")
+        # FIX: Remove self.instance from logger since it might not have a unit during creation
+        logger.info(f"Validating CPF: digits={cpf_digits}")
         
         if not self.instance.pk or (hasattr(self.instance, 'cpf') and self.instance.cpf != cpf) or not self.instance.situation:
             logger.info(f"Triggering API consultation for CPF {cpf_digits}")
@@ -566,6 +567,7 @@ class VisitorFormAdmin(forms.ModelForm):
             else:
                 logger.info("API result is None")
         return cpf
+
 
 
     def clean_phone(self):

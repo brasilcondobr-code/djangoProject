@@ -1,18 +1,15 @@
 from django.db import transaction
 import logging
-from domains.administrative.models.circular import Circular
 from domains.email_service.models import ShippingQueue, ConnectionStatus, SMTPConfiguration, UsageProfiles
-from domains.residents.models import Resident
 
 logger = logging.getLogger(__name__)
 
-class CircularEmailQueueService:
+class AdministrativeEmailQueueService:
     @staticmethod
     @transaction.atomic
-    def queue_circular_emails(circular: Circular):
+    def queue_emails(entity, residents, module_origin, subject, message, smtp_config_field, attachment=None):
         """
-        Queues emails for all residents associated with a circular.
-        Returns a dict with the results of the operation.
+        Generic method to queue emails for any administrative entity.
         """
         results = {
             'queued': 0,
@@ -22,24 +19,21 @@ class CircularEmailQueueService:
             'errors': 0
         }
 
-        residents = circular.residents.all()
         results['total_residents'] = residents.count()
         
         if not residents.exists():
             return results
 
-        # Get the SMTP configuration from the circular, or fallback to the first active one if none specified
-        smtp_config = circular.email_smtp_configuration
+        # Get the SMTP configuration from the entity, or fallback to the first active one if none specified
+        smtp_config = getattr(entity, smtp_config_field, None)
         if not smtp_config:
             smtp_config = SMTPConfiguration.objects.filter(is_active=True).first()
 
-        # Get a usage profile. In a real system, we might have one specifically for circulars.
+        # Get a usage profile.
         usage_profile = UsageProfiles.objects.filter(is_active=True).first()
 
         # Get the 'Pendente' connection status
         pending_status = ConnectionStatus.objects.filter(status__iexact='Pendente').first()
-        if not pending_status:
-            pass
 
         for resident in residents:
             try:
@@ -47,10 +41,10 @@ class CircularEmailQueueService:
                     results['no_email'] += 1
                     continue
 
-                # Check if this email is already queued for this circular to avoid duplicates
+                # Check if this email is already queued to avoid duplicates
                 exists = ShippingQueue.objects.filter(
-                    module_origin="administrative_circular",
-                    reference_id=circular.id,
+                    module_origin=module_origin,
+                    reference_id=entity.id,
                     to_email=resident.email
                 ).exists()
 
@@ -58,23 +52,39 @@ class CircularEmailQueueService:
                     results['already_queued'] += 1
                     continue
 
+                # Extract Condominium object.
+                # Handle both ManyToManyField (returns manager) and ForeignKey (returns instance)
+                condominium_val = getattr(entity, 'condominium', None)
+                condominium_obj = None
+                
+                if condominium_val:
+                    if hasattr(condominium_val, 'all'): # It's a manager (ManyToManyField)
+                        first_unit = condominium_val.first()
+                        if first_unit:
+                            condominium_obj = getattr(first_unit, 'condominium', None)
+                    elif hasattr(condominium_val, 'condominium'): # It's a CondominiumUnit instance
+                        condominium_obj = condominium_val.condominium
+                    else: # It might already be a Condominium instance
+                        condominium_obj = condominium_val
+
                 ShippingQueue.objects.create(
-                    condominium=circular.condominium,
-                    module_origin="administrative_circular",
-                    reference_id=circular.id,
-                    subject=f"[Circular] {circular.title}",
+                    condominium=condominium_obj,
+                    module_origin=module_origin,
+                    reference_id=entity.id,
+                    subject=subject,
                     to_email=resident.email,
-                    message=circular.circular_content,
-                    html_message=circular.circular_content, # Assuming content can be HTML
+                    message=message,
+                    html_message=message, 
                     smtp_configuration=smtp_config,
                     usage_profile=usage_profile,
                     status=pending_status,
-                    is_active=True
+                    is_active=True,
+                    attachments=attachment
                 )
                 results['queued'] += 1
             except Exception as e:
-                logger.error(f"Error queuing email for resident {resident.id}: {str(e)}", extra={
-                    "circular_id": circular.id,
+                logger.error(f"Error queuing email for entity {entity.id} and resident {resident.id}: {str(e)}", extra={
+                    "entity_id": entity.id,
                     "resident_id": resident.id
                 })
                 results['errors'] += 1

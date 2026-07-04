@@ -3,8 +3,7 @@ from django.urls import reverse_lazy
 
 from core.services.validators import validate_date
 from domains.administrative.models.circular import Circular
-from domains.residents.models import Resident
-from domains.parameters.models import ResidentType
+from domains.email_service.models import ConnectionStatus
 from ckeditor.widgets import CKEditorWidget
 
 
@@ -14,7 +13,11 @@ class CircularForm(forms.ModelForm):
         fields = "__all__"
 
         widgets = {
-            "circular_content": CKEditorWidget(),
+            "condominium": forms.SelectMultiple(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
             "title": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -25,20 +28,10 @@ class CircularForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "type": "date",
-                }
+                },
+                format="%Y-%m-%d",
             ),
-            "types_residents": forms.Select(
-                attrs={
-                    "class": "form-control",
-                    "data-residents-url": reverse_lazy("get_residents_by_type"),
-                }
-            ),
-            "residents": forms.SelectMultiple(
-                attrs={
-                    "class": "form-control",
-                    "data-placeholder": "Selecione os moradores",
-                }
-            ),
+            "circular_content": CKEditorWidget(),
         }
 
         labels = {
@@ -48,14 +41,7 @@ class CircularForm(forms.ModelForm):
             "circular_content": "Conteúdo da Circular",
             "is_active": "Ativo",
             "connection_status": "Status",
-            "types_residents": "Tipo de Residente",
-            "residents": "Residentes",
             "email_smtp_configuration": "Configuração SMTP",
-        }
-
-        help_texts = {
-            "types_residents": "Selecione o tipo de residente para filtrar os moradores.",
-            "residents": "Após selecionar o tipo de residente, escolha um ou vários moradores.",
         }
 
         error_messages = {
@@ -82,69 +68,11 @@ class CircularForm(forms.ModelForm):
         self.fields["title"].required = True
         self.fields["circular_content"].required = True
 
-        # Garantir que o campo residents seja tratado como ModelMultipleChoiceField para evitar erros de tipo
-        residents_field = self.fields["residents"]
-        if isinstance(residents_field, forms.ModelMultipleChoiceField):
-            residents_field.queryset = Resident.objects.none()
-
-        resident_type_id = self._resolve_resident_type_id()
-
-        if resident_type_id:
-            try:
-                resident_type_id = int(resident_type_id)
-
-                if not self.is_bound:
-                    self.fields["types_residents"].initial = resident_type_id
-
-                if isinstance(residents_field, forms.ModelMultipleChoiceField):
-                    residents_field.queryset = Resident.objects.filter(
-                        type_of_resident_id=resident_type_id
-                    ).order_by("name")
-
-            except (TypeError, ValueError):
-                if isinstance(residents_field, forms.ModelMultipleChoiceField):
-                    residents_field.queryset = Resident.objects.none()
-
-    def _resolve_resident_type_id(self):
-        """
-        Resolve o tipo de residente considerando:
-        1. POST/GET do formulário;
-        2. instância existente;
-        3. valor inicial.
-        """
-
-        if self.data.get("types_residents"):
-            return self.data.get("types_residents")
-
-        if self.instance and self.instance.pk and self.instance.types_residents_id:
-            return self.instance.types_residents_id
-
-        initial_type = self.initial.get("types_residents")
-        if initial_type:
-            return initial_type
-
-        return None
-
-    def clean(self):
-        cleaned_data = super().clean()
-        types_residents = cleaned_data.get("types_residents")
-        residents = cleaned_data.get("residents")
-
-        if types_residents and residents:
-            selected_resident_ids = set(residents.values_list("id", flat=True))
-
-            compatible_resident_ids = set(
-                residents.filter(
-                    type_of_resident_id=types_residents.id
-                ).values_list("id", flat=True)
-            )
-
-            if not selected_resident_ids.issubset(compatible_resident_ids):
-                raise forms.ValidationError(
-                    "Existem residentes selecionados incompatíveis com o tipo de residente informado."
-                )
-
-        return cleaned_data
+        # Default status to 'Pendente' on creation
+        if not self.instance.pk and "connection_status" in self.fields:
+            status_pendente = ConnectionStatus.objects.filter(status__iexact='Pendente').first()
+            if status_pendente:
+                self.fields["connection_status"].initial = status_pendente
 
     def clean_release_date(self):
         release_date = self.cleaned_data.get("release_date")

@@ -119,4 +119,8 @@ class Resident(models.Model):
 
     
     def __str__(self):
-        return f"{self.name} | {self.unit}".strip()
+        try:
+            unit_str = str(self.unit) if self.unit else "Sem Unidade"
+        except Exception:
+            unit_str = "Sem Unidade"
+        return f"{self.name} | {unit_str}".strip()

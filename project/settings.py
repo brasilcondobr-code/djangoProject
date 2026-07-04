@@ -249,6 +249,7 @@ JAZZMIN_SETTINGS = {
         "parameters.TypesVisitorRestrictions": "fa-solid fa-triangle-exclamation",
         "parameters.DocumentType": "fas fa-file-alt",
         "parameters.ResidentType": "fa-regular fa-hand-back-fist",
+        "parameters.InfractionsType": "fas fa-exclamation-triangle",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",
