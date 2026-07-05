@@ -19,10 +19,6 @@ class Migration(migrations.Migration):
             name='condominium',
             table='condominium_condominium',
         ),
-        migrations.AlterModelTable(
-            name='documentcondominium',
-            table='condominium_documentcondominium',
-        ),
         migrations.CreateModel(
             name='TypesCollaborator',
             fields=[

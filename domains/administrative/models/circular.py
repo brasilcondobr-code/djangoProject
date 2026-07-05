@@ -1,17 +1,22 @@
 from django.db import models
 from core.services.validators import validate_date
-from domains.condominium.models import Condominium
 from domains.email_service.models import ConnectionStatus, SMTPConfiguration
+from domains.residents.models import CondominiumUnit
 from domains.parameters.models import ResidentType
-from domains.residents.models import Resident
 
 class Circular(models.Model):
     # Aba: Principal
-    condominium = models.ForeignKey(
-        Condominium,
-        on_delete=models.CASCADE,
+    condominium = models.ManyToManyField(
+        CondominiumUnit,
         related_name="circulars",
         verbose_name="Condomínio",
+        blank=True,
+    )
+    types_residents = models.ManyToManyField(
+        ResidentType,
+        related_name="circulars",
+        verbose_name="Tipos de Residentes",
+        blank=True,
     )
 
     release_date = models.DateField(
@@ -42,23 +47,6 @@ class Circular(models.Model):
         verbose_name="Status",
     )
 
-    # Aba: Moradores
-    types_residents = models.ForeignKey(
-        ResidentType,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="circulars",
-        verbose_name="Tipo de Residente",
-    )
-
-    residents = models.ManyToManyField(
-        Resident,
-        blank=True,
-        related_name="circulars",
-        verbose_name="Residentes",
-    )
-
     # Aba: Configurações
     email_smtp_configuration = models.ForeignKey(
         SMTPConfiguration,
@@ -67,6 +55,11 @@ class Circular(models.Model):
         blank=True,
         related_name="circulars",
         verbose_name="Configuração SMTP",
+    )
+    logs = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Logs",
     )
 
     # Auditoria
@@ -86,10 +79,17 @@ class Circular(models.Model):
         ordering = ["-release_date", "-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["condominium", "release_date", "title"],
-                name="unique_circular_by_condominium_date_title",
+                fields=["release_date", "title"],
+                name="unique_circular_by_date_title",
             ),
         ]
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.connection_status:
+            status_pendente = ConnectionStatus.objects.filter(status__iexact='Pendente').first()
+            if status_pendente:
+                self.connection_status = status_pendente
+        super().save(*args, **kwargs)

@@ -40,6 +40,10 @@ class QueueProcessorService:
             # 1. Recarrega o item com lock para evitar race conditions
             item = QueueRepository.get_for_update(queue_item.pk)
             
+            # Incrementa a tentativa e salva imediatamente para garantir que a ação seja registrada
+            item.retry_count += 1
+            QueueRepository.save(item)
+            
             # 2. Validações iniciais de negócio
             if not item.is_active:
                 return {"success": False, "message": "Item inativo."}
@@ -99,7 +103,6 @@ class QueueProcessorService:
 
                 # Verificar se deve tentar novamente
                 if RetryService.should_retry(item):
-                    item.retry_count += 1
                     retry_status = ConnectionStatus.objects.filter(status__iexact="Retentativa").first()
                     if retry_status:
                         item.status = retry_status

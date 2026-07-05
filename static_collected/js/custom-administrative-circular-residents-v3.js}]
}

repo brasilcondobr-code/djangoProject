@@ -1,0 +1,196 @@
+(function($) {
+    'use strict';
+
+    // Função para extrair o valor de qualquer forma possível
+    function getTypeValue($typeSelect) {
+        // 1. TENTATIVA NATIVA (DOM)
+        const nativeSelect = $typeSelect[0];
+        if (nativeSelect) {
+            const nativeValue = nativeSelect.value;
+            if (nativeValue && nativeValue !== '' && nativeValue !== '---------') {
+                return nativeValue;
+            }
+        }
+
+        // 2. TENTATIVA VIA JQUERY .val()
+        const jVal = $typeSelect.val();
+        const finalJVal = Array.isArray(jVal) ? (jVal[0] || '') : jVal;
+        if (finalJVal && finalJVal !== '' && finalJVal !== '---------') {
+            return finalJVal;
+        }
+
+        // 3. TENTATIVA VIA OPÇÃO SELECIONADA
+        const selectedOpt = $typeSelect.find('option:selected');
+        const optVal = selectedOpt.val();
+        if (optVal && optVal !== '' && optVal !== '---------') {
+            return optVal;
+        }
+
+        // 4. TENTATIVA VIA SELECT2 DATA
+        try {
+            if (typeof $typeSelect.select2 === 'function') {
+                const s2Data = $typeSelect.select2('data');
+                if (s2Data && s2Data.length > 0) {
+                    const id = s2Data[0].id;
+                    if (id && id !== '' && id !== '---------') return id;
+                }
+            }
+        } catch (e) {}
+
+        // 5. TENTATIVA VIA TEXTO VISÍVEL (Fallback Absoluto)
+        const selectedText = selectedOpt.text() ? selectedOpt.text().trim() : '';
+        if (selectedText && selectedText !== '' && selectedText !== '---------') {
+            return selectedText;
+        }
+
+        return '';
+    }
+
+    function refreshSelect2($select) {
+        $select.trigger('change');
+    }
+
+    function clearResidents($residentSelect) {
+        $residentSelect.empty();
+        refreshSelect2($residentSelect);
+    }
+
+    function setResidentsState($residentSelect, state) {
+        if (state === 'loading') {
+            $residentSelect.prop('disabled', true);
+        } else if (state === 'enabled') {
+            $residentSelect.prop('disabled', false);
+        } else {
+            $residentSelect.prop('disabled', true);
+        }
+        refreshSelect2($residentSelect);
+    }
+
+    function appendResidents($residentSelect, residents) {
+        residents.forEach(function(resident) {
+            const option = new Option(
+                resident.name || resident.text,
+                resident.id,
+                false,
+                false
+            );
+            $residentSelect.append(option);
+        });
+        refreshSelect2($residentSelect);
+    }
+
+    function getAjaxUrl($typeSelect) {
+        const url = $typeSelect.data('residents-url');
+        return url || '/administrative/ajax/get-residents-by-type/';
+    }
+
+    let lastLoadedType = null;
+    let currentRequest = null;
+
+    function loadResidentsByType(typeValue, options) {
+        options = options || {};
+        const force = Boolean(options.force);
+        const $typeSelect = $('#id_types_residents');
+        const $residentSelect = $('#id_residents');
+
+        if (!$typeSelect.length || !$residentSelect.length) return;
+
+        if (!typeValue) {
+            clearResidents($residentSelect);
+            setResidentsState($residentSelect, 'disabled');
+            lastLoadedType = null;
+            return;
+        }
+
+        if (!force && String(lastLoadedType) === String(typeValue)) {
+            return;
+        }
+
+        lastLoadedType = typeValue;
+        const ajaxUrl = getAjaxUrl($typeSelect);
+
+        clearResidents($residentSelect);
+        setResidentsState($residentSelect, 'loading');
+
+        if (currentRequest && currentRequest.readyState !== 4) {
+            currentRequest.abort();
+        }
+
+        currentRequest = $.ajax({
+            url: ajaxUrl,
+            method: 'GET',
+            dataType: 'json',
+            data: { type_id: typeValue },
+            success: function(response) {
+                if (response && response.success && response.residents && response.residents.length > 0) {
+                    appendResidents($residentSelect, response.residents);
+                    setResidentsState($residentSelect, 'enabled');
+                } else {
+                    setResidentsState($residentSelect, 'disabled');
+                }
+            },
+            error: function(xhr, status, error) {
+                if (status === 'abort') return;
+                setResidentsState($residentSelect, 'disabled');
+            }
+        });
+    }
+
+    function setupMutationObserver($typeSelect) {
+        const targetNode = $typeSelect.next('.select2-container').find('.select2-selection__rendered');
+        if (!targetNode.length) return;
+
+        const config = { childList: true, characterData: true, subtree: true };
+
+        const callback = function(mutationsList, observer) {
+            for (const mutation of mutationsList) {
+                const val = getTypeValue($typeSelect);
+                loadResidentsByType(val, { force: true });
+                break; 
+            }
+        };
+
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode[0], config);
+    }
+
+    function bindEvents() {
+        $(document).off('.circularResidents');
+
+        $(document).on('change', '#id_types_residents', function() {
+            const val = getTypeValue($(this));
+            loadResidentsByType(val, { force: true });
+        });
+
+        $(document).on('select2:select', '#id_types_residents', function() {
+            const val = getTypeValue($(this));
+            loadResidentsByType(val, { force: true });
+        });
+    }
+
+    function initCircularResidentsAjax() {
+        const $typeSelect = $('#id_types_residents');
+        const $residentSelect = $('#id_residents');
+
+        if (!$typeSelect.length || !$residentSelect.length) return;
+
+        clearResidents($residentSelect);
+        setResidentsState($residentSelect, 'disabled');
+
+        bindEvents();
+        setupMutationObserver($typeSelect);
+
+        const initialVal = getTypeValue($typeSelect);
+        if (initialVal) {
+            loadResidentsByType(initialVal, { force: true });
+        }
+    }
+
+    if (typeof django !== 'undefined' && django.jQuery) {
+        const $ = django.jQuery;
+        $(document).ready(initCircularResidentsAjax);
+        $(window).on('load', function() {
+            setTimeout(initCircularResidentsAjax, 500);
+        });
+    }
+})(django.jQuery);

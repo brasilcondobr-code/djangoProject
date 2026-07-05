@@ -1,6 +1,7 @@
 from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
 class DataManagementConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'domains.data_management'
-    verbose_name = 'Gestão de Dados'
+    verbose_name = _('09. Gestão de Dados')

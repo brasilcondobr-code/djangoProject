@@ -7,7 +7,8 @@ from shared.validators import (
     validate_upload_files_docs, 
     validate_date
 )
-from domains.condominium.models import Collaborator, Condominium, DocumentCondominium
+from domains.condominium.models import Collaborator, Condominium
+
 
 class CondominiumFormAdmin(forms.ModelForm):
 
@@ -218,68 +219,4 @@ class CollaboratorsFormAdmin(forms.ModelForm):
             raise forms.ValidationError('A data de validade da certidão é inválida.')
         return date_val
         
-class DocumentCondominiumFormAdmin(forms.ModelForm):
-
-    class Meta:
-        model = DocumentCondominium
-        fields = '__all__'
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'file': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'observations': forms.Textarea(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-        
-        labels = {
-            'condominium': 'Condomínio',
-            'name': 'Nome do Documento',
-            'file': 'Arquivo do Documento',
-            'observations': 'Observações',
-            'is_active': 'Ativo',
-        }
-        
-        help_texts = {
-            'condominium': 'Selecione o condomínio relacionado ao documento',
-            'name': 'Digite o nome do documento',
-            'file': 'Selecione o arquivo do documento',
-            'observations': 'Observações adicionais sobre o documento',
-            'is_active': 'Documento ativo',
-        }
-        
-        error_messages = {
-            'condominium': {
-                'required': 'O condomínio é obrigatório.',
-            },
-            'name': {
-                'max_length': 'O nome do documento deve ter no máximo 255 caracteres.',
-            },
-            'file': {
-                'required': 'O arquivo do documento é obrigatório.',
-            },
-            'observations': {
-                'max_length': 'As observações do documento devem ter no.maxcdn 255 caracteres.',
-            },
-            'is_active': {
-                'required': 'O campo ativo é obrigatório.',
-            },
-        }
-        
-        field_order = [
-            'condominium',
-            'name',
-            'file',
-            'observations',
-            'is_active',
-            'created_at',
-            'updated_at',
-        ]
-        
-        exclude = ['created_at', 'updated_at']
-        
-    def __init__(self, *args, **kwargs):
-        super(DocumentCondominiumFormAdmin, self).__init__(*args, **kwargs)
-        self.fields['condominium'].widget.attrs['class'] = 'form-control'
-        self.fields['name'].widget.attrs['class'] = 'form-control'
-        self.fields['file'].widget.attrs['class'] = 'form-control'
-        self.fields['observations'].widget.attrs['class'] = 'form-control'
-        self.fields['is_active'].widget.attrs['class'] = 'form-check-input'
+# (nothing)

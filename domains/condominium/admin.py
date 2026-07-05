@@ -2,7 +2,7 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 
-from domains.condominium.models import Condominium, Collaborator, DocumentCondominium, TypesCollaborator
+from domains.condominium.models import Condominium, Collaborator, TypesCollaborator
 from domains.condominium.services import CondominiumService, CollaboratorService
 
 # Register your models here.
@@ -96,19 +96,4 @@ class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
             'js/custom-condominium-collaborators.js',
         )
         
-@admin.register(DocumentCondominium)
-class DocumentCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ('condominium', 'name', 'file', 'is_active')
-    search_fields = ('condominium__name', 'name')
-    list_filter = ('condominium', 'is_active')
-    readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-    
-    class Media:
-        js = (
-            'admin/js/vendor/jquery/jquery.js',
-            'admin/js/jquery.init.js',
-            'js/utils.js',
-            'js/custom-condominium-documentcondominium.js',
-        )
+# (nothing)

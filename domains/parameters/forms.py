@@ -1,5 +1,6 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType
+
 
 
 class StatesForm(forms.ModelForm):
@@ -208,8 +209,30 @@ class TypesVisitorRestrictionsForm(forms.ModelForm):
 
 
 class ResidentTypeForm(forms.ModelForm):
+# ... (existing ResidentTypeForm code)
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+        
+        # RN001: Remover espaços extras e validar unicidade case-insensitive
+        description = description.strip()
+        
+        # Verifica se já existe outro registro com a mesma descrição (ignorando case)
+        # Exclui o próprio objeto se estivermos em um Update
+        instance = self.instance
+        queryset = ResidentType.objects.filter(description__iexact=description)
+        if instance:
+            queryset = queryset.exclude(pk=instance.pk)
+            
+        if queryset.exists():
+            raise forms.ValidationError('Já existe um tipo de residente com esta descrição.')
+            
+        return description
+
+class DocumentTypeForm(forms.ModelForm):
     class Meta:
-        model = ResidentType
+        model = DocumentType
         fields = '__all__'
         widgets = {
             'description': forms.TextInput(attrs={
@@ -236,15 +259,61 @@ class ResidentTypeForm(forms.ModelForm):
         # RN001: Remover espaços extras e validar unicidade case-insensitive
         description = description.strip()
         
-        # Verifica se já existe outro registro com a mesma descrição (ignorando case)
-        # Exclui o próprio objeto se estivermos em um Update
         instance = self.instance
-        queryset = ResidentType.objects.filter(description__iexact=description)
+        queryset = DocumentType.objects.filter(description__iexact=description)
         if instance:
             queryset = queryset.exclude(pk=instance.pk)
             
         if queryset.exists():
-            raise forms.ValidationError('Já existe um tipo de residente com esta descrição.')
+            raise forms.ValidationError('Já existe um tipo de documento com esta descrição.')
             
         return description
+
+class InfractionsTypeForm(forms.ModelForm):
+    class Meta:
+        model = InfractionsType
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição',
+            }),
+            'infraction_type': forms.Select(attrs={
+                'class': 'form-control',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'infraction_type': 'Tipo de Infração',
+            'is_active': 'Ativo',
+        }
+        error_messages = {
+            'description': {
+                'required': 'A descrição é obrigatória.',
+            },
+            'infraction_type': {
+                'required': 'O tipo de infração é obrigatório.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+        
+        # RN001: Remover espaços extras e validar unicidade case-insensitive
+        description = description.strip()
+        
+        instance = self.instance
+        queryset = InfractionsType.objects.filter(description__iexact=description)
+        if instance:
+            queryset = queryset.exclude(pk=instance.pk)
+            
+        if queryset.exists():
+            raise forms.ValidationError('Já existe um tipo de infração com esta descrição.')
+            
+        return description
+
+
 

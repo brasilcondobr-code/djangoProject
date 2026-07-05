@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('condominium', '0030_documentcondominium'),
+        ('condominium', '0029_collaborators_photo'),
     ]
 
     operations = [

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Tipos de Infrações</h2>
+    <a href="{% url 'infractions-type-create' %}" class="btn btn-primary mb-3">Adicionar Novo Tipo</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Descrição</th>
+                <th>Tipo</th>
+                <th>Ativo</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for infractions_type in infractions_types %}
+            <tr>
+                <td>{{ infractions_type.description }}</td>
+                <td>{{ infractions_type.get_infraction_type_display }}</td>
+                <td>{{ infractions_type.is_active|yesno:"Sim,Não" }}</td>
+                <td>
+                    <a href="{% url 'infractions-type-detail' infractions_type.pk %}" class="btn btn-sm btn-info">Detalhes</a>
+                    <a href="{% url 'infractions-type-update' infractions_type.pk %}" class="btn btn-sm btn-warning">Editar</a>
+                    <a href="{% url 'infractions-type-delete' infractions_type.pk %}" class="btn btn-sm btn-danger">Excluir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Nenhum tipo de infração encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
