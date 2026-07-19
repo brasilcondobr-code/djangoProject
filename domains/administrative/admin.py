@@ -14,8 +14,10 @@ from domains.administrative.models.virtual_assembly import VirtualAssembly
 from domains.administrative.forms import BankForm, CircularForm, DocumentsForm
 from domains.administrative.forms.infraction_form import InfractionsForm
 from domains.administrative.forms.meter_form import MetersForm
+from domains.administrative.forms.patrimony_form import PatrimonyForm
 from domains.administrative.services.infraction_service import InfractionService
 from domains.administrative.services.meter_service import MeterService
+from domains.administrative.services.patrimony_service import PatrimonyService
 
  
 class ExportCsvMixin:
@@ -519,8 +521,166 @@ class InfractionAdmin(admin.ModelAdmin):
 
 @admin.register(Patrimony)
 class PatrimonyAdmin(admin.ModelAdmin):
+    form = PatrimonyForm
 
-    pass
+    list_display = (
+        "asset_code",
+        "name",
+        "condominium",
+        "asset_type",
+        "asset_category",
+        "asset_status",
+        "state_condition",
+        "quantity",
+        "is_active",
+    )
+
+    list_filter = (
+        "is_active",
+        "asset_type",
+        "asset_category",
+        "asset_status",
+        "state_condition",
+        "requires_maintenance",
+        "release_date",
+        "acquisition_date",
+    )
+
+    search_fields = (
+        "asset_code",
+        "name",
+        "serial_number",
+        "invoice_number",
+        "location",
+    )
+
+    readonly_fields = (
+        "asset_code",
+        "created_at",
+        "updated_at",
+    )
+
+    list_select_related = (
+        "condominium",
+        "asset_type",
+        "asset_category",
+        "asset_status",
+        "state_condition",
+        "asset_brand",
+        "maintenance_frequency",
+        "responsible_person",
+    )
+
+    fieldsets = (
+        (
+            "Principal",
+            {
+                "fields": (
+                    "condominium",
+                    "release_date",
+                    "asset_code",
+                    "name",
+                    "description",
+                    "asset_type",
+                    "asset_category",
+                    "location",
+                    "asset_status",
+                    "state_condition",
+                    "serial_number",
+                    "asset_brand",
+                    "asset_model",
+                    "quantity",
+                ),
+            },
+        ),
+        (
+            "Aquisições",
+            {
+                "fields": (
+                    "acquisition_date",
+                    "invoice_number",
+                    "supplier",
+                    "purchase_value",
+                    "current_value",
+                    "depreciation_rate",
+                    "useful_life_months",
+                    "warranty_expiration_date",
+                ),
+            },
+        ),
+        (
+            "Manutenções",
+            {
+                "fields": (
+                    "requires_maintenance",
+                    "maintenance_frequency",
+                    "last_maintenance_date",
+                    "next_maintenance_date",
+                    "maintenance_notes",
+                ),
+            },
+        ),
+        (
+            "Documentos",
+            {
+                "fields": (
+                    "main_photo",
+                    "invoice_file",
+                    "manual_file",
+                    "warranty_file",
+                ),
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "fields": (
+                    "responsible_person",
+                    "is_active",
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    actions = ["generate_asset_code"]
+
+    @admin.action(description="Gerar Código do Patrimônio")
+    def generate_asset_code(self, request, queryset):
+        generated = 0
+        already_has_code = 0
+        errors = []
+
+        for patrimony in queryset:
+            if patrimony.asset_code:
+                already_has_code += 1
+                continue
+            try:
+                PatrimonyService.generate_asset_code(patrimony)
+                generated += 1
+            except Exception as e:
+                errors.append(str(e))
+
+        messages_success = []
+        if generated:
+            messages_success.append(f"{generated} código(s) gerado(s) com sucesso.")
+        if already_has_code:
+            messages_success.append(f"{already_has_code} patrimônio(s) já possuía(m) código.")
+        if messages_success:
+            self.message_user(request, " ".join(messages_success))
+        if errors:
+            self.message_user(
+                request,
+                "Erros: " + "; ".join(errors),
+                level=messages.ERROR,
+            )
+
+    class Media:
+        js = (
+            "js/patrimonys_admin.js",
+        )
 
 @admin.register(BudgetForecast)
 class BudgetForecastAdmin(admin.ModelAdmin):

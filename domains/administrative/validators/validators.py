@@ -68,3 +68,55 @@ def is_html_content_empty(value):
  
     return not bool(text)
 
+
+def validate_file_size_10mb(file):
+    if not file:
+        return
+    limit = 10 * 1024 * 1024  # 10 MB
+    if file.size > limit:
+        raise ValidationError("O arquivo não pode ultrapassar 10 MB.")
+
+
+def validate_photo_extension(file):
+    if not file:
+        return
+    extension = Path(file.name).suffix.lower()
+    allowed = {".jpg", ".jpeg", ".png", ".webp"}
+    if extension not in allowed:
+        raise ValidationError(
+            "Formato de imagem inválido. Utilize apenas .jpg, .jpeg, .png ou .webp."
+        )
+
+
+def validate_invoice_extension(file):
+    if not file:
+        return
+    extension = Path(file.name).suffix.lower()
+    allowed = {".pdf", ".jpg", ".jpeg", ".png"}
+    if extension not in allowed:
+        raise ValidationError(
+            "Formato de nota fiscal inválido. Utilize apenas .pdf, .jpg, .jpeg ou .png."
+        )
+
+
+def validate_manual_extension(file):
+    if not file:
+        return
+    extension = Path(file.name).suffix.lower()
+    allowed = {".pdf", ".doc", ".docx"}
+    if extension not in allowed:
+        raise ValidationError(
+            "Formato de manual inválido. Utilize apenas .pdf, .doc ou .docx."
+        )
+
+
+def validate_warranty_extension(file):
+    if not file:
+        return
+    extension = Path(file.name).suffix.lower()
+    allowed = {".pdf", ".jpg", ".jpeg", ".png"}
+    if extension not in allowed:
+        raise ValidationError(
+            "Formato de certificado de garantia inválido. Utilize apenas .pdf, .jpg, .jpeg ou .png."
+        )
+

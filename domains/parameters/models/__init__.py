@@ -7,3 +7,9 @@ from .resident_type import ResidentType
 from .document_type import DocumentType
 from .infractions_type import InfractionsType
 from .meter_type import MeterType
+from .asset_type import AssetType
+from .asset_category import AssetCategory
+from .asset_status import AssetStatus
+from .asset_state_condition import AssetStateCondition
+from .asset_brand import AssetBrand
+from .asset_maintenance_frequency import AssetMaintenanceFrequency

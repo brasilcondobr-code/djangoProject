@@ -10,9 +10,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='addresses',
-            name='neighborhood',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Bairro'),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name='addresses',
+                    name='neighborhood',
+                    field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Bairro'),
+                ),
+            ],
+            database_operations=[],
         ),
     ]

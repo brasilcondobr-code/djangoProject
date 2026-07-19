@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('condominium', '0012_alter_collaborators_options_types_collaborators_and_more'),
         ('personalities', '0001_initial'),
+        ('parameters', '0001_initial'),
     ]
 
     operations = [
@@ -39,7 +40,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True, verbose_name='Ativo')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Data de Criação')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Data de Atualização')),
-                ('address', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='condominium.addresses', verbose_name='Endereço')),
+                ('address', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='parameters.addresses', verbose_name='Endereço')),
                 ('business_sector', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='personalities.businesssector', verbose_name='Ramo de Atividade')),
             ],
             options={

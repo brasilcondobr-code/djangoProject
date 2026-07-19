@@ -2,7 +2,12 @@ import csv
 from django.http import HttpResponse
 from django.contrib import admin
 
-from .models import Addresses, States, TypesCondominium, StructionCondominium, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, MeterType
+from .models import (
+    Addresses, States, TypesCondominium, StructionCondominium,
+    TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType,
+    MeterType, AssetType, AssetCategory, AssetStatus, AssetStateCondition,
+    AssetBrand, AssetMaintenanceFrequency
+)
 from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm
 
 class ExportCsvMixin:
@@ -162,6 +167,60 @@ class InfractionsTypeAdmin(admin.ModelAdmin):
 
 @admin.register(MeterType)
 class MeterTypeAdmin(admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+
+
+@admin.register(AssetType)
+class AssetTypeAdmin(admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+
+
+@admin.register(AssetCategory)
+class AssetCategoryAdmin(admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+
+
+@admin.register(AssetStatus)
+class AssetStatusAdmin(admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+
+
+@admin.register(AssetStateCondition)
+class AssetStateConditionAdmin(admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+
+
+@admin.register(AssetBrand)
+class AssetBrandAdmin(admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+
+
+@admin.register(AssetMaintenanceFrequency)
+class AssetMaintenanceFrequencyAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
