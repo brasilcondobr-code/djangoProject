@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
  
-from domains.administrative.models import Bank, Infraction
+from domains.administrative.models import Bank, Infraction, BankAccount
 from domains.administrative.models.circular import Circular
 from domains.administrative.models.documents import Documents
 from domains.administrative.models.meters import Meters
@@ -11,7 +11,7 @@ from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.administrative.models.task import Task
 from domains.administrative.models.virtual_assembly import VirtualAssembly
-from domains.administrative.forms import BankForm, CircularForm, DocumentsForm
+from domains.administrative.forms import BankForm, CircularForm, DocumentsForm, BankAccountForm
 from domains.administrative.forms.infraction_form import InfractionsForm
 from domains.administrative.forms.meter_form import MetersForm
 from domains.administrative.forms.patrimony_form import PatrimonyForm
@@ -120,26 +120,14 @@ class MeterAdmin(admin.ModelAdmin):
 @admin.register(Bank)
 class BankAdmin(ExportCsvMixin, admin.ModelAdmin):
     form = BankForm
-    list_display = ('compe', 'bank_name', 'agency', 'account_number', 'account_digit', 'is_active')
-    search_fields = ('bank_name', 'account_number', 'iban')
-    list_filter = ('account_type', 'is_active')
+    list_display = ('compe', 'bank_name', 'is_active')
+    search_fields = ('bank_name', 'compe')
+    list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     
     fieldsets = (
         ('Principal', {
-            'fields': ('compe', 'bank_name', 'account_type', 'initial_balance', 
-                'initial_balance_date', 'account_name', 'iban', 'agency', 
-                'account_number', 'account_digit', 'bank_address', 'is_active'
-            )
-        }),
-        ('Beneficiário', {
-            'fields': ('condominium',)
-        }),
-        ('Sacado Avalista', {
-            'fields': (
-                'full_name_drawn', 'cpf_drawn', 'rg_drawn', 
-                'phone_drawn', 'email_drawn', 'addresses_drawn',
-            )
+            'fields': ('compe', 'bank_name', 'iban', 'bank_address', 'is_active')
         }),
         ('Gerente', {
             'fields': (
@@ -156,6 +144,90 @@ class BankAdmin(ExportCsvMixin, admin.ModelAdmin):
             'js/utils.js',
             'js/custom-administrative-bank.js',
             )
+
+
+@admin.register(BankAccount)
+class BankAccountAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = BankAccountForm
+
+    list_display = (
+        'bank',
+        'condominium',
+        'account_type',
+        'account_name',
+        'agency',
+        'account_number',
+        'account_digit',
+        'initial_balance',
+        'is_active',
+        'created_at',
+    )
+
+    list_filter = (
+        'bank',
+        'condominium',
+        'account_type',
+        'is_active',
+    )
+
+    search_fields = (
+        'account_name',
+        'agency',
+        'account_number',
+        'account_digit',
+        'bank__bank_name',
+        'condominium__name',
+    )
+
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+    )
+
+    list_select_related = (
+        'bank',
+        'condominium',
+        'account_type',
+    )
+
+    fieldsets = (
+        (
+            'Principal',
+            {
+                'fields': (
+                    'bank',
+                    'condominium',
+                    'account_type',
+                    'initial_balance',
+                    'initial_balance_date',
+                    'account_name',
+                    'agency',
+                    'account_number',
+                    'account_digit',
+                    'is_active',
+                ),
+            },
+        ),
+        (
+            'Auditoria',
+            {
+                'fields': (
+                    'created_at',
+                    'updated_at',
+                ),
+                'classes': ('collapse',),
+            },
+        ),
+    )
+
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/utils.js',
+            'js/bank_accounts_admin.js',
+        )
+
 
 @admin.register(Circular)
 class CircularAdmin(admin.ModelAdmin):

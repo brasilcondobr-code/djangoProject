@@ -99,8 +99,8 @@ class Infraction(models.Model):
     )
 
     class Meta:
-        verbose_name = "04. Infração"
-        verbose_name_plural = "04. Infrações"
+        verbose_name = "05. Infração"
+        verbose_name_plural = "05. Infrações"
         ordering = ["-releaseDate", "title"]
         indexes = [
             models.Index(fields=["releaseDate"]),

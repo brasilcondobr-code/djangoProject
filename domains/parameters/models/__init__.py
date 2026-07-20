@@ -13,3 +13,4 @@ from .asset_status import AssetStatus
 from .asset_state_condition import AssetStateCondition
 from .asset_brand import AssetBrand
 from .asset_maintenance_frequency import AssetMaintenanceFrequency
+from .bank_account_type import BankAccountType

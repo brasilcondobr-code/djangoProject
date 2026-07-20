@@ -6,7 +6,7 @@ from .models import (
     Addresses, States, TypesCondominium, StructionCondominium,
     TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType,
     MeterType, AssetType, AssetCategory, AssetStatus, AssetStateCondition,
-    AssetBrand, AssetMaintenanceFrequency
+    AssetBrand, AssetMaintenanceFrequency, BankAccountType
 )
 from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm
 
@@ -231,6 +231,16 @@ class AssetBrandAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 @admin.register(AssetMaintenanceFrequency)
 class AssetMaintenanceFrequencyAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+
+
+@admin.register(BankAccountType)
+class BankAccountTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)

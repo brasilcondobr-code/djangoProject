@@ -72,8 +72,8 @@ class Documents(models.Model):
 
     class Meta:
         app_label = "administrative"
-        verbose_name = _("03. Documento")
-        verbose_name_plural = _("03. Documentos")
+        verbose_name = _("04. Documento")
+        verbose_name_plural = _("04. Documentos")
         ordering = ["title", "created_at"]
         db_table = "administrative_document"
         unique_together = ["condominium", "title", "registration_date"]

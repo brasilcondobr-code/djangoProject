@@ -1,4 +1,5 @@
 from domains.administrative.models.bank import Bank
+from domains.administrative.models.bank_accounts import BankAccount
 from domains.administrative.models.circular import Circular
 from domains.administrative.models.documents import Documents
 from domains.administrative.models.infraction import Infraction

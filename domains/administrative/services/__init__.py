@@ -1,1 +1,2 @@
 from domains.administrative.services.bank_service import BankService
+from domains.administrative.services.bank_accounts_service import BankAccountService

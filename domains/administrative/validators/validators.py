@@ -120,3 +120,28 @@ def validate_warranty_extension(file):
             "Formato de certificado de garantia inválido. Utilize apenas .pdf, .jpg, .jpeg ou .png."
         )
 
+
+def validate_agency(value):
+    if not value:
+        raise ValidationError('A agência é obrigatória.')
+    import re
+    pattern = r'^\d{1,6}$'
+    if not re.match(pattern, value):
+        raise ValidationError('A agência deve conter apenas números (até 6 dígitos).')
+
+
+def validate_account_number(value):
+    if not value:
+        raise ValidationError('O número da conta é obrigatório.')
+    import re
+    pattern = r'^\d{1,10}$'
+    if not re.match(pattern, value):
+        raise ValidationError('O número da conta deve conter apenas números (até 10 dígitos).')
+
+
+def validate_initial_balance(value):
+    if value is None:
+        return
+    if value < 0:
+        raise ValidationError('O saldo inicial não pode ser negativo.')
+

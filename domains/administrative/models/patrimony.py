@@ -261,8 +261,8 @@ class Patrimony(models.Model):
 
     class Meta:
         app_label = 'administrative'
-        verbose_name = "06. Patrimônio"
-        verbose_name_plural = "06. Patrimônios"
+        verbose_name = "07. Patrimônio"
+        verbose_name_plural = "07. Patrimônios"
         ordering = ["-created_at", "name"]
         constraints = [
             models.UniqueConstraint(

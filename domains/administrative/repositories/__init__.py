@@ -1,1 +1,2 @@
 from domains.administrative.repositories.bank_repository import BankRepository
+from domains.administrative.repositories.bank_accounts_repository import BankAccountRepository

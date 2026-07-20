@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('parameters', '0003_alter_addresses_table_alter_states_table_and_more'),
+        ('parameters', '0004_aaa_ensure_tables_exist'),
     ]
 
     operations = [
