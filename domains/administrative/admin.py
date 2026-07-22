@@ -12,6 +12,7 @@ from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.administrative.models.task import Task
 from domains.administrative.models.virtual_assembly import VirtualAssembly
 from domains.administrative.forms import BankForm, CircularForm, DocumentsForm, BankAccountForm
+from domains.administrative.forms.chartofaccount_form import ChartOfAccountForm
 from domains.administrative.forms.infraction_form import InfractionsForm
 from domains.administrative.forms.meter_form import MetersForm
 from domains.administrative.forms.patrimony_form import PatrimonyForm
@@ -760,7 +761,67 @@ class BudgetForecastAdmin(admin.ModelAdmin):
 
 @admin.register(ChartOfAccount)
 class ChartOfAccountAdmin(admin.ModelAdmin):
-    pass
+    form = ChartOfAccountForm
+    list_display = (
+        'account_code', 'account_name', 'condominium',
+        'account_type', 'account_class', 'account_level',
+        'status', 'is_default',
+        'effective_start_date', 'effective_end_date',
+    )
+    list_filter = (
+        'condominium', 'account_type', 'account_class',
+        'status', 'account_level', 'is_default',
+        'is_system_account', 'can_be_archived',
+    )
+    search_fields = (
+        'account_code', 'account_name', 'external_reference',
+        'condominium__name',
+    )
+    list_select_related = (
+        'condominium', 'account_type', 'account_class',
+        'account_group', 'account_subgroup',
+        'parent_account', 'status',
+    )
+    autocomplete_fields = ['condominium', 'parent_account', 'replacement_account']
+    readonly_fields = (
+        'created_at', 'created_by', 'updated_at', 'updated_by',
+        'approved_at', 'approved_by',
+    )
+    fieldsets = (
+        ('Principal', {
+            'fields': (
+                'condominium', 'account_code', 'account_name',
+                'account_type', 'account_level', 'account_class',
+                'account_group', 'account_subgroup',
+                'parent_account', 'account_description',
+                'external_reference',
+            ),
+        }),
+        ('Controle', {
+            'classes': ('collapse',),
+            'fields': (
+                'status', 'effective_start_date', 'effective_end_date',
+                'is_default', 'is_system_account', 'can_be_archived',
+                'archive_reason', 'replacement_account', 'version',
+            ),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': (
+                'created_at', 'created_by', 'updated_at', 'updated_by',
+                'approved_at', 'approved_by', 'change_reason',
+            ),
+        }),
+    )
+
+    class Media:
+        js = ('js/chartofaccount_admin.js',)
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):

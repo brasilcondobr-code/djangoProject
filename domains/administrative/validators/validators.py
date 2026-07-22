@@ -145,3 +145,35 @@ def validate_initial_balance(value):
     if value < 0:
         raise ValidationError('O saldo inicial não pode ser negativo.')
 
+
+def validate_chart_account_code(value):
+    if not value:
+        raise ValidationError('O código da conta é obrigatório.')
+    value = value.strip()
+    if not re.match(r'^[\d.]+$', value):
+        raise ValidationError('O código da conta deve conter apenas números e pontos.')
+    segments = value.split('.')
+    if len(segments) > 4:
+        raise ValidationError('O código da conta possui muitos segmentos.')
+    for segment in segments:
+        if not segment or len(segment) > 3:
+            raise ValidationError('Cada segmento do código deve ter de 1 a 3 dígitos.')
+
+
+def validate_external_reference(value):
+    if not value:
+        return
+    if not re.match(r'^[A-Za-z0-9\-]+$', value):
+        raise ValidationError('A referência externa deve conter apenas letras, números e hífen.')
+    if len(value) > 50:
+        raise ValidationError('A referência externa deve ter no máximo 50 caracteres.')
+
+
+def validate_archive_reason(value):
+    if not value:
+        return
+    if not value.strip():
+        raise ValidationError('O motivo do arquivamento não pode conter apenas espaços.')
+    if len(value) > 255:
+        raise ValidationError('O motivo do arquivamento deve ter no máximo 255 caracteres.')
+

@@ -6,7 +6,9 @@ from .models import (
     Addresses, States, TypesCondominium, StructionCondominium,
     TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType,
     MeterType, AssetType, AssetCategory, AssetStatus, AssetStateCondition,
-    AssetBrand, AssetMaintenanceFrequency, BankAccountType
+    AssetBrand, AssetMaintenanceFrequency, BankAccountType,
+    Chartofaccountstype, Accountingclasstypes, ChartofaccountsMaingroup,
+    ChartofaccountsSubgroup, ChartofaccountsStatus,
 )
 from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm
 
@@ -241,6 +243,56 @@ class AssetMaintenanceFrequencyAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 @admin.register(BankAccountType)
 class BankAccountTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('description', 'is_active')
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+
+
+@admin.register(Chartofaccountstype)
+class ChartofaccountstypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('code', 'description', 'nature', 'is_active')
+    search_fields = ('code', 'description')
+    list_filter = ('nature', 'is_active')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+
+
+@admin.register(Accountingclasstypes)
+class AccountingclasstypesAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('code', 'description', 'account_type', 'is_active')
+    search_fields = ('code', 'description', 'account_type__description')
+    list_filter = ('account_type', 'is_active')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+
+
+@admin.register(ChartofaccountsMaingroup)
+class ChartofaccountsMaingroupAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('code', 'description', 'account_class', 'is_active')
+    search_fields = ('code', 'description', 'account_class__description')
+    list_filter = ('account_class', 'is_active')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+
+
+@admin.register(ChartofaccountsSubgroup)
+class ChartofaccountsSubgroupAdmin(ExportCsvMixin, admin.ModelAdmin):
+    list_display = ('code', 'description', 'main_group', 'is_active')
+    search_fields = ('code', 'description', 'main_group__description')
+    list_filter = ('main_group', 'is_active')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    actions = ["export_as_csv"]
+
+
+@admin.register(ChartofaccountsStatus)
+class ChartofaccountsStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)

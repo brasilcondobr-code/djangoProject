@@ -1,2 +1,3 @@
 from domains.administrative.selectors.bank_selector import BankSelector
 from domains.administrative.selectors.bank_accounts_selector import BankAccountSelector
+from domains.administrative.selectors.chartofaccount_selector import ChartOfAccountSelector

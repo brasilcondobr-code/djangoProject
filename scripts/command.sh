@@ -12,7 +12,17 @@ echo "✅ Postgres Database Started Successfully ($POSTGRES_HOST:$POSTGRES_PORT)
 
 python manage.py collectstatic --noinput
 ## python manage.py makemigrations --noinput
-python manage.py migrate --noinput
+# Retry migrate up to 3 times to handle concurrent startup race conditions
+for i in $(seq 1 3); do
+    python manage.py migrate --noinput && break
+    if [ $i -lt 3 ]; then
+        echo "⚠️ Migration attempt $i failed, retrying in 3 seconds..."
+        sleep 3
+    else
+        echo "❌ Migration failed after 3 attempts."
+        exit 1
+    fi
+done
 
 # Criar superusuário padrão para desenvolvimento se não existir
 cat <<EOF | python manage.py shell
