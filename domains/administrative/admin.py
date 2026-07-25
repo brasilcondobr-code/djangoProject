@@ -782,7 +782,7 @@ class ChartOfAccountAdmin(admin.ModelAdmin):
         'account_group', 'account_subgroup',
         'parent_account', 'status',
     )
-    autocomplete_fields = ['condominium', 'parent_account', 'replacement_account']
+    autocomplete_fields = []
     readonly_fields = (
         'created_at', 'created_by', 'updated_at', 'updated_by',
         'approved_at', 'approved_by',
@@ -815,7 +815,12 @@ class ChartOfAccountAdmin(admin.ModelAdmin):
     )
 
     class Media:
-        js = ('js/chartofaccount_admin.js',)
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/utils.js',
+            'js/chartofaccount_admin.js',
+        )
 
     def save_model(self, request, obj, form, change):
         if not obj.pk:

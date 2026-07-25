@@ -1,4 +1,5 @@
 from django import forms
+from django.urls import reverse
 from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.condominium.models import Condominium
 from domains.parameters.models import (
@@ -89,6 +90,10 @@ class ChartOfAccountForm(forms.ModelForm):
         help_texts = {
             'account_code': 'Código único dentro do condomínio.',
             'account_level': 'Informe um valor entre 1 e 4.',
+            'account_type': 'Selecione o tipo da conta para filtrar a classe contábil.',
+            'account_class': 'Selecione primeiro o tipo da conta.',
+            'account_group': 'Selecione primeiro a classe contábil.',
+            'account_subgroup': 'Selecione primeiro o grupo principal.',
             'parent_account': 'A conta-pai deve pertencer ao mesmo condomínio.',
             'effective_end_date': 'Deixe em branco enquanto a conta estiver vigente.',
             'replacement_account': 'Informe a conta que substituirá esta conta, quando aplicável.',
@@ -129,15 +134,85 @@ class ChartOfAccountForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        is_bound = bool(self.data)
+        instance = self.instance
+
+        self.fields['account_code'].widget.attrs['class'] = 'mask-chart-account-code form-control'
         self.fields['condominium'].widget.attrs['class'] = 'form-control'
+
         self.fields['account_type'].queryset = Chartofaccountstype.objects.filter(is_active=True)
         self.fields['account_type'].widget.attrs['class'] = 'form-control'
-        self.fields['account_class'].queryset = Accountingclasstypes.objects.filter(is_active=True)
+        self.fields['account_type'].widget.attrs['data-classes-url'] = reverse('filter_classes_by_type')
+        self.fields['account_type'].required = False
+        self.fields['account_type'].empty_label = '---------'
+
+        all_classes = Accountingclasstypes.objects.filter(is_active=True)
+        all_groups = ChartofaccountsMaingroup.objects.filter(is_active=True)
+        all_subgroups = ChartofaccountsSubgroup.objects.filter(is_active=True)
+
+        if is_bound:
+            type_id = self.data.get('account_type')
+            if type_id:
+                self.fields['account_class'].queryset = all_classes.filter(
+                    account_type_id=type_id,
+                )
+            else:
+                self.fields['account_class'].queryset = all_classes
+
+            class_id = self.data.get('account_class')
+            if class_id:
+                self.fields['account_group'].queryset = all_groups.filter(
+                    account_class_id=class_id,
+                )
+            else:
+                self.fields['account_group'].queryset = all_groups
+
+            group_id = self.data.get('account_group')
+            if group_id:
+                self.fields['account_subgroup'].queryset = all_subgroups.filter(
+                    main_group_id=group_id,
+                )
+            else:
+                self.fields['account_subgroup'].queryset = all_subgroups
+        elif instance.pk:
+            if instance.account_type_id:
+                self.fields['account_class'].queryset = all_classes.filter(
+                    account_type=instance.account_type,
+                )
+            else:
+                self.fields['account_class'].queryset = all_classes
+
+            if instance.account_class_id:
+                self.fields['account_group'].queryset = all_groups.filter(
+                    account_class=instance.account_class,
+                )
+            else:
+                self.fields['account_group'].queryset = all_groups
+
+            if instance.account_group_id:
+                self.fields['account_subgroup'].queryset = all_subgroups.filter(
+                    main_group=instance.account_group,
+                )
+            else:
+                self.fields['account_subgroup'].queryset = all_subgroups
+        else:
+            self.fields['account_class'].queryset = all_classes
+            self.fields['account_group'].queryset = all_groups
+            self.fields['account_subgroup'].queryset = all_subgroups
+
         self.fields['account_class'].widget.attrs['class'] = 'form-control'
-        self.fields['account_group'].queryset = ChartofaccountsMaingroup.objects.filter(is_active=True)
+        self.fields['account_class'].widget.attrs['data-groups-url'] = reverse('filter_groups_by_class')
+        self.fields['account_class'].required = False
+        self.fields['account_class'].empty_label = '---------'
         self.fields['account_group'].widget.attrs['class'] = 'form-control'
-        self.fields['account_subgroup'].queryset = ChartofaccountsSubgroup.objects.filter(is_active=True)
+        self.fields['account_group'].widget.attrs['data-subgroups-url'] = reverse('filter_subgroups_by_group')
+        self.fields['account_group'].required = False
+        self.fields['account_group'].empty_label = '---------'
         self.fields['account_subgroup'].widget.attrs['class'] = 'form-control'
+        self.fields['account_subgroup'].required = False
+        self.fields['account_subgroup'].empty_label = '---------'
+
         self.fields['status'].queryset = ChartofaccountsStatus.objects.filter(is_active=True)
         self.fields['status'].widget.attrs['class'] = 'form-control'
 
@@ -217,6 +292,18 @@ class ChartOfAccountForm(forms.ModelForm):
             raise forms.ValidationError('A data final não pode ser anterior à data inicial.')
         return end
 
+    def clean_account_type(self):
+        value = self.cleaned_data.get('account_type')
+        if not value:
+            raise forms.ValidationError('Selecione o tipo da conta.')
+        return value
+
+    def clean_account_class(self):
+        value = self.cleaned_data.get('account_class')
+        if not value:
+            raise forms.ValidationError('Selecione a classe contábil.')
+        return value
+
     def clean(self):
         cleaned_data = super().clean()
         condominium = cleaned_data.get('condominium')
@@ -265,5 +352,28 @@ class ChartOfAccountForm(forms.ModelForm):
                 self.add_error('archive_reason', 'Informe o motivo do arquivamento.')
             if self.instance and self.instance.pk and not self.instance.can_be_archived:
                 self.add_error('archive_reason', 'Esta conta não permite arquivamento.')
+
+        account_type = cleaned_data.get('account_type')
+        account_class = cleaned_data.get('account_class')
+        account_group = cleaned_data.get('account_group')
+        account_subgroup = cleaned_data.get('account_subgroup')
+
+        if account_type and account_class and account_class.account_type_id != account_type.pk:
+            self.add_error(
+                'account_class',
+                'A classe contábil selecionada não pertence ao tipo da conta informado.',
+            )
+
+        if account_class and account_group and account_group.account_class_id != account_class.pk:
+            self.add_error(
+                'account_group',
+                'O grupo principal selecionado não pertence à classe contábil informada.',
+            )
+
+        if account_group and account_subgroup and account_subgroup.main_group_id != account_group.pk:
+            self.add_error(
+                'account_subgroup',
+                'O subgrupo selecionado não pertence ao grupo principal informado.',
+            )
 
         return cleaned_data

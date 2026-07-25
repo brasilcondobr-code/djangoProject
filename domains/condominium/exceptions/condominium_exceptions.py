@@ -1,7 +1,22 @@
 class CondominiumException(Exception):
-    """Base exception for Condominium domain."""
     pass
 
+
 class CondominiumNotFoundError(CondominiumException):
-    """Raised when a Condominium is not found."""
+    pass
+
+
+class CollaboratorException(CondominiumException):
+    pass
+
+
+class CollaboratorNotFoundError(CollaboratorException):
+    pass
+
+
+class TypesCollaboratorException(CondominiumException):
+    pass
+
+
+class TypesCollaboratorNotFoundError(TypesCollaboratorException):
     pass

@@ -24,8 +24,8 @@ class Collaborator(models.Model):
         unique_together = [['name', 'cpf'], ['condominium', 'cpf']]
         db_table = 'condominium_collaborators'
 
-    condominium = models.ForeignKey(Condominium, related_name="collaborators", null=False, blank=False, verbose_name="Condomínio", on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome")
+    condominium = models.ForeignKey(Condominium, related_name="collaborators", null=False, blank=False, verbose_name="Condomínio", on_delete=models.CASCADE, db_index=True)
+    name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome", db_index=True)
     cpf = models.CharField(max_length=20, null=False, blank=False, verbose_name="CPF", unique=True)
     rg = models.CharField(max_length=20, null=False, blank=False, verbose_name="RG")
     email = models.EmailField(max_length=255, null=False, blank=False, verbose_name="Email", unique=True)

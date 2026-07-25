@@ -171,3 +171,102 @@ class TestChartOfAccountForm:
         }
         form = ChartOfAccountForm(data=data)
         assert form.is_valid(), form.errors
+
+    def test_dependent_fields_start_empty_on_add(self):
+        form = ChartOfAccountForm()
+        assert form.fields['account_class'].queryset.count() == 0
+        assert form.fields['account_group'].queryset.count() == 0
+        assert form.fields['account_subgroup'].queryset.count() == 0
+
+    def test_form_rejects_class_not_belonging_to_type(self, _condo, _acc_type, _acc_class, _status):
+        other_type = Chartofaccountstype.objects.create(code='T002', description='Passivo', nature='credora')
+        data = {
+            'condominium': _condo.pk,
+            'account_code': '005.000.000.000',
+            'account_name': 'Hierarquia Inválida',
+            'account_type': other_type.pk,
+            'account_level': 1,
+            'account_class': _acc_class.pk,
+            'status': _status.pk,
+            'effective_start_date': '2024-01-01',
+        }
+        form = ChartOfAccountForm(data=data)
+        assert not form.is_valid()
+        assert 'account_class' in form.errors
+
+    def test_form_rejects_group_not_belonging_to_class(
+        self, _condo, _acc_type, _acc_class, _status,
+    ):
+        other_class = Accountingclasstypes.objects.create(
+            code='C002', description='Saídas', account_type=_acc_type,
+        )
+        group = ChartofaccountsMaingroup.objects.create(
+            code='G001', description='Grupo Teste', account_class=other_class,
+        )
+        data = {
+            'condominium': _condo.pk,
+            'account_code': '006.000.000.000',
+            'account_name': 'Grupo Inválido',
+            'account_type': _acc_type.pk,
+            'account_level': 1,
+            'account_class': _acc_class.pk,
+            'account_group': group.pk,
+            'status': _status.pk,
+            'effective_start_date': '2024-01-01',
+        }
+        form = ChartOfAccountForm(data=data)
+        assert not form.is_valid()
+        assert 'account_group' in form.errors
+
+    def test_form_data_ajax_attributes(self):
+        form = ChartOfAccountForm()
+        assert form.fields['account_type'].widget.attrs.get('data-classes-url') is not None
+        assert form.fields['account_class'].widget.attrs.get('data-groups-url') is not None
+        assert form.fields['account_group'].widget.attrs.get('data-subgroups-url') is not None
+
+    def test_edit_mode_queryset_restricted_to_related(
+        self, _condo, _acc_type, _acc_class, _status,
+    ):
+        Chartofaccountstype.objects.create(code='T002', description='Passivo', nature='credora')
+        account = ChartOfAccount.objects.create(
+            condominium=_condo,
+            account_code='001.000.000.000',
+            account_name='Conta Edit',
+            account_type=_acc_type,
+            account_level=1,
+            account_class=_acc_class,
+            status=_status,
+            effective_start_date='2024-01-01',
+        )
+        form = ChartOfAccountForm(instance=account)
+        qs = form.fields['account_class'].queryset
+        assert _acc_class in qs
+        assert qs.count() == 1
+
+    def test_form_rejects_subgroup_not_belonging_to_group(
+        self, _condo, _acc_type, _acc_class, _status,
+    ):
+        group = ChartofaccountsMaingroup.objects.create(
+            code='G001', description='Grupo Teste', account_class=_acc_class,
+        )
+        other_group = ChartofaccountsMaingroup.objects.create(
+            code='G002', description='Outro Grupo', account_class=_acc_class,
+        )
+        subgroup = ChartofaccountsSubgroup.objects.create(
+            code='S001', description='Sub Teste', main_group=other_group,
+        )
+        data = {
+            'condominium': _condo.pk,
+            'account_code': '007.000.000.000',
+            'account_name': 'Subgrupo Inválido',
+            'account_type': _acc_type.pk,
+            'account_level': 1,
+            'account_class': _acc_class.pk,
+            'account_group': group.pk,
+            'account_subgroup': subgroup.pk,
+            'status': _status.pk,
+            'effective_start_date': '2024-01-01',
+        }
+        form = ChartOfAccountForm(data=data)
+        assert not form.is_valid()
+        assert 'account_subgroup' in form.errors

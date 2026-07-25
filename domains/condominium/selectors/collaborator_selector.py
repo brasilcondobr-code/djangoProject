@@ -1,22 +1,18 @@
+from shared.selectors import BaseSelector
 from domains.condominium.models import Collaborator
 
-class CollaboratorSelector:
-    @staticmethod
-    def get_all_active():
-        return Collaborator.objects.filter(is_active=True)
 
-    @staticmethod
-    def get_by_id(id):
-        return Collaborator.objects.filter(pk=id).first()
+class CollaboratorSelector(BaseSelector):
+    model = Collaborator
 
-    @staticmethod
-    def get_by_email(email):
-        return Collaborator.objects.filter(email=email).first()
+    @classmethod
+    def get_by_email(cls, email):
+        return cls.model.objects.filter(email=email).first()
 
-    @staticmethod
-    def get_by_cpf(cpf):
-        return Collaborator.objects.filter(cpf=cpf).first()
+    @classmethod
+    def get_by_cpf(cls, cpf):
+        return cls.model.objects.filter(cpf=cpf).first()
 
-    @staticmethod
-    def get_by_condominium(condominium):
-        return Collaborator.objects.filter(condominium=condominium)
+    @classmethod
+    def get_by_condominium(cls, condominium):
+        return cls.model.objects.filter(condominium=condominium)

@@ -1,44 +1,16 @@
-import csv
-from django.http import HttpResponse
 from django.contrib import admin
 
 from domains.condominium.models import Condominium, Collaborator, TypesCollaborator
 from domains.condominium.services import CondominiumService, CollaboratorService
+from shared.admin import BaseModelAdmin
 
-# Register your models here.
-class ExportCsvMixin:
-    def init(self, model, *args, **kwargs):
-        self.model = model
-        super().__init__(*args, **kwargs)
-        
-    def export_as_csv(self, request, queryset):
-        meta = self.model._meta
-        field_names = [field.name for field in meta.fields]
-        
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
-        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
-        
-        # Gera o cabeçalho dinamicamente usando o 'verbose_name' configurado no Model
-        writer.writerow([field.verbose_name.title() for field in meta.fields])
-        
-        for obj in queryset:
-            row = [getattr(obj, field) for field in field_names]
-            writer.writerow(row)
-        return response
-    
-    export_as_csv.short_description = "Exportar para CSV"
-    
-    
+
 @admin.register(Condominium)
-class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
-    list_display = ('code','name', 'cnpj', 'state_registration', 'municipal_registration', 'type_condominium', 'address', 'is_active')
+class CondominiumAdmin(BaseModelAdmin):
+    list_display = ('code', 'name', 'cnpj', 'state_registration', 'municipal_registration', 'type_condominium', 'address', 'is_active')
     search_fields = ('name', 'code', 'cnpj')
     list_filter = ('code', 'is_active')
-    readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-    
+
     class Media:
         js = (
             'admin/js/vendor/jquery/jquery.js',
@@ -46,25 +18,22 @@ class CondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
             'js/utils.js',
             'js/custom-condominium-condominium.js',
         )
-    
+
+
 @admin.register(TypesCollaborator)
-class TypesCollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
+class TypesCollaboratorsAdmin(BaseModelAdmin):
     list_display = ('name', 'is_active')
     search_fields = ('name',)
     list_filter = ('is_active',)
-    readonly_fields = ('created_at', 'updated_at')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-    
+
+
 @admin.register(Collaborator)
-class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
+class CollaboratorsAdmin(BaseModelAdmin):
     list_display = ('name', 'email', 'phone_number', 'type_collaborator', 'condominium', 'photo', 'is_active')
     search_fields = ('condominium__name', 'name', 'email')
     list_filter = ('condominium', 'is_active')
     readonly_fields = ('created_at', 'updated_at', 'api_status', 'retorno_api', 'date_time_appointment')
-    list_per_page = 25
-    actions = ["export_as_csv"]
-    
+
     fieldsets = (
         (None, {
             'fields': (
@@ -87,7 +56,7 @@ class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
             'fields': ('certificate_presentation_date', 'certificate_validity', 'observations_certificate', 'certificate_file'),
         }),
     )
-    
+
     class Media:
         js = (
             'admin/js/vendor/jquery/jquery.js',
@@ -95,5 +64,3 @@ class CollaboratorsAdmin(ExportCsvMixin, admin.ModelAdmin):
             'js/utils.js',
             'js/custom-condominium-collaborators.js',
         )
-        
-# (nothing)
