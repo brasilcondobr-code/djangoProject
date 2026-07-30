@@ -7,4 +7,6 @@ from .validators import (
     validate_chart_account_code,
     validate_external_reference,
     validate_archive_reason,
+    validate_task_title,
+    validate_task_description,
 )

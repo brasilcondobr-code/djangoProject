@@ -11,7 +11,7 @@ from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.administrative.models.task import Task
 from domains.administrative.models.virtual_assembly import VirtualAssembly
-from domains.administrative.forms import BankForm, CircularForm, DocumentsForm, BankAccountForm
+from domains.administrative.forms import BankForm, CircularForm, DocumentsForm, BankAccountForm, TaskForm
 from domains.administrative.forms.chartofaccount_form import ChartOfAccountForm
 from domains.administrative.forms.infraction_form import InfractionsForm
 from domains.administrative.forms.meter_form import MetersForm
@@ -19,6 +19,7 @@ from domains.administrative.forms.patrimony_form import PatrimonyForm
 from domains.administrative.services.infraction_service import InfractionService
 from domains.administrative.services.meter_service import MeterService
 from domains.administrative.services.patrimony_service import PatrimonyService
+from domains.administrative.services.tasks_service import TaskService
 
  
 class ExportCsvMixin:
@@ -830,7 +831,54 @@ class ChartOfAccountAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    pass
+    form = TaskForm
+    list_display = (
+        'condominium', 'title', 'responsible_user', 'status',
+        'release_date', 'estimated_completion_date',
+        'is_active', 'created_at', 'updated_at',
+    )
+    list_filter = (
+        'is_active', 'status', 'condominium',
+    )
+    search_fields = (
+        'title', 'condominium__name',
+        'responsible_user__username', 'responsible_user__email',
+    )
+    list_select_related = (
+        'condominium', 'responsible_user', 'status',
+    )
+    readonly_fields = (
+        'created_by_user', 'created_at', 'updated_at',
+    )
+    autocomplete_fields = []
+    ordering = ('-created_at',)
+    fieldsets = (
+        ('Principal', {
+            'fields': (
+                'condominium', 'created_by_user', 'responsible_user',
+                'title', 'release_date', 'estimated_completion_date',
+                'completion_date', 'description', 'is_active', 'status',
+            ),
+        }),
+    )
+
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/utils.js',
+        )
+
+    def get_changeform_initial_data(self, request):
+        return {'created_by_user': request.user}
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by_user = request.user
+        super().save_model(request, obj, form, change)
+
+    def get_queryset(self, request):
+        return TaskService.get_admin_queryset()
 
 @admin.register(VirtualAssembly)
 class VirtualAssemblyAdmin(admin.ModelAdmin):

@@ -177,3 +177,26 @@ def validate_archive_reason(value):
     if len(value) > 255:
         raise ValidationError('O motivo do arquivamento deve ter no máximo 255 caracteres.')
 
+
+def validate_task_title(value):
+    if not value:
+        raise ValidationError('Informe o título da tarefa.')
+    stripped = value.strip()
+    if not stripped:
+        raise ValidationError('O título da tarefa não pode conter apenas espaços.')
+    if len(stripped) > 255:
+        raise ValidationError('O título da tarefa deve ter no máximo 255 caracteres.')
+    return stripped
+
+
+def validate_task_description(value):
+    if is_html_content_empty(value):
+        raise ValidationError('A descrição da tarefa deve possuir conteúdo.')
+    import re
+    dangerous = re.findall(r'<script[^>]*>.*?</script>', value, re.IGNORECASE | re.DOTALL)
+    if dangerous:
+        raise ValidationError('A descrição contém tags de script não permitidas.')
+    dangerous_attrs = re.findall(r'\son\w+\s*=', value, re.IGNORECASE)
+    if dangerous_attrs:
+        raise ValidationError('A descrição contém atributos de evento não permitidos.')
+
