@@ -1,0 +1,47 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="{{ action }}">
+  <input type="hidden" name="apply" value="1">
+  {% for task in tasks %}
+    <input type="hidden" name="_selected_action" value="{{ task.pk }}">
+  {% endfor %}
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">{{ title }}</h3>
+    </div>
+    <div class="card-body">
+      <p>Tarefas selecionadas: <strong>{{ tasks|length }}</strong></p>
+
+      <div class="form-group">
+        <label for="completion_date">Data efetiva de conclusão:</label>
+        <input type="date" name="completion_date" id="completion_date" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label for="new_status">Status:</label>
+        <select name="new_status" id="new_status" class="form-control" required>
+          <option value="">---------</option>
+          {% for status in status_list %}
+            <option value="{{ status.pk }}">{{ status.status }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button type="submit" class="btn btn-primary">Confirmar baixa</button>
+      <a href="{% url 'admin:administrative_task_changelist' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

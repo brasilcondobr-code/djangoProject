@@ -8,4 +8,5 @@ from domains.administrative.models.patrimony import Patrimony
 from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.administrative.models.task import Task
+from domains.administrative.models.task_history import TaskHistory
 from domains.administrative.models.virtual_assembly import VirtualAssembly

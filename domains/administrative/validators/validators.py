@@ -192,10 +192,22 @@ def validate_task_title(value):
 def validate_task_description(value):
     if is_html_content_empty(value):
         raise ValidationError('A descrição da tarefa deve possuir conteúdo.')
+    _reject_dangerous_html(value)
+
+
+def validate_task_history_description(value):
+    if is_html_content_empty(value):
+        raise ValidationError('A descrição do histórico deve possuir conteúdo.')
+    _reject_dangerous_html(value)
+
+
+def _reject_dangerous_html(value):
     import re
-    dangerous = re.findall(r'<script[^>]*>.*?</script>', value, re.IGNORECASE | re.DOTALL)
-    if dangerous:
-        raise ValidationError('A descrição contém tags de script não permitidas.')
+    for tag in ['script', 'iframe', 'object', 'embed']:
+        pattern = rf'<{tag}[^>]*>.*?</{tag}>'
+        matches = re.findall(pattern, value, re.IGNORECASE | re.DOTALL)
+        if matches:
+            raise ValidationError(f'A descrição contém tags {tag} não permitidas.')
     dangerous_attrs = re.findall(r'\son\w+\s*=', value, re.IGNORECASE)
     if dangerous_attrs:
         raise ValidationError('A descrição contém atributos de evento não permitidos.')

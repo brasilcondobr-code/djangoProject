@@ -10,8 +10,9 @@ from domains.administrative.models.patrimony import Patrimony
 from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.administrative.models.task import Task
+from domains.administrative.models.task_history import TaskHistory
 from domains.administrative.models.virtual_assembly import VirtualAssembly
-from domains.administrative.forms import BankForm, CircularForm, DocumentsForm, BankAccountForm, TaskForm
+from domains.administrative.forms import BankForm, CircularForm, DocumentsForm, BankAccountForm, TaskForm, TaskHistoryForm
 from domains.administrative.forms.chartofaccount_form import ChartOfAccountForm
 from domains.administrative.forms.infraction_form import InfractionsForm
 from domains.administrative.forms.meter_form import MetersForm
@@ -829,9 +830,25 @@ class ChartOfAccountAdmin(admin.ModelAdmin):
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
 
+class TaskHistoryInline(admin.TabularInline):
+    model = TaskHistory
+    form = TaskHistoryForm
+    extra = 1
+    ordering = ('-history_date', '-created_at')
+    readonly_fields = ('created_by_user', 'created_at', 'updated_at')
+    fields = ('history_date', 'description_history', 'created_by_user', 'created_at')
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
     form = TaskForm
+    inlines = [TaskHistoryInline]
     list_display = (
         'condominium', 'title', 'responsible_user', 'status',
         'release_date', 'estimated_completion_date',
@@ -861,6 +878,7 @@ class TaskAdmin(admin.ModelAdmin):
             ),
         }),
     )
+    actions = ['bulk_update_status', 'bulk_complete_tasks']
 
     class Media:
         js = (
@@ -877,8 +895,91 @@ class TaskAdmin(admin.ModelAdmin):
             obj.created_by_user = request.user
         super().save_model(request, obj, form, change)
 
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, TaskHistory) and instance.pk is None:
+                instance.created_by_user = request.user
+            instance.save()
+        formset.save_m2m()
+
     def get_queryset(self, request):
         return TaskService.get_admin_queryset()
+
+    @admin.action(description='Alterar status em lote')
+    def bulk_update_status(self, request, queryset):
+        from django.shortcuts import render
+        from django.contrib import messages
+        from domains.email_service.models import ConnectionStatus
+
+        if 'apply' in request.POST:
+            new_status_id = request.POST.get('new_status')
+            task_ids = request.POST.getlist('_selected_action')
+
+            if not task_ids:
+                self.message_user(request, 'Nenhuma tarefa selecionada.', level=messages.ERROR)
+                return
+
+            try:
+                updated = TaskService.bulk_update_status(
+                    request.user, task_ids, new_status_id,
+                )
+                self.message_user(
+                    request,
+                    f'{updated} tarefa(s) atualizada(s) com sucesso.',
+                )
+            except Exception as e:
+                self.message_user(request, str(e), level=messages.ERROR)
+
+            return
+
+        status_list = ConnectionStatus.objects.filter(is_active=True)
+        return render(request, 'admin/bulk_update_status.html', {
+            'title': 'Alterar status em lote',
+            'tasks': queryset,
+            'status_list': status_list,
+            'action': 'bulk_update_status',
+            'opts': self.model._meta,
+        })
+
+    @admin.action(description='Baixa de tarefas')
+    def bulk_complete_tasks(self, request, queryset):
+        from django.shortcuts import render
+        from django.contrib import messages
+        from django.utils import timezone
+        from domains.email_service.models import ConnectionStatus
+
+        if 'apply' in request.POST:
+            completion_date = request.POST.get('completion_date')
+            new_status_id = request.POST.get('new_status')
+            task_ids = request.POST.getlist('_selected_action')
+
+            if not task_ids:
+                self.message_user(request, 'Nenhuma tarefa selecionada.', level=messages.ERROR)
+                return
+
+            try:
+                updated = TaskService.bulk_complete_tasks(
+                    request.user, task_ids, completion_date, new_status_id,
+                )
+                self.message_user(
+                    request,
+                    f'{updated} tarefa(s) baixada(s) com sucesso.',
+                )
+            except Exception as e:
+                self.message_user(request, str(e), level=messages.ERROR)
+
+            return
+
+        my_tasks = queryset.filter(created_by_user=request.user)
+        status_list = ConnectionStatus.objects.filter(is_active=True)
+        return render(request, 'admin/bulk_complete_tasks.html', {
+            'title': 'Baixa de tarefas',
+            'tasks': my_tasks,
+            'status_list': status_list,
+            'action': 'bulk_complete_tasks',
+            'opts': self.model._meta,
+        })
 
 @admin.register(VirtualAssembly)
 class VirtualAssemblyAdmin(admin.ModelAdmin):

@@ -9,4 +9,5 @@ from .validators import (
     validate_archive_reason,
     validate_task_title,
     validate_task_description,
+    validate_task_history_description,
 )
