@@ -3,54 +3,88 @@ import logging
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 
-from domains.parameters.models import Accountingclasstypes, ChartofaccountsMaingroup, ChartofaccountsSubgroup
+from domains.administrative.services.chartofaccount_service import ChartOfAccountService
 
 logger = logging.getLogger(__name__)
 
 
 @staff_member_required
 def filter_classes_by_type(request):
-    type_id = request.GET.get('type_id')
-    if not type_id:
-        return JsonResponse({'success': False, 'results': []}, status=400)
+    tipo_conta_id = request.GET.get('tipo_conta_id')
+    if not tipo_conta_id:
+        return JsonResponse({'results': []}, status=400)
     try:
-        classes = Accountingclasstypes.objects.filter(
-            account_type_id=type_id, is_active=True,
-        ).order_by('description')
-        results = [{'id': c.id, 'text': str(c)} for c in classes]
-        return JsonResponse({'success': True, 'results': results})
+        tipo_conta_id = int(tipo_conta_id)
+    except (ValueError, TypeError):
+        return JsonResponse({'results': []}, status=400)
+    try:
+        classes = ChartOfAccountService.get_classes_by_type(tipo_conta_id)
+        results = []
+        for c in classes:
+            text = f"{c['code']} - {c['description']}"
+            tipo = c.get('account_type__description')
+            if tipo:
+                text += f" ({tipo})"
+            results.append({'id': c['id'], 'text': text})
+        return JsonResponse({'results': results})
     except Exception as e:
-        logger.error(f'Erro ao filtrar classes: {e}', exc_info=True)
-        return JsonResponse({'success': False, 'results': []}, status=500)
+        logger.error('Erro ao filtrar classes por tipo %s: %s', tipo_conta_id, e, exc_info=True)
+        return JsonResponse({'results': []}, status=500)
 
 
 @staff_member_required
 def filter_groups_by_class(request):
-    class_id = request.GET.get('class_id')
-    if not class_id:
-        return JsonResponse({'success': False, 'results': []}, status=400)
+    classe_contabil_id = request.GET.get('classe_contabil_id')
+    if not classe_contabil_id:
+        return JsonResponse({'results': []}, status=400)
     try:
-        groups = ChartofaccountsMaingroup.objects.filter(
-            account_class_id=class_id, is_active=True,
-        ).order_by('description')
-        results = [{'id': g.id, 'text': str(g)} for g in groups]
-        return JsonResponse({'success': True, 'results': results})
+        classe_contabil_id = int(classe_contabil_id)
+    except (ValueError, TypeError):
+        return JsonResponse({'results': []}, status=400)
+    try:
+        groups = ChartOfAccountService.get_groups_by_class(classe_contabil_id)
+        results = []
+        for g in groups:
+            text = f"{g['code']} - {g['description']}"
+            cls_code = g.get('account_class__code')
+            cls_desc = g.get('account_class__description')
+            cls_tipo = g.get('account_class__account_type__description')
+            parts = [text]
+            if cls_desc:
+                parts.append(cls_desc)
+            if cls_tipo:
+                parts.append(cls_tipo)
+            results.append({'id': g['id'], 'text': ' / '.join(parts)})
+        return JsonResponse({'results': results})
     except Exception as e:
-        logger.error(f'Erro ao filtrar grupos: {e}', exc_info=True)
-        return JsonResponse({'success': False, 'results': []}, status=500)
+        logger.error('Erro ao filtrar grupos por classe %s: %s', classe_contabil_id, e, exc_info=True)
+        return JsonResponse({'results': []}, status=500)
 
 
 @staff_member_required
 def filter_subgroups_by_group(request):
-    group_id = request.GET.get('group_id')
-    if not group_id:
-        return JsonResponse({'success': False, 'results': []}, status=400)
+    grupo_principal_id = request.GET.get('grupo_principal_id')
+    if not grupo_principal_id:
+        return JsonResponse({'results': []}, status=400)
     try:
-        subgroups = ChartofaccountsSubgroup.objects.filter(
-            main_group_id=group_id, is_active=True,
-        ).order_by('description')
-        results = [{'id': s.id, 'text': str(s)} for s in subgroups]
-        return JsonResponse({'success': True, 'results': results})
+        grupo_principal_id = int(grupo_principal_id)
+    except (ValueError, TypeError):
+        return JsonResponse({'results': []}, status=400)
+    try:
+        subgroups = ChartOfAccountService.get_subgroups_by_group(grupo_principal_id)
+        results = []
+        for s in subgroups:
+            text = f"{s['code']} - {s['description']}"
+            grp_code = s.get('main_group__code')
+            grp_desc = s.get('main_group__description')
+            grp_cls = s.get('main_group__account_class__description')
+            parts = [text]
+            if grp_desc:
+                parts.append(grp_desc)
+            if grp_cls:
+                parts.append(grp_cls)
+            results.append({'id': s['id'], 'text': ' / '.join(parts)})
+        return JsonResponse({'results': results})
     except Exception as e:
-        logger.error(f'Erro ao filtrar subgrupos: {e}', exc_info=True)
-        return JsonResponse({'success': False, 'results': []}, status=500)
+        logger.error('Erro ao filtrar subgrupos por grupo %s: %s', grupo_principal_id, e, exc_info=True)
+        return JsonResponse({'results': []}, status=500)

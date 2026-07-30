@@ -1,131 +1,129 @@
-(function($) {
+(function (djq) {
     'use strict';
 
-    var _pageReady = false;
+    function mask(v) {
+        var d = v.replace(/\D/g, '').slice(0, 12);
+        if (!d) return '';
+        var p = [];
+        for (var i = 0; i < d.length; i += 3) p.push(d.substr(i, 3));
+        return p.join('.');
+    }
 
-    function maskChartAccountCode(v) {
-        var digits = v.replace(/\D/g, '');
-        if (digits.length === 0) return '';
-        digits = digits.slice(0, 12);
-        var parts = [];
-        for (var i = 0; i < digits.length; i += 3) {
-            parts.push(digits.substr(i, 3));
+    function getJQ() {
+        return window.jQuery || window.$ || djq;
+    }
+
+    function refreshSelect2(el) {
+        if (!el) return;
+        var $ = getJQ();
+        if (!$.fn || !$.fn.select2) return;
+        try {
+            if ($(el).data('select2')) $(el).select2('destroy');
+            $(el).select2({ width: '100%' });
+        } catch (e) {
+            if (console) console.warn('select2 error', e);
         }
-        return parts.join('.');
     }
 
-    $(document).on('input', '.mask-chart-account-code', function() {
-        $(this).val(maskChartAccountCode($(this).val()));
-    });
-
-    var xhrClasses = null;
-    var xhrGroups = null;
-    var xhrSubgroups = null;
-
-    var _loadingClasses = false;
-    var _loadingGroups = false;
-    var _loadingSubgroups = false;
-
-    function clearAndAddPlaceholder(sel) {
-        $(sel).empty().append('<option value="">---------</option>');
-        $(sel).trigger('change.select2');
+    function populate(el, items) {
+        var html = '<option value="">---</option>';
+        if (items && items.length) {
+            for (var i = 0; i < items.length; i++) {
+                var id = String(items[i].id).replace(/"/g, '&quot;');
+                var txt = String(items[i].text)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                html += '<option value="' + id + '">' + txt + '</option>';
+            }
+        }
+        el.innerHTML = html;
+        el.value = '';
+        var $ = getJQ();
+        $(el).trigger('change');
+        refreshSelect2(el);
     }
 
-    function loadClasses(typeId) {
-        if (xhrClasses && xhrClasses.readyState !== 4) xhrClasses.abort();
-        _loadingClasses = true;
-
-        if (!typeId) {
-            _loadingClasses = false;
+    function ajaxLoad(url, params, el) {
+        if (!url) {
+            populate(el, null);
             return;
         }
-
-        clearAndAddPlaceholder('#id_account_class');
-        clearAndAddPlaceholder('#id_account_group');
-        clearAndAddPlaceholder('#id_account_subgroup');
-
-        var url = $('#id_account_type').data('classes-url');
-        xhrClasses = $.getJSON(url, {type_id: typeId}, function(resp) {
-            if (resp.results && resp.results.length) {
-                $.each(resp.results, function(i, item) {
-                    $('#id_account_class').append($('<option>', {value: item.id, text: item.text}));
-                });
-            }
-            $('#id_account_class').trigger('change.select2');
-        }).always(function() {
-            _loadingClasses = false;
-        });
+        var qs = Object.keys(params).map(function (k) {
+            return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+        }).join('&');
+        var fullUrl = url + (qs ? '?' + qs : '');
+        fetch(fullUrl, { credentials: 'same-origin' })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).then(function (resp) {
+                var items = (resp && resp.results) ? resp.results : [];
+                populate(el, items);
+            }).catch(function () {
+                populate(el, null);
+            });
     }
 
-    function loadGroups(classId) {
-        if (xhrGroups && xhrGroups.readyState !== 4) xhrGroups.abort();
-        _loadingGroups = true;
+    djq(document).on('input', '.mask-chart-account-code', function () {
+        this.value = mask(this.value);
+    });
 
-        if (!classId) {
-            _loadingGroups = false;
-            return;
+    djq(document).ready(function () {
+        var tipoConta = document.getElementById('id_account_type');
+        var classeContabil = document.getElementById('id_account_class');
+        var grupoPrincipal = document.getElementById('id_account_group');
+        var subgrupo = document.getElementById('id_account_subgroup');
+
+        if (!tipoConta) return;
+
+        function loadClasses(typeId) {
+            var url = tipoConta.getAttribute('data-classes-url') || '/administrative/ajax/filter-classes/';
+            populate(classeContabil, null);
+            populate(grupoPrincipal, null);
+            populate(subgrupo, null);
+            if (!typeId) { classeContabil.disabled = false; return; }
+            ajaxLoad(url, { tipo_conta_id: typeId }, classeContabil);
         }
 
-        clearAndAddPlaceholder('#id_account_group');
-        clearAndAddPlaceholder('#id_account_subgroup');
-
-        var url = $('#id_account_class').data('groups-url');
-        xhrGroups = $.getJSON(url, {class_id: classId}, function(resp) {
-            if (resp.results && resp.results.length) {
-                $.each(resp.results, function(i, item) {
-                    $('#id_account_group').append($('<option>', {value: item.id, text: item.text}));
-                });
-            }
-            $('#id_account_group').trigger('change.select2');
-        }).always(function() {
-            _loadingGroups = false;
-        });
-    }
-
-    function loadSubgroups(groupId) {
-        if (xhrSubgroups && xhrSubgroups.readyState !== 4) xhrSubgroups.abort();
-        _loadingSubgroups = true;
-
-        if (!groupId) {
-            _loadingSubgroups = false;
-            return;
+        function loadGroups(classId) {
+            var url = (classeContabil ? classeContabil.getAttribute('data-groups-url') : null) || '/administrative/ajax/filter-groups/';
+            populate(grupoPrincipal, null);
+            populate(subgrupo, null);
+            if (!classId) { grupoPrincipal.disabled = false; return; }
+            ajaxLoad(url, { classe_contabil_id: classId }, grupoPrincipal);
         }
 
-        clearAndAddPlaceholder('#id_account_subgroup');
+        function loadSubgroups(groupId) {
+            var url = (grupoPrincipal ? grupoPrincipal.getAttribute('data-subgroups-url') : null) || '/administrative/ajax/filter-subgroups/';
+            populate(subgrupo, null);
+            if (!groupId) { subgrupo.disabled = false; return; }
+            ajaxLoad(url, { grupo_principal_id: groupId }, subgrupo);
+        }
 
-        var url = $('#id_account_group').data('subgroups-url');
-        xhrSubgroups = $.getJSON(url, {group_id: groupId}, function(resp) {
-            if (resp.results && resp.results.length) {
-                $.each(resp.results, function(i, item) {
-                    $('#id_account_subgroup').append($('<option>', {value: item.id, text: item.text}));
-                });
+        var $ = getJQ();
+        $(tipoConta).on('change', function () {
+            loadClasses(this.value);
+        });
+        $(classeContabil).on('change', function () {
+            loadGroups(this.value);
+        });
+        $(grupoPrincipal).on('change', function () {
+            loadSubgroups(this.value);
+        });
+
+        document.querySelectorAll('.mask-chart-account-code').forEach(function (el) {
+            el.value = mask(el.value);
+        });
+
+        if (tipoConta.value) {
+            classeContabil.disabled = false;
+            if (classeContabil && classeContabil.value) {
+                grupoPrincipal.disabled = false;
+                if (subgrupo && subgrupo.value) {
+                    subgrupo.disabled = false;
+                }
             }
-            $('#id_account_subgroup').trigger('change.select2');
-        }).always(function() {
-            _loadingSubgroups = false;
-        });
-    }
-
-    $(document).on('change', '#id_account_type', function() {
-        if (!_pageReady || _loadingClasses) return;
-        loadClasses($('#id_account_type').val());
-    });
-
-    $(document).on('change', '#id_account_class', function() {
-        if (!_pageReady || _loadingGroups) return;
-        loadGroups($('#id_account_class').val());
-    });
-
-    $(document).on('change', '#id_account_group', function() {
-        if (!_pageReady || _loadingSubgroups) return;
-        loadSubgroups($('#id_account_group').val());
-    });
-
-    $(document).ready(function() {
-        $('.mask-chart-account-code').each(function() {
-            $(this).val(maskChartAccountCode($(this).val()));
-        });
-        _pageReady = true;
+        }
     });
 
 })(django.jQuery);

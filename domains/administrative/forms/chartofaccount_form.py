@@ -41,14 +41,20 @@ class ChartOfAccountForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Ex.: DESP-MAN-ELEV-001',
             }),
-            'effective_start_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-            }),
-            'effective_end_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-            }),
+            'effective_start_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                },
+                format='%Y-%m-%d',
+            ),
+            'effective_end_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                },
+                format='%Y-%m-%d',
+            ),
             'archive_reason': forms.Textarea(attrs={
                 'class': 'form-control',
                 'placeholder': 'Informe o motivo do arquivamento',
@@ -144,7 +150,7 @@ class ChartOfAccountForm(forms.ModelForm):
         self.fields['account_type'].queryset = Chartofaccountstype.objects.filter(is_active=True)
         self.fields['account_type'].widget.attrs['class'] = 'form-control'
         self.fields['account_type'].widget.attrs['data-classes-url'] = reverse('filter_classes_by_type')
-        self.fields['account_type'].required = False
+        self.fields['account_type'].required = True
         self.fields['account_type'].empty_label = '---------'
 
         all_classes = Accountingclasstypes.objects.filter(is_active=True)
@@ -154,46 +160,30 @@ class ChartOfAccountForm(forms.ModelForm):
         if is_bound:
             type_id = self.data.get('account_type')
             if type_id:
-                self.fields['account_class'].queryset = all_classes.filter(
-                    account_type_id=type_id,
-                )
+                self.fields['account_class'].queryset = all_classes.filter(account_type_id=type_id)
             else:
                 self.fields['account_class'].queryset = all_classes
-
             class_id = self.data.get('account_class')
             if class_id:
-                self.fields['account_group'].queryset = all_groups.filter(
-                    account_class_id=class_id,
-                )
+                self.fields['account_group'].queryset = all_groups.filter(account_class_id=class_id)
             else:
                 self.fields['account_group'].queryset = all_groups
-
             group_id = self.data.get('account_group')
             if group_id:
-                self.fields['account_subgroup'].queryset = all_subgroups.filter(
-                    main_group_id=group_id,
-                )
+                self.fields['account_subgroup'].queryset = all_subgroups.filter(main_group_id=group_id)
             else:
                 self.fields['account_subgroup'].queryset = all_subgroups
         elif instance.pk:
             if instance.account_type_id:
-                self.fields['account_class'].queryset = all_classes.filter(
-                    account_type=instance.account_type,
-                )
+                self.fields['account_class'].queryset = all_classes.filter(account_type=instance.account_type)
             else:
                 self.fields['account_class'].queryset = all_classes
-
             if instance.account_class_id:
-                self.fields['account_group'].queryset = all_groups.filter(
-                    account_class=instance.account_class,
-                )
+                self.fields['account_group'].queryset = all_groups.filter(account_class=instance.account_class)
             else:
                 self.fields['account_group'].queryset = all_groups
-
             if instance.account_group_id:
-                self.fields['account_subgroup'].queryset = all_subgroups.filter(
-                    main_group=instance.account_group,
-                )
+                self.fields['account_subgroup'].queryset = all_subgroups.filter(main_group=instance.account_group)
             else:
                 self.fields['account_subgroup'].queryset = all_subgroups
         else:
@@ -284,6 +274,12 @@ class ChartOfAccountForm(forms.ModelForm):
         if value:
             validate_archive_reason(value)
         return value
+
+    def clean_effective_start_date(self):
+        start = self.cleaned_data.get('effective_start_date')
+        if not start:
+            raise forms.ValidationError('Informe a data inicial de vigência.')
+        return start
 
     def clean_effective_end_date(self):
         start = self.cleaned_data.get('effective_start_date')

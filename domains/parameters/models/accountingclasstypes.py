@@ -21,4 +21,4 @@ class Accountingclasstypes(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
 
     def __str__(self):
-        return f'{self.code} - {self.description}'
+        return f'{self.code} - {self.description} - {self.account_type}'

@@ -4,6 +4,7 @@ from django.db.models import Q
 from domains.administrative.repositories.chartofaccount_repository import ChartOfAccountRepository
 from domains.administrative.selectors.chartofaccount_selector import ChartOfAccountSelector
 from domains.administrative.validators import validate_chart_account_code, validate_external_reference, validate_archive_reason
+from domains.parameters.models import Accountingclasstypes, ChartofaccountsMaingroup, ChartofaccountsSubgroup
 
 logger = logging.getLogger(__name__)
 
@@ -206,3 +207,55 @@ class ChartOfAccountService:
     @staticmethod
     def get_chart_of_account_by_id(account_id):
         return ChartOfAccountSelector.get_by_id(account_id)
+
+    @staticmethod
+    def get_classes_by_type(tipo_conta_id):
+        if not tipo_conta_id:
+            return []
+        try:
+            tipo_conta_id = int(tipo_conta_id)
+        except (ValueError, TypeError):
+            return []
+        return list(
+            Accountingclasstypes.objects.filter(
+                account_type_id=tipo_conta_id, is_active=True,
+            ).select_related('account_type').order_by('description').values(
+                'id', 'code', 'description', 'account_type__description',
+            )
+        )
+
+    @staticmethod
+    def get_groups_by_class(classe_contabil_id):
+        if not classe_contabil_id:
+            return []
+        try:
+            classe_contabil_id = int(classe_contabil_id)
+        except (ValueError, TypeError):
+            return []
+        return list(
+            ChartofaccountsMaingroup.objects.filter(
+                account_class_id=classe_contabil_id, is_active=True,
+            ).select_related('account_class').order_by('description').values(
+                'id', 'code', 'description',
+                'account_class__code', 'account_class__description',
+                'account_class__account_type__description',
+            )
+        )
+
+    @staticmethod
+    def get_subgroups_by_group(grupo_principal_id):
+        if not grupo_principal_id:
+            return []
+        try:
+            grupo_principal_id = int(grupo_principal_id)
+        except (ValueError, TypeError):
+            return []
+        return list(
+            ChartofaccountsSubgroup.objects.filter(
+                main_group_id=grupo_principal_id, is_active=True,
+            ).select_related('main_group').order_by('description').values(
+                'id', 'code', 'description',
+                'main_group__code', 'main_group__description',
+                'main_group__account_class__description',
+            )
+        )

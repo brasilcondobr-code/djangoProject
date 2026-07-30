@@ -172,9 +172,10 @@ class TestChartOfAccountForm:
         form = ChartOfAccountForm(data=data)
         assert form.is_valid(), form.errors
 
-    def test_dependent_fields_start_empty_on_add(self):
+    def test_dependent_fields_show_all_active_on_add(self, _acc_type, _acc_class):
         form = ChartOfAccountForm()
-        assert form.fields['account_class'].queryset.count() == 0
+        assert form.fields['account_class'].queryset.count() == 1
+        assert _acc_class in form.fields['account_class'].queryset
         assert form.fields['account_group'].queryset.count() == 0
         assert form.fields['account_subgroup'].queryset.count() == 0
 
