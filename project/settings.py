@@ -263,6 +263,8 @@ JAZZMIN_SETTINGS = {
         "parameters.ChartofaccountsMaingroup": "fa-brands fa-atlassian",
         "parameters.ChartofaccountsSubgroup": "fa-brands fa-black-tie",
         "parameters.ChartofaccountsStatus": "fa-brands fa-audible",
+        "parameters.VotingType": "fa-brands fa-avianex",
+        "parameters.AssemblyStatus": "fa-brands fa-avianex",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",

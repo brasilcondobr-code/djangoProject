@@ -1,6 +1,8 @@
 import csv
 from django.http import HttpResponse
+from django import forms
 from django.contrib import admin
+from django.db import IntegrityError, transaction
 
 from .models import (
     Addresses, States, TypesCondominium, StructionCondominium,
@@ -8,9 +10,10 @@ from .models import (
     MeterType, AssetType, AssetCategory, AssetStatus, AssetStateCondition,
     AssetBrand, AssetMaintenanceFrequency, BankAccountType,
     Chartofaccountstype, Accountingclasstypes, ChartofaccountsMaingroup,
-    ChartofaccountsSubgroup, ChartofaccountsStatus,
+    ChartofaccountsSubgroup, ChartofaccountsStatus, VotingType,
+    AssemblyStatus,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm
 
 class ExportCsvMixin:
     def init(self, model, *args, **kwargs):
@@ -299,3 +302,56 @@ class ChartofaccountsStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     actions = ["export_as_csv"]
+
+
+@admin.register(VotingType)
+class VotingTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = VotingTypeForm
+    list_display = ('description', 'is_active', 'created_at', 'updated_at')
+    list_display_links = ('description',)
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    empty_value_display = '-'
+    actions = ["export_as_csv"]
+    fieldsets = (
+        ('Dados principais', {
+            'fields': ('description', 'is_active'),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': ('created_at', 'updated_at'),
+        }),
+    )
+
+
+@admin.register(AssemblyStatus)
+class AssemblyStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = AssemblyStatusForm
+    list_display = (
+        'description', 'is_pending', 'is_running', 'is_complete',
+        'is_active', 'created_at', 'updated_at',
+    )
+    list_display_links = ('description',)
+    search_fields = ('description',)
+    list_filter = ('is_pending', 'is_running', 'is_complete', 'is_active')
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    empty_value_display = '-'
+    actions = ["export_as_csv"]
+
+    def save_model(self, request, obj, form, change):
+        try:
+            with transaction.atomic():
+                super().save_model(request, obj, form, change)
+        except IntegrityError as exc:
+            message = 'Já existe um status de assembleia com este valor.'
+            if 'unique_running_assembly_status' in str(exc):
+                message = 'Já existe um status marcado como "Em execução".'
+            elif 'unique_complete_assembly_status' in str(exc):
+                message = 'Já existe um status marcado como "Completo".'
+            raise forms.ValidationError(message) from exc
+

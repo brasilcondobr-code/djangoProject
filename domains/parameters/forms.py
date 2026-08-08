@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus
 
 
 
@@ -313,6 +313,108 @@ class InfractionsTypeForm(forms.ModelForm):
         if queryset.exists():
             raise forms.ValidationError('Já existe um tipo de infração com esta descrição.')
             
+        return description
+
+
+class VotingTypeForm(forms.ModelForm):
+    class Meta:
+        model = VotingType
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição do tipo de votação',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'is_active': 'Define se o tipo de votação poderá ser utilizado em novos registros.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'A descrição é obrigatória.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+
+        instance = self.instance
+        queryset = VotingType.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError('Já existe um tipo de votação com esta descrição.')
+
+        return description
+
+
+class AssemblyStatusForm(forms.ModelForm):
+    class Meta:
+        model = AssemblyStatus
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Descrição do status da assembleia',
+                'maxlength': '255',
+            }),
+            'is_pending': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_running': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_complete': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_pending': 'Está pendente',
+            'is_running': 'Está em execução',
+            'is_complete': 'Está completo',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para o status.',
+            'is_pending': 'Indica se o status representa uma assembleia pendente.',
+            'is_running': 'Indica se o status representa uma assembleia em execução.',
+            'is_complete': 'Indica se o status representa uma assembleia concluída.',
+            'is_active': 'Define se o status poderá ser utilizado em novos registros.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'A descrição é obrigatória.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('A descrição é obrigatória.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = AssemblyStatus.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError('Já existe um status de assembleia com esta descrição.')
+
         return description
 
 

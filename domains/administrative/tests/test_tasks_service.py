@@ -28,10 +28,24 @@ class TestTaskService:
         assert task.title == 'Tarefa de serviço'
 
     def test_update_task(self, _condo, _user):
-        task = Task.objects.create(**self._valid_data(_condo))
+        data = self._valid_data(_condo)
+        data['created_by_user'] = _user
+        task = Task.objects.create(**data)
         TaskService.update_task(_user, task, {'title': 'Título atualizado'})
         task.refresh_from_db()
         assert task.title == 'Título atualizado'
+
+    def test_update_task_denied_for_non_creator(self, _condo, _user):
+        from django.contrib.auth.models import User
+        from django.core.exceptions import PermissionDenied
+
+        other = User.objects.create_user(username='otheruser', password='12345')
+        task = Task.objects.create(
+            **self._valid_data(_condo),
+            created_by_user=other,
+        )
+        with pytest.raises(PermissionDenied):
+            TaskService.update_task(_user, task, {'title': 'Tentativa'})
 
     def test_validate_dates_valid(self):
         TaskService.validate_task_dates(

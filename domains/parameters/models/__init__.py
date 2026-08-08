@@ -19,3 +19,5 @@ from .accountingclasstypes import Accountingclasstypes
 from .chartofaccountsmaingroup import ChartofaccountsMaingroup
 from .chartofaccountssubgroup import ChartofaccountsSubgroup
 from .chartofaccountsstatus import ChartofaccountsStatus
+from .voting_type import VotingType
+from .assembly_status import AssemblyStatus

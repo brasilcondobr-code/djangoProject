@@ -38,3 +38,15 @@ class ParametersValidator:
     def validate_resident_type(data):
         if 'description' not in data or not data['description']:
             raise ValueError("Description is required")
+
+    @staticmethod
+    def validate_voting_type(data):
+        description = data.get('description', '')
+        if not description or not description.strip():
+            raise ValueError("Description is required")
+
+    @staticmethod
+    def validate_assembly_status(data):
+        description = data.get('description', '')
+        if not description or not description.strip():
+            raise ValueError("A descrição é obrigatória.")
