@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption
 
 
 
@@ -414,6 +414,53 @@ class AssemblyStatusForm(forms.ModelForm):
 
         if queryset.exists():
             raise forms.ValidationError('Já existe um status de assembleia com esta descrição.')
+
+        return description
+
+
+class TopicOptionForm(forms.ModelForm):
+    class Meta:
+        model = TopicOption
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição da opção de pauta',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para a opção de pauta.',
+            'is_active': 'Define se a opção de pauta poderá ser utilizada em novos registros.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'Informe a descrição da opção de pauta.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('Informe a descrição da opção de pauta.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = TopicOption.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError('Já existe uma opção de pauta com esta descrição.')
 
         return description
 

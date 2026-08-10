@@ -11,9 +11,9 @@ from .models import (
     AssetBrand, AssetMaintenanceFrequency, BankAccountType,
     Chartofaccountstype, Accountingclasstypes, ChartofaccountsMaingroup,
     ChartofaccountsSubgroup, ChartofaccountsStatus, VotingType,
-    AssemblyStatus,
+    AssemblyStatus, TopicOption,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm
 
 class ExportCsvMixin:
     def init(self, model, *args, **kwargs):
@@ -354,4 +354,18 @@ class AssemblyStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
             elif 'unique_complete_assembly_status' in str(exc):
                 message = 'Já existe um status marcado como "Completo".'
             raise forms.ValidationError(message) from exc
+
+
+@admin.register(TopicOption)
+class TopicOptionAdmin(ExportCsvMixin, admin.ModelAdmin):
+    form = TopicOptionForm
+    list_display = ('description', 'is_active', 'created_at', 'updated_at')
+    list_display_links = ('description',)
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    empty_value_display = '-'
+    actions = ["export_as_csv"]
 
