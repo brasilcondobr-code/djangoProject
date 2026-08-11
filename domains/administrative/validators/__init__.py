@@ -10,4 +10,7 @@ from .validators import (
     validate_task_title,
     validate_task_description,
     validate_task_history_description,
+    validate_topic_attachment_extension,
+    validate_file_size_10mb,
+    validate_rich_html_description,
 )

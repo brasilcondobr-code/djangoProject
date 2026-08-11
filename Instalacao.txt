@@ -65,7 +65,7 @@
         Último nome:		Santos
         [X] Ativo
         [X] Membro de equipe
-        [  ] Status de superusuários
+        [ ] Status de superusuários
         Grupos              Sindicos
 
     

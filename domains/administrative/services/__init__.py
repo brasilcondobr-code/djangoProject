@@ -1,3 +1,6 @@
 from domains.administrative.services.bank_service import BankService
 from domains.administrative.services.bank_accounts_service import BankAccountService
 from domains.administrative.services.chartofaccount_service import ChartOfAccountService
+from domains.administrative.services.virtual_meeting_service import VirtualMeetingService
+from domains.administrative.services.virtual_meeting_topic_service import VirtualMeetingTopicService
+from domains.administrative.services.virtual_meeting_participant_service import VirtualMeetingParticipantService

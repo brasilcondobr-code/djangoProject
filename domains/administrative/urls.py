@@ -5,9 +5,11 @@ from domains.administrative.views.filter_chart_options import (
     filter_groups_by_class,
     filter_subgroups_by_group,
 )
+from domains.administrative.views.participants_by_group import participants_by_group
 
 urlpatterns = [
     path('ajax/residents-by-type/', get_residents_by_type, name='get_residents_by_type'),
+    path('ajax/participants-by-group/', participants_by_group, name='participants_by_group'),
     path('ajax/filter-classes/', filter_classes_by_type, name='filter_classes_by_type'),
     path('ajax/filter-groups/', filter_groups_by_class, name='filter_groups_by_class'),
     path('ajax/filter-subgroups/', filter_subgroups_by_group, name='filter_subgroups_by_group'),

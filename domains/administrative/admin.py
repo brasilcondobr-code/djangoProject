@@ -1,5 +1,7 @@
 from django.contrib import admin, messages
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.http import HttpResponse
  
 from domains.administrative.models import Bank, Infraction, BankAccount
@@ -11,8 +13,16 @@ from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.administrative.models.task import Task
 from domains.administrative.models.task_history import TaskHistory
-from domains.administrative.models.virtual_assembly import VirtualAssembly
+from domains.administrative.models.virtual_meeting import VirtualMeeting
+from domains.administrative.models.virtual_meeting_topic import VirtualMeetingTopic
+from domains.administrative.models.virtual_meeting_participant import VirtualMeetingParticipant
 from domains.administrative.forms import BankForm, CircularForm, DocumentsForm, BankAccountForm, TaskForm, TaskHistoryForm
+from domains.administrative.forms.virtual_meeting_form import VirtualMeetingForm
+from domains.administrative.forms.virtual_meeting_topic_form import (
+    VirtualMeetingTopicForm,
+    VirtualMeetingTopicFormSet,
+)
+from domains.administrative.forms.virtual_meeting_participant_form import VirtualMeetingParticipantForm
 from domains.administrative.forms.chartofaccount_form import ChartOfAccountForm
 from domains.administrative.forms.infraction_form import InfractionsForm
 from domains.administrative.forms.meter_form import MetersForm
@@ -981,6 +991,188 @@ class TaskAdmin(admin.ModelAdmin):
             'opts': self.model._meta,
         })
 
-@admin.register(VirtualAssembly)
-class VirtualAssemblyAdmin(admin.ModelAdmin):
-    pass
+class VirtualMeetingTopicInline(admin.TabularInline):
+    model = VirtualMeetingTopic
+    form = VirtualMeetingTopicForm
+    formset = VirtualMeetingTopicFormSet
+    extra = 1
+    fields = ('title', 'description', 'topic_options')
+    verbose_name = 'Pauta'
+    verbose_name_plural = 'Pautas'
+
+
+class VirtualMeetingParticipantInline(admin.TabularInline):
+    model = VirtualMeetingParticipant
+    form = VirtualMeetingParticipantForm
+    extra = 1
+    fields = ('resident_type', 'resident')
+    verbose_name = 'Participante'
+    verbose_name_plural = 'Participantes'
+
+
+@admin.register(VirtualMeeting)
+class VirtualMeetingAdmin(admin.ModelAdmin):
+    form = VirtualMeetingForm
+    inlines = [
+        VirtualMeetingTopicInline,
+    ]
+    jazzmin_section_order = (
+        'Principal',
+        'Edital de Convocação',
+        'Participantes',
+        'Pautas',
+        'Configurações',
+        'Auditoria',
+    )
+    list_display = (
+        'title', 'condominium', 'meeting_status',
+        'meeting_date_time_start', 'notice_meeting_date_time',
+        'updated_at',
+    )
+    list_filter = (
+        'meeting_status', 'condominium',
+        'meeting_date_time_start',
+    )
+    search_fields = (
+        'title', 'president', 'secretary',
+        'condominium__name',
+    )
+    list_select_related = (
+        'condominium', 'meeting_status',
+    )
+    readonly_fields = (
+        'created_by_user_display', 'created_at', 'updated_at', 'status_assembleia',
+    )
+    autocomplete_fields = ('condominium', 'voting_type')
+    ordering = ('-created_at',)
+    list_per_page = 25
+    fieldsets = (
+        ('Principal', {
+            'fields': (
+                'condominium', 'title', 'voting_type', 'location',
+                'meeting_date_time_start', 'meeting_date_time_end',
+                'meeting_date_time_voting_begins', 'meeting_date_time_voting_end',
+                'president', 'secretary', 'video_conference_link', 'description',
+            ),
+        }),
+        ('Edital de Convocação', {
+            'classes': ('collapse',),
+            'fields': (
+                'notice_meeting_date_time', 'notice_meeting_description',
+                'notice_meeting_send_email_participants',
+            ),
+        }),
+        ('Participantes', {
+            'fields': (
+                'participating_groups',
+                'participating_resident',
+            ),
+        }),
+        ('Configurações', {
+            'classes': ('collapse',),
+            'fields': (
+                'status_assembleia',
+                'participating_vote_unit',
+                'ban_those_in_default_from_voting',
+                'hide_results_from_participants_during_voting',
+                'release_the_agenda_for_vote',
+                'allow_comments', 'show_comments',
+                'allow_replies_to_comments', 'show_replies_to_comments',
+            ),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': ('created_by_user_display', 'created_at', 'updated_at'),
+        }),
+    )
+    actions = ['enviar_fila_email']
+
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/jquery.init.js',
+            'js/virtual_meeting_admin.js',
+            'js/virtualmeeting_participants.js',
+        )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'condominium', 'meeting_status',
+        ).prefetch_related(
+            'participating_groups', 'participating_resident',
+        )
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if isinstance(db_field, models.DateTimeField):
+            kwargs.pop('form_class', None)
+            return db_field.formfield(**kwargs)
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+    def get_readonly_fields(self, request, obj=None):
+        self._current_user = request.user
+        return super().get_readonly_fields(request, obj)
+
+    def created_by_user_display(self, obj):
+        from django.utils.html import format_html, mark_safe
+
+        user = getattr(self, '_current_user', None)
+        if user is None:
+            user = obj.created_by_user if obj else None
+        options = []
+        for u in User.objects.all().order_by('username'):
+            selected = ' selected' if user and u.pk == user.pk else ''
+            options.append(f'<option value="{u.pk}"{selected}>{u.username}</option>')
+        return format_html(
+            '<select class="form-control" disabled>{}</select>',
+            mark_safe(''.join(options)),
+        )
+    created_by_user_display.short_description = 'Criado por'
+
+    def status_assembleia(self, obj):
+        from domains.administrative.services.virtual_meeting_service import VirtualMeetingService
+
+        try:
+            status = VirtualMeetingService.get_pending_status()
+        except Exception:
+            return '-'
+        return status.description if status else '-'
+    status_assembleia.short_description = 'Status da assembleia'
+
+    def save_model(self, request, obj, form, change):
+        from domains.administrative.services.virtual_meeting_service import VirtualMeetingService
+
+        try:
+            if not change and obj.meeting_status_id is None:
+                obj.meeting_status = VirtualMeetingService.get_pending_status()
+        except Exception:
+            pass
+        if not change:
+            user = getattr(request, 'user', None)
+            if user is not None:
+                obj.created_by_user = user
+        super().save_model(request, obj, form, change)
+
+    @admin.action(description='Enviar Fila E-mail')
+    def enviar_fila_email(self, request, queryset):
+        from django.contrib import messages
+        from domains.administrative.services.virtual_meeting_email_service import VirtualMeetingEmailService
+
+        scheduled = 0
+        for virtual_meeting in queryset:
+            try:
+                VirtualMeetingEmailService.schedule_notice_email(virtual_meeting)
+                scheduled += 1
+            except Exception as exc:
+                self.message_user(
+                    request,
+                    f'{virtual_meeting}: {exc}',
+                    level=messages.ERROR,
+                )
+        if scheduled:
+            self.message_user(
+                request,
+                f'{scheduled} assembleia(s) enfileirada(s) para envio de e-mail.',
+            )
+
+    def has_add_permission(self, request):
+        return True

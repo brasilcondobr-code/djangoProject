@@ -70,7 +70,7 @@ class TestPatrimonyAdmin:
         assert "asset_type" in admin.list_select_related
         assert "asset_category" in admin.list_select_related
 
-    def test_generate_asset_code_action(self, setup_data, mocker):
+    def test_generate_asset_code_action(self, setup_data):
         condo, asset_type, asset_category, asset_status, state_condition = setup_data
         patrimony = Patrimony.objects.create(
             condominium=condo,

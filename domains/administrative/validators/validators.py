@@ -20,6 +20,30 @@ ALLOWED_METER_FILE_EXTENSIONS = {
     ".png",
     ".bmp",
 }
+
+ALLOWED_TOPIC_ATTACHMENT_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".odt",
+    ".txt",
+    ".rtf",
+    ".jpg",
+    ".jpeg",
+    ".png",
+}
+
+def validate_topic_attachment_extension(file):
+    if not file:
+        raise ValidationError("O arquivo é obrigatório.")
+
+    extension = Path(file.name).suffix.lower()
+
+    if extension not in ALLOWED_TOPIC_ATTACHMENT_EXTENSIONS:
+        raise ValidationError(
+            "Formato de arquivo inválido. São permitidos apenas "
+            ".pdf, .doc, .docx, .odt, .txt, .rtf, .jpg, .jpeg e .png."
+        )
  
 def validate_infraction_file_extension(file):
     if not file:
@@ -199,6 +223,11 @@ def validate_task_history_description(value):
     if is_html_content_empty(value):
         raise ValidationError('A descrição do histórico deve possuir conteúdo.')
     _reject_dangerous_html(value)
+
+
+def validate_rich_html_description(value):
+    if value:
+        _reject_dangerous_html(value)
 
 
 def _reject_dangerous_html(value):
