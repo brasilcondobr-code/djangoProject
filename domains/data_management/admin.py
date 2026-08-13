@@ -15,7 +15,27 @@ class AuditModuleAdmin(admin.ModelAdmin):
 
 @admin.register(ScheduledTaskModule)
 class ScheduledTaskModuleAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        'virtual_meeting', 'task_type', 'scheduled_at', 'status',
+        'attempts', 'sent_at',
+    )
+    list_filter = ('status', 'task_type', 'scheduled_at')
+    search_fields = ('virtual_meeting__title',)
+    readonly_fields = (
+        'virtual_meeting', 'task_type', 'scheduled_at', 'status', 'attempts',
+        'sent_at', 'last_error', 'celery_task_id', 'created_at', 'updated_at',
+    )
+    ordering = ('-scheduled_at',)
+    list_per_page = 25
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 @admin.register(IntegrationModule)
 class IntegrationModuleAdmin(admin.ModelAdmin):

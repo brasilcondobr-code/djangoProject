@@ -1042,6 +1042,7 @@ class VirtualMeetingAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         'created_by_user_display', 'created_at', 'updated_at', 'status_assembleia',
+        'email_log',
     )
     autocomplete_fields = ('condominium', 'voting_type')
     ordering = ('-created_at',)
@@ -1052,14 +1053,15 @@ class VirtualMeetingAdmin(admin.ModelAdmin):
                 'condominium', 'title', 'voting_type', 'location',
                 'meeting_date_time_start', 'meeting_date_time_end',
                 'meeting_date_time_voting_begins', 'meeting_date_time_voting_end',
+                'meeting_date_time_send_mail',
                 'president', 'secretary', 'video_conference_link', 'description',
             ),
         }),
         ('Edital de Convocação', {
             'classes': ('collapse',),
             'fields': (
-                'notice_meeting_date_time', 'notice_meeting_description',
-                'notice_meeting_send_email_participants',
+                'notice_meeting_title', 'notice_meeting_date_time',
+                'notice_meeting_description',
             ),
         }),
         ('Participantes', {
@@ -1072,6 +1074,10 @@ class VirtualMeetingAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'fields': (
                 'status_assembleia',
+                'email_smtp_configuration',
+                'connection_status',
+                'email_log',
+                'notice_meeting_send_email_participants',
                 'participating_vote_unit',
                 'ban_those_in_default_from_voting',
                 'hide_results_from_participants_during_voting',
@@ -1098,6 +1104,7 @@ class VirtualMeetingAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
             'condominium', 'meeting_status',
+            'email_smtp_configuration', 'connection_status',
         ).prefetch_related(
             'participating_groups', 'participating_resident',
         )
@@ -1155,24 +1162,74 @@ class VirtualMeetingAdmin(admin.ModelAdmin):
     @admin.action(description='Enviar Fila E-mail')
     def enviar_fila_email(self, request, queryset):
         from django.contrib import messages
+        from domains.administrative.exceptions import VirtualMeetingValidationException
         from domains.administrative.services.virtual_meeting_email_service import VirtualMeetingEmailService
 
-        scheduled = 0
+        total_schedules = 0
+        total_recipients = 0
+        total_no_email = 0
+        total_skipped = 0
+        total_errors = 0
+
         for virtual_meeting in queryset:
             try:
-                VirtualMeetingEmailService.schedule_notice_email(virtual_meeting)
-                scheduled += 1
-            except Exception as exc:
+                results = VirtualMeetingEmailService.schedule_emails(virtual_meeting)
+                if results.get('skipped'):
+                    total_skipped += 1
+                    self.message_user(
+                        request,
+                        f"{virtual_meeting.title}: envio em massa desabilitado "
+                        f"(campo 'Enviar e-mail aos participantes' = Não).",
+                        level=messages.WARNING,
+                    )
+                    continue
+                total_schedules += len(results.get('schedules', []))
+                total_recipients += sum(
+                    s.get('recipients', 0) for s in results.get('schedules', [])
+                )
+                total_no_email += results.get('no_email', 0)
                 self.message_user(
                     request,
-                    f'{virtual_meeting}: {exc}',
+                    f"{virtual_meeting.title}: {len(results.get('schedules', []))} "
+                    f"agendamento(s) criado(s) - {total_recipients} destinatário(s).",
+                    level=messages.SUCCESS,
+                )
+            except VirtualMeetingValidationException as exc:
+                total_errors += 1
+                self.message_user(
+                    request,
+                    f'{virtual_meeting.title}: {exc}',
                     level=messages.ERROR,
                 )
-        if scheduled:
-            self.message_user(
-                request,
-                f'{scheduled} assembleia(s) enfileirada(s) para envio de e-mail.',
-            )
+            except Exception as exc:
+                total_errors += 1
+                import logging
+                logger = logging.getLogger('domains.administrative.admin')
+                logger.exception(
+                    'virtual_meeting_email_action_error',
+                    extra={
+                        'virtual_meeting_id': virtual_meeting.pk,
+                        'operation': 'send_email_queue_action',
+                    },
+                )
+                self.message_user(
+                    request,
+                    f'{virtual_meeting.title}: erro inesperado ({exc}).',
+                    level=messages.ERROR,
+                )
+
+        summary = (
+            f"Processamento concluído:\n"
+            f"- Assembleias processadas: {len(queryset)}\n"
+            f"- Agendamentos criados: {total_schedules}\n"
+            f"- Destinatários agendados: {total_recipients}\n"
+            f"- Participantes sem e-mail (ignorados): {total_no_email}\n"
+            f"- Assembleias sem envio (flag desabilitado): {total_skipped}\n"
+            f"- Assembleias com erro: {total_errors}\n"
+            f"Consulte o campo 'Email Logs' e os agendamentos de cada registro para detalhes."
+        )
+        self.message_user(request, summary)
 
     def has_add_permission(self, request):
         return True
+

@@ -1,5 +1,6 @@
 import pytest
 from django.test import Client
+from django.utils import timezone
 
 from domains.administrative.forms import VirtualMeetingForm
 from domains.administrative.services.virtual_meeting_participant_service import (
@@ -240,13 +241,19 @@ def _form_data(meeting, **overrides):
     data = {
         'condominium': meeting.condominium_id,
         'title': 'Assembleia Geral',
+        'description': '<p>Descrição da assembleia</p>',
         'president': 'João',
         'secretary': 'Maria',
         'meeting_date_time_start': meeting.meeting_date_time_start,
         'meeting_date_time_end': meeting.meeting_date_time_end,
         'meeting_date_time_voting_begins': meeting.meeting_date_time_voting_begins,
         'meeting_date_time_voting_end': meeting.meeting_date_time_voting_end,
+        'meeting_date_time_send_mail': (
+            meeting.meeting_date_time_voting_begins - timezone.timedelta(days=1)
+        ),
+        'notice_meeting_title': 'Edital de Convocação',
         'notice_meeting_date_time': meeting.notice_meeting_date_time,
+        'notice_meeting_description': '<p>Descrição do edital</p>',
         'notice_meeting_send_email_participants': False,
     }
     data.update(overrides)
@@ -257,7 +264,7 @@ def _form_data(meeting, **overrides):
 class TestVirtualMeetingParticipantsValidation:
 
     def test_valid_single_group_with_multiple_participants(
-        self, _meeting, _resident_type, _resident,
+        self, _meeting, _resident_type, _resident, _smtp_config, _connection_pendente,
     ):
         second = Resident.objects.create(
             unit=_resident.unit,
@@ -274,6 +281,8 @@ class TestVirtualMeetingParticipantsValidation:
             _meeting,
             participating_groups=_resident_type.pk,
             participating_resident=[_resident.pk, second.pk],
+            email_smtp_configuration=_smtp_config.pk,
+            connection_status=_connection_pendente.pk,
         ))
         assert form.is_valid(), form.errors
 

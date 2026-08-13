@@ -75,6 +75,9 @@ class VirtualMeeting(models.Model):
     meeting_date_time_voting_end = models.DateTimeField(
         verbose_name='Término da votação',
     )
+    meeting_date_time_send_mail = models.DateTimeField(
+        verbose_name='Data/Hora - Envio do E-mail',
+    )
     president = models.CharField(
         max_length=250,
         verbose_name='Presidente',
@@ -94,6 +97,12 @@ class VirtualMeeting(models.Model):
     )
 
     # --- Aba: Edital de Convocação ---
+    notice_meeting_title = models.CharField(
+        max_length=250,
+        blank=True,
+        default='',
+        verbose_name='Título do Edital de Convocação',
+    )
     notice_meeting_date_time = models.DateTimeField(
         verbose_name='Data da convocação',
     )
@@ -102,7 +111,7 @@ class VirtualMeeting(models.Model):
         verbose_name='Descrição do edital',
     )
     notice_meeting_send_email_participants = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name='Enviar e-mail aos participantes',
     )
 
@@ -164,6 +173,30 @@ class VirtualMeeting(models.Model):
         verbose_name='Grupos participantes',
     )
 
+    # --- Aba: Configurações (E-mail) ---
+    email_smtp_configuration = models.ForeignKey(
+        'email_service.SMTPConfiguration',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='virtual_meetings',
+        verbose_name='Configuração SMTP',
+    )
+    connection_status = models.ForeignKey(
+        'email_service.ConnectionStatus',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='virtual_meetings',
+        verbose_name='Email Status',
+    )
+    email_log = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Email Logs',
+        help_text='Histórico de registro dos envios de e-mails (somente leitura).',
+    )
+
     created_by_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -183,3 +216,14 @@ class VirtualMeeting(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if self.connection_status_id is None:
+            from domains.email_service.models import ConnectionStatus
+
+            status_pendente = ConnectionStatus.objects.filter(
+                status__iexact='Pendente',
+            ).first()
+            if status_pendente:
+                self.connection_status = status_pendente
+        super().save(*args, **kwargs)

@@ -24,6 +24,7 @@ def _data(_meeting, **overrides):
         'meeting_date_time_end': _meeting.meeting_date_time_end,
         'meeting_date_time_voting_begins': _meeting.meeting_date_time_voting_begins,
         'meeting_date_time_voting_end': _meeting.meeting_date_time_voting_end,
+        'meeting_date_time_send_mail': _meeting.meeting_date_time_send_mail,
         'notice_meeting_date_time': _meeting.notice_meeting_date_time,
     }
     data.update(overrides)
@@ -53,6 +54,7 @@ class TestVirtualMeetingService:
             'meeting_date_time_end': now + timezone.timedelta(days=2),
             'meeting_date_time_voting_begins': now + timezone.timedelta(days=1, hours=1),
             'meeting_date_time_voting_end': now + timezone.timedelta(days=1, hours=2),
+            'meeting_date_time_send_mail': now + timezone.timedelta(days=1),
             'notice_meeting_date_time': now - timezone.timedelta(days=1),
         })
         assert created.meeting_status == status
@@ -70,6 +72,7 @@ class TestVirtualMeetingService:
                 'meeting_date_time_end': now + timezone.timedelta(days=2),
                 'meeting_date_time_voting_begins': now + timezone.timedelta(days=1, hours=1),
                 'meeting_date_time_voting_end': now + timezone.timedelta(days=1, hours=2),
+                'meeting_date_time_send_mail': now + timezone.timedelta(days=1),
                 'notice_meeting_date_time': now - timezone.timedelta(days=1),
             })
 
@@ -109,6 +112,32 @@ class TestVirtualMeetingService:
     def test_is_notice_future(self, _meeting):
         assert VirtualMeetingService.is_notice_future(_meeting) is False
 
+    def test_validate_date_ok(self, _meeting):
+        data = {'meeting_date_time_send_mail': _meeting.notice_meeting_date_time}
+        assert VirtualMeetingService.validate_date(data) is None
+
+    def test_validate_date_after_voting_begins(self, _meeting):
+        data = {
+            'meeting_date_time_send_mail': (
+                _meeting.meeting_date_time_voting_begins
+                + timezone.timedelta(days=1)
+            ),
+            'meeting_date_time_voting_begins': _meeting.meeting_date_time_voting_begins,
+        }
+        with pytest.raises(VirtualMeetingValidationException):
+            VirtualMeetingService.validate_date(data)
+
+    def test_validate_dates_includes_send_mail(self, _meeting):
+        data = _data(
+            _meeting,
+            meeting_date_time_send_mail=(
+                _meeting.meeting_date_time_voting_begins
+                + timezone.timedelta(days=1)
+            ),
+        )
+        with pytest.raises(VirtualMeetingValidationException):
+            VirtualMeetingService.validate_meeting_dates(data)
+
 
 @pytest.mark.django_db
 class TestVirtualMeetingTopicService:
@@ -141,6 +170,7 @@ class TestVirtualMeetingTopicService:
             meeting_date_time_end=now + timezone.timedelta(days=2),
             meeting_date_time_voting_begins=now + timezone.timedelta(days=1, hours=1),
             meeting_date_time_voting_end=now + timezone.timedelta(days=1, hours=2),
+            meeting_date_time_send_mail=now + timezone.timedelta(days=1),
             notice_meeting_date_time=now - timezone.timedelta(days=1),
         )
         assert VirtualMeetingTopicService.topic_title_exists(meeting, 'Pauta 1') is False

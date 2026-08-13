@@ -61,6 +61,14 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
+# Tarefa de varredura dos agendamentos de e-mail das Votações Virtuais.
+CELERY_BEAT_SCHEDULE = {
+    'process-pending-virtual-meeting-emails-every-minute': {
+        'task': 'domains.administrative.tasks.virtual_meeting_email_tasks.process_pending_virtual_meeting_emails',
+        'schedule': 60.0,
+    },
+}
+
 # Middleware
 MIDDLEWARE = [
 

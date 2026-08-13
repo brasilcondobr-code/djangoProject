@@ -59,6 +59,19 @@ class VirtualMeetingService:
                 'A data de convocação deve ser anterior ao início da assembleia.'
             )
 
+        VirtualMeetingService.validate_date(data)
+
+    @staticmethod
+    def validate_date(data):
+        send_mail = data.get('meeting_date_time_send_mail')
+        voting_begins = data.get('meeting_date_time_voting_begins')
+        if not send_mail or not voting_begins:
+            return
+        if send_mail >= voting_begins:
+            raise VirtualMeetingValidationException(
+                'A data/hora de envio do e-mail deve ser anterior ao início da votação.',
+            )
+
     @staticmethod
     @transaction.atomic
     def create_virtual_meeting(data):

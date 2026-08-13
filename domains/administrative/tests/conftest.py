@@ -4,6 +4,11 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from domains.administrative.models import Bank, VirtualMeeting
 from domains.condominium.models import Condominium
+from domains.email_service.models import (
+    ConnectionStatus,
+    SMTPConfiguration,
+    TypesProvider,
+)
 from domains.parameters.models import BankAccountType, States, TypesCondominium, Addresses
 from domains.parameters.models import VotingType, AssemblyStatus, ResidentType
 from domains.residents.models.condominium_unit import CondominiumUnit
@@ -98,6 +103,41 @@ def _user():
 
 
 @pytest.fixture
+def _provider():
+    return TypesProvider.objects.create(provider='SMTP')
+
+
+@pytest.fixture
+def _connection_pendente():
+    return ConnectionStatus.objects.create(
+        status='Pendente', description='Aguardando envio',
+    )
+
+
+@pytest.fixture
+def _connection_enviado():
+    return ConnectionStatus.objects.create(
+        status='Enviado', description='Enviado com sucesso',
+    )
+
+
+@pytest.fixture
+def _smtp_config(_provider):
+    return SMTPConfiguration.objects.create(
+        description='Test SMTP',
+        provider_code='test_smtp',
+        provider_type=_provider,
+        smtp_host='localhost',
+        smtp_port=1025,
+        username='test@example.com',
+        password='password',
+        use_tls=False,
+        use_ssl=False,
+        api_supported=False,
+    )
+
+
+@pytest.fixture
 def _meeting(_condo, _assembly_status):
     now = timezone.now()
     return VirtualMeeting.objects.create(
@@ -110,5 +150,6 @@ def _meeting(_condo, _assembly_status):
         meeting_date_time_end=now + timezone.timedelta(days=2),
         meeting_date_time_voting_begins=now + timezone.timedelta(days=1, hours=1),
         meeting_date_time_voting_end=now + timezone.timedelta(days=1, hours=2),
+        meeting_date_time_send_mail=now + timezone.timedelta(days=1, minutes=30),
         notice_meeting_date_time=now - timezone.timedelta(days=1),
     )
