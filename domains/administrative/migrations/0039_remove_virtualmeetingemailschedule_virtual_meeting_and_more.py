@@ -63,6 +63,10 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(copy_email_schedules, reverse_noop),
+        migrations.RemoveConstraint(
+            model_name='virtualmeetingemailschedule',
+            name='unique_virtual_meeting_email_schedule_type',
+        ),
         migrations.RemoveField(
             model_name='virtualmeetingemailschedule',
             name='virtual_meeting',

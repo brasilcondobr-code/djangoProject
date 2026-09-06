@@ -78,9 +78,9 @@ def test_meters_form_valid(setup_data):
         "composition": "07/2026",
         "Consumption": "10.5",
         "Value": "50.0",
-        "file": SimpleUploadedFile("medidor.jpg", b"conteudo", content_type="image/jpeg"),
     }
-    form = MetersForm(data=data)
+    file = SimpleUploadedFile("medidor.jpg", b"conteudo", content_type="image/jpeg")
+    form = MetersForm(data=data, files={"file": file})
     assert form.is_valid(), form.errors
 
 
@@ -93,8 +93,8 @@ def test_meters_invalid_extension(setup_data):
         "composition": "07/2026",
         "Consumption": "10.5",
         "Value": "50.0",
-        "file": SimpleUploadedFile("medidor.exe", b"bad", content_type="application/octet-stream"),
     }
-    form = MetersForm(data=data)
+    file = SimpleUploadedFile("medidor.exe", b"bad", content_type="application/octet-stream")
+    form = MetersForm(data=data, files={"file": file})
     assert not form.is_valid()
     assert "file" in form.errors

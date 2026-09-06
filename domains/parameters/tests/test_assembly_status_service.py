@@ -40,10 +40,10 @@ class TestAssemblyStatusService:
         assert 'descrição' in str(exc_info.value)
 
     def test_update_fails_on_duplicate_description(self):
-        AssemblyStatusService.create_assembly_status({'description': 'Em execução'})
+        AssemblyStatusService.create_assembly_status({'description': 'Em execucao'})
         other = AssemblyStatusService.create_assembly_status({'description': 'Outra'})
         with pytest.raises(ValueError):
-            AssemblyStatusService.update_assembly_status(other, {'description': 'EM EXECUÇÃO'})
+            AssemblyStatusService.update_assembly_status(other, {'description': 'EM EXECUCAO'})
 
     def test_create_second_running_fails(self):
         AssemblyStatusService.create_assembly_status({

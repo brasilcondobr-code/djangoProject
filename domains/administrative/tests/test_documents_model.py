@@ -1,13 +1,11 @@
 import pytest
-from django.core.exceptions import ValidationError
 from domains.administrative.models.documents import Documents
-from domains.condominium.models import Condominium
 from domains.parameters.models import DocumentType
 
 @pytest.mark.django_db
 class TestDocumentsModel:
-    def test_create_document_valid(self, admin_user):
-        condo = Condominium.objects.create(name="Condo Test")
+    def test_create_document_valid(self, _condo, admin_user):
+        condo = _condo
         doc_type = DocumentType.objects.create(description="RG")
         
         doc = Documents.objects.create(
@@ -21,8 +19,8 @@ class TestDocumentsModel:
         assert doc.title == "Documento Teste"
         assert str(doc) == "Documento Teste"
 
-    def test_duplicate_document_fails(self, admin_user):
-        condo = Condominium.objects.create(name="Condo Test")
+    def test_duplicate_document_fails(self, _condo, admin_user):
+        condo = _condo
         doc_type = DocumentType.objects.create(description="RG")
         
         Documents.objects.create(

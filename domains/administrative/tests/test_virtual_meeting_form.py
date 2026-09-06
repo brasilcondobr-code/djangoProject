@@ -229,12 +229,12 @@ class TestVirtualMeetingTopicForm:
     def test_duplicate_topics(self, _meeting):
         VirtualMeetingTopicForm(data={
             'virtual_meeting': _meeting.pk,
-            'title': 'Aprovação do balanço',
+            'title': 'Aprovacao do balanco',
         }).save()
 
         form2 = VirtualMeetingTopicForm(data={
             'virtual_meeting': _meeting.pk,
-            'title': 'Aprovação do BALANÇO',
+            'title': 'Aprovacao do BALANCO',
         })
         assert not form2.is_valid()
         assert 'Já existe uma pauta com este título nesta assembleia.' in form2.errors['title'][0]

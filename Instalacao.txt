@@ -35,6 +35,42 @@
 
 
 
+    Se quiser iniciar os containers em segundo plano:
+
+        # docker compose up -d
+
+
+    Verificar o estado:
+
+        # docker compose ps
+
+
+    ====================================================================================================================
+
+        SEQUENCIA RECOMENDADA:
+
+
+            Terminal 1 — Docker
+                # cd ~/Projects/djangoProject
+                # docker compose up
+
+            Terminal 2 — VS Code
+                # cd ~/Projects/djangoProject
+                # code .
+
+            Terminal 3 — Aider
+                # cd ~/Projects/djangoProject
+                # aider --model qwen
+
+    ====================================================================================================================
+   
+    # Teste executando:
+        ~/bin/iniciar-brasil-condo
+
+    # Os containers continuarão rodando em segundo plano. Para desligá-los posteriormente:
+        # cd ~/Projects/djangoProject
+        # docker compose down -v
+        
 
     # Subir as imagens do Docker
     # docker compose up
@@ -86,6 +122,40 @@
         Servidor SMTP (para o Django/Celery enviar e-mails):
         Dentro do Docker (comunicação entre containers): mailpit:1025
         Fora do Docker (via localhost): localhost:1025
+
+
+==============================================================================================================================================
+
+
+    Verifique se o Ollama iniciou
+
+        # systemctl is-active ollama
+        (active)
+
+    Verificar se o modelo está ativo:
+
+        # ollama list
+
+
+    Testar a API:
+
+        http://127.0.0.1:11434/api/tags
+        curl http://127.0.0.1:11434/api/tags
+    
+
+    Abra outro terminal e inicie o Aider
+
+        # cd ~/Projects/djangoProject
+        # aider
+
+
+
+    Você também pode iniciar explicitamente pelo alias:
+
+        # cd ~/Projects/djangoProject
+        # aider --model qwen
+
+    o Aider deverá iniciar usando automaticamente: ollama_chat/qwen2.5-coder:7b
 
 
 ==============================================================================================================================================

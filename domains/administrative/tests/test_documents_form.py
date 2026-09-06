@@ -2,41 +2,37 @@ import pytest
 from django import forms
 from domains.administrative.forms import DocumentsForm
 from domains.administrative.models.documents import Documents
-from domains.condominium.models import Condominium
 from domains.parameters.models import DocumentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+
 @pytest.mark.django_db
 class TestDocumentsForm:
-    def test_form_valid(self, admin_user):
-        condo = Condominium.objects.create(name="Condo Test")
+    def test_form_valid(self, _condo, admin_user):
+        condo = _condo
         doc_type = DocumentType.objects.create(description="RG")
         file = SimpleUploadedFile("test.pdf", b"content")
-        
         data = {
             'condominium': condo.pk,
             'document_type': doc_type.pk,
             'title': 'Titulo Teste',
             'registration_date': '2023-01-01',
-            'file': file,
-            'is_active': True
+            'is_active': True,
         }
-        form = DocumentsForm(data=data)
+        form = DocumentsForm(data=data, files={'file': file})
         assert form.is_valid()
 
-    def test_form_invalid_extension(self, admin_user):
-        condo = Condominium.objects.create(name="Condo Test")
+    def test_form_invalid_extension(self, _condo, admin_user):
+        condo = _condo
         doc_type = DocumentType.objects.create(description="RG")
         file = SimpleUploadedFile("test.exe", b"content")
-        
         data = {
             'condominium': condo.pk,
             'document_type': doc_type.pk,
             'title': 'Titulo Teste',
             'registration_date': '2023-01-01',
-            'file': file,
         }
-        form = DocumentsForm(data=data)
+        form = DocumentsForm(data=data, files={'file': file})
         assert not form.is_valid()
         assert 'file' in form.errors
 
