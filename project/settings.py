@@ -77,6 +77,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'domains.system.middleware.connected_user_middleware.ConnectedUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -163,6 +164,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CONNECTED_USER_TIMEOUT = int(os.environ.get('CONNECTED_USER_TIMEOUT', 300))
+CONNECTED_USER_ACTIVITY_UPDATE_INTERVAL = int(
+    os.environ.get('CONNECTED_USER_ACTIVITY_UPDATE_INTERVAL', 60)
+)
+CONNECTED_USER_POLL_INTERVAL = int(
+    os.environ.get('CONNECTED_USER_POLL_INTERVAL', 30)
+)
 
 LOGGING = {
     'version': 1,
