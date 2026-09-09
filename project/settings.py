@@ -173,6 +173,25 @@ CONNECTED_USER_POLL_INTERVAL = int(
     os.environ.get('CONNECTED_USER_POLL_INTERVAL', 30)
 )
 
+# ==============================================================================
+# Módulo 01. Backups (data_management)
+# ==============================================================================
+# Diretório permitido para os arquivos de backup (configurável).
+BACKUP_ROOT = BASE_DIR / 'backups'
+# Scripts autorizados de execução (configuráveis por variável de ambiente).
+BACKUP_SCRIPT_PATH = os.environ.get(
+    'BACKUP_SCRIPT_PATH',
+    str(BASE_DIR / 'scripts' / 'backup_module.sh')
+)
+BACKUP_RESTORE_SCRIPT_PATH = os.environ.get(
+    'BACKUP_RESTORE_SCRIPT_PATH',
+    str(BASE_DIR / 'scripts' / 'restore_module.sh')
+)
+# Timeouts (segundos) para execução síncrona.
+BACKUP_EXECUTION_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_EXECUTION_TIMEOUT_SECONDS', 300))
+BACKUP_RESTORE_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_RESTORE_TIMEOUT_SECONDS', 600))
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -211,6 +230,11 @@ LOGGING = {
             'propagate': True,
         },
         'personalities': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'data_management': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
