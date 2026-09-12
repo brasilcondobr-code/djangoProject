@@ -10,49 +10,54 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='states',
-            name='capital',
-            field=models.CharField(max_length=100, null=True, verbose_name='Capital'),
-        ),
-        migrations.AddField(
-            model_name='states',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='states',
-            name='updated_at',
-            field=models.DateTimeField(auto_now=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='structioncondominium',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='structioncondominium',
-            name='updated_at',
-            field=models.DateTimeField(auto_now=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='typescondominium',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='typescondominium',
-            name='updated_at',
-            field=models.DateTimeField(auto_now=True, null=True),
-        ),
-        migrations.AlterField(
-            model_name='addresses',
-            name='complement',
-            field=models.CharField(max_length=255, null=True, verbose_name='Complemento'),
-        ),
-        migrations.AlterField(
-            model_name='states',
-            name='region',
-            field=models.CharField(choices=[('Região Norte', 'Região Norte'), ('Região Nordeste', 'Região Nordeste'), ('Região Centro-Oeste', 'Região Centro-Oeste'), ('Região Sudeste', 'Região Sudeste'), ('Região Sul', 'Região Sul')], max_length=100, null=True, verbose_name='Região'),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name='states',
+                    name='capital',
+                    field=models.CharField(max_length=100, null=True, verbose_name='Capital'),
+                ),
+                migrations.AddField(
+                    model_name='states',
+                    name='created_at',
+                    field=models.DateTimeField(auto_now_add=True, null=True),
+                ),
+                migrations.AddField(
+                    model_name='states',
+                    name='updated_at',
+                    field=models.DateTimeField(auto_now=True, null=True),
+                ),
+                migrations.AddField(
+                    model_name='structioncondominium',
+                    name='created_at',
+                    field=models.DateTimeField(auto_now_add=True, null=True),
+                ),
+                migrations.AddField(
+                    model_name='structioncondominium',
+                    name='updated_at',
+                    field=models.DateTimeField(auto_now=True, null=True),
+                ),
+                migrations.AddField(
+                    model_name='typescondominium',
+                    name='created_at',
+                    field=models.DateTimeField(auto_now_add=True, null=True),
+                ),
+                migrations.AddField(
+                    model_name='typescondominium',
+                    name='updated_at',
+                    field=models.DateTimeField(auto_now=True, null=True),
+                ),
+                migrations.AlterField(
+                    model_name='addresses',
+                    name='complement',
+                    field=models.CharField(max_length=255, null=True, verbose_name='Complemento'),
+                ),
+                migrations.AlterField(
+                    model_name='states',
+                    name='region',
+                    field=models.CharField(choices=[('Região Norte', 'Região Norte'), ('Região Nordeste', 'Região Nordeste'), ('Região Centro-Oeste', 'Região Centro-Oeste'), ('Região Sudeste', 'Região Sudeste'), ('Região Sul', 'Região Sul')], max_length=100, null=True, verbose_name='Região'),
+                ),
+            ],
+            database_operations=[],
         ),
     ]

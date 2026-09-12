@@ -10,21 +10,26 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='addresses',
-            options={'ordering': ['country', 'state', 'city', 'street', 'number', 'complement', 'is_active', 'created_at'], 'verbose_name': '4. Endereço', 'verbose_name_plural': '4. Endereços'},
-        ),
-        migrations.AlterUniqueTogether(
-            name='addresses',
-            unique_together=set(),
-        ),
-        migrations.AddField(
-            model_name='addresses',
-            name='number',
-            field=models.CharField(max_length=10, null=True, verbose_name='Número'),
-        ),
-        migrations.AlterUniqueTogether(
-            name='addresses',
-            unique_together={('street', 'number', 'neighborhood', 'city', 'state', 'zip_code')},
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterModelOptions(
+                    name='addresses',
+                    options={'ordering': ['country', 'state', 'city', 'street', 'number', 'complement', 'is_active', 'created_at'], 'verbose_name': '4. Endereço', 'verbose_name_plural': '4. Endereços'},
+                ),
+                migrations.AlterUniqueTogether(
+                    name='addresses',
+                    unique_together=set(),
+                ),
+                migrations.AddField(
+                    model_name='addresses',
+                    name='number',
+                    field=models.CharField(max_length=10, null=True, verbose_name='Número'),
+                ),
+                migrations.AlterUniqueTogether(
+                    name='addresses',
+                    unique_together={('street', 'number', 'neighborhood', 'city', 'state', 'zip_code')},
+                ),
+            ],
+            database_operations=[],
         ),
     ]

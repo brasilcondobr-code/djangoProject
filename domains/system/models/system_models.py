@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class TechnicalSupportTicket(models.Model):
     class Meta:
@@ -46,10 +47,46 @@ class IntegrationToken(models.Model):
         return "05. Token de Integração"
 
 class ConnectedUser(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="connected_user_sessions",
+        verbose_name="Usuário",
+    )
+    session_key = models.CharField(
+        max_length=40,
+        unique=True,
+        verbose_name="Chave da sessão",
+    )
+    connected_at = models.DateTimeField(auto_now_add=True, verbose_name="Conectado em")
+    last_activity = models.DateTimeField(verbose_name="Última atividade")
+    disconnected_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Desconectado em",
+    )
+    is_connected = models.BooleanField(default=True, verbose_name="Conectado")
+    ip_address = models.GenericIPAddressField(
+        blank=True,
+        null=True,
+        verbose_name="Endereço IP",
+    )
+    user_agent = models.CharField(
+        max_length=512,
+        blank=True,
+        verbose_name="Navegador",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+
     class Meta:
         app_label = 'system'
         verbose_name = "06. Usuário Conectado"
         verbose_name_plural = "06. Usuários Conectados"
+        indexes = [
+            models.Index(fields=("is_connected", "last_activity")),
+            models.Index(fields=("user", "is_connected")),
+        ]
 
     def __str__(self):
-        return "06. Usuário Conectado"
+        return str(self.user)

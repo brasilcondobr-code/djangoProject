@@ -41,6 +41,15 @@ const BrasilCondoUtils = {
             var amount = (parseInt(v) / 100).toFixed(2).replace(".", ",");
             amount = amount.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             return amount;
+        },
+        agency: function(v) {
+            return v.replace(/\D/g, '').slice(0, 6);
+        },
+        account_number: function(v) {
+            return v.replace(/\D/g, '').slice(0, 10);
+        },
+        account_digit: function(v) {
+            return v.replace(/\D/g, '').slice(0, 3);
         }
     },
     

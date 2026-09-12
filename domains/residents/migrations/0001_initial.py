@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('condominium', '0006_alter_addresses_complement'),
+        ('parameters', '0001_initial'),
     ]
 
     operations = [
@@ -35,7 +36,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Criado em')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Atualizado em')),
                 ('condominium', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='units', to='condominium.condominium', verbose_name='Condomínio')),
-                ('structure', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='units', to='condominium.structioncondominium', verbose_name='Bloco / Torre')),
+                ('structure', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='units', to='parameters.structioncondominium', verbose_name='Bloco / Torre')),
             ],
             options={
                 'ordering': ['unit_number'],
@@ -52,7 +53,7 @@ class Migration(migrations.Migration):
                 ('active', models.BooleanField(default=True, verbose_name='Ativo')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('address', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='agencies', to='condominium.addresses', verbose_name='Endereço')),
+                ('address', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='agencies', to='parameters.addresses', verbose_name='Endereço')),
             ],
             options={
                 'verbose_name': 'Imobiliária',

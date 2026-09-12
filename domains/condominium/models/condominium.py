@@ -10,9 +10,9 @@ class Condominium(models.Model):
         db_table = 'condominium_condominium'
 
     code = models.CharField(max_length=100, verbose_name="Código", unique=True)
-    name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome")
+    name = models.CharField(max_length=255, null=False, blank=False, verbose_name="Nome", db_index=True)
     cnpj = models.CharField(max_length=20, null=False, blank=False, verbose_name="CNPJ", unique=True)
-    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo", db_index=True)
     state_registration = models.CharField(max_length=20, verbose_name="Inscrição Estadual")
     municipal_registration = models.CharField(max_length=20, verbose_name="Inscrição Municipal")
     type_condominium = models.ForeignKey(TypesCondominium, related_name="condominium", null=False, blank=False, verbose_name="Tipo de Condomínio",

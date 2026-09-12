@@ -74,8 +74,8 @@ class Circular(models.Model):
 
     class Meta:
         app_label = 'administrative'
-        verbose_name = "02. Circular"
-        verbose_name_plural = "02. Circulares"
+        verbose_name = "03. Circular"
+        verbose_name_plural = "03. Circulares"
         ordering = ["-release_date", "-created_at"]
         constraints = [
             models.UniqueConstraint(

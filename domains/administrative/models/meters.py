@@ -96,8 +96,8 @@ class Meters(models.Model):
 
     class Meta:
         app_label = 'administrative'
-        verbose_name = "05. Medidor"
-        verbose_name_plural = "05. Medidores"
+        verbose_name = "06. Medidor"
+        verbose_name_plural = "06. Medidores"
         ordering = ["-releaseDate", "composition"]
         constraints = [
             models.UniqueConstraint(

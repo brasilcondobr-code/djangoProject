@@ -1,11 +1,12 @@
 (function($){
     $(document).ready(function(){
-        console.log('O arquivo custom-condominium-condominium.js está carregado');
+        BrasilCondoUtils.applyMask('.mask-cnpj', 'cnpj');
+        BrasilCondoUtils.applyMask('.mask-code', 'code');
+        BrasilCondoUtils.applyMask('.mask-state-registration', 'state_registration');
+        BrasilCondoUtils.applyMask('.mask-municipal', 'municipal');
 
         $('.mask-code').on('input', function(){
             $(this).val($(this).val().toUpperCase());
         });
-
-        BrasilCondoUtils.applyMask('.mask-cnpj', 'cnpj');
     });
 })(django.jQuery);

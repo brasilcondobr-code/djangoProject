@@ -10,24 +10,29 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='addresses',
-            unique_together={('street', 'number', 'neighborhood', 'city', 'state', 'zip_code')},
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterUniqueTogether(
+                    name='addresses',
+                    unique_together={('street', 'number', 'neighborhood', 'city', 'state', 'zip_code')},
+                ),
+                migrations.AlterUniqueTogether(
+                    name='states',
+                    unique_together={('name', 'abbreviation')},
+                ),
+                migrations.AlterUniqueTogether(
+                    name='structioncondominium',
+                    unique_together={('name',)},
+                ),
+                migrations.AlterUniqueTogether(
+                    name='typescondominium',
+                    unique_together={('name',)},
+                ),
+            ],
+            database_operations=[],
         ),
         migrations.AlterUniqueTogether(
             name='condominium',
             unique_together={('cnpj',), ('code',)},
-        ),
-        migrations.AlterUniqueTogether(
-            name='states',
-            unique_together={('name', 'abbreviation')},
-        ),
-        migrations.AlterUniqueTogether(
-            name='structioncondominium',
-            unique_together={('name',)},
-        ),
-        migrations.AlterUniqueTogether(
-            name='typescondominium',
-            unique_together={('name',)},
         ),
     ]

@@ -61,6 +61,14 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
+# Tarefa de varredura dos agendamentos de e-mail das Votações Virtuais.
+CELERY_BEAT_SCHEDULE = {
+    'process-pending-virtual-meeting-emails-every-minute': {
+        'task': 'domains.administrative.tasks.virtual_meeting_email_tasks.process_pending_virtual_meeting_emails',
+        'schedule': 60.0,
+    },
+}
+
 # Middleware
 MIDDLEWARE = [
 
@@ -69,6 +77,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'domains.system.middleware.connected_user_middleware.ConnectedUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -156,6 +165,41 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CONNECTED_USER_TIMEOUT = int(os.environ.get('CONNECTED_USER_TIMEOUT', 300))
+CONNECTED_USER_ACTIVITY_UPDATE_INTERVAL = int(
+    os.environ.get('CONNECTED_USER_ACTIVITY_UPDATE_INTERVAL', 60)
+)
+CONNECTED_USER_POLL_INTERVAL = int(
+    os.environ.get('CONNECTED_USER_POLL_INTERVAL', 30)
+)
+
+# ==============================================================================
+# Módulo 01. Backups (data_management)
+# ==============================================================================
+# Diretório permitido para os arquivos de backup (configurável).
+BACKUP_ROOT = BASE_DIR / 'backups'
+# Scripts autorizados de execução (configuráveis por variável de ambiente).
+BACKUP_SCRIPT_PATH = os.environ.get(
+    'BACKUP_SCRIPT_PATH',
+    str(BASE_DIR / 'scripts' / 'backup_module.sh')
+)
+BACKUP_RESTORE_SCRIPT_PATH = os.environ.get(
+    'BACKUP_RESTORE_SCRIPT_PATH',
+    str(BASE_DIR / 'scripts' / 'restore_module.sh')
+)
+# Timeouts (segundos) para execução síncrona.
+BACKUP_EXECUTION_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_EXECUTION_TIMEOUT_SECONDS', 300))
+BACKUP_RESTORE_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_RESTORE_TIMEOUT_SECONDS', 600))
+
+# ==============================================================================
+# Módulo 02. Exportações (data_management)
+# ==============================================================================
+# Diretório permitido para os arquivos gerados (configurável por ambiente).
+EXPORT_ROOT = os.environ.get('EXPORT_ROOT', str(BASE_DIR / 'media' / 'exports'))
+# Timeout (segundos) da task de exportação.
+EXPORT_TASK_TIMEOUT_SECONDS = int(os.environ.get('EXPORT_TASK_TIMEOUT_SECONDS', 600))
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -194,6 +238,11 @@ LOGGING = {
             'propagate': True,
         },
         'personalities': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'data_management': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
@@ -249,8 +298,23 @@ JAZZMIN_SETTINGS = {
         "parameters.TypesVisitorRestrictions": "fa-solid fa-triangle-exclamation",
         "parameters.DocumentType": "fas fa-file-alt",
         "parameters.ResidentType": "fa-regular fa-hand-back-fist",
-        "parameters.InfractionsType": "fas fa-exclamation-triangle",
+        "parameters.InfractionsType": "fas fa-exchange-alt",
         "parameters.MeterType": "fas fa-tachometer-alt",
+        "parameters.AssetBrand": "fas fa-quora",
+        "parameters.AssetCategory": "fas fa-ravelry",
+        "parameters.AssetMaintenanceFrequency": "fas fa-briefcase-medical",
+        "parameters.AssetStateCondition": "fas fa-bugs",
+        "parameters.AssetStatus": "fas fa-cogs",
+        "parameters.AssetType": "fas fa-cube",
+        "parameters.BankAccountType": "fas fa-credit-card",
+        "parameters.Chartofaccountstype": "fa-brands fa-accusoft",
+        "parameters.Accountingclasstypes": "fa-brands fa-algolia",
+        "parameters.ChartofaccountsMaingroup": "fa-brands fa-atlassian",
+        "parameters.ChartofaccountsSubgroup": "fa-brands fa-black-tie",
+        "parameters.ChartofaccountsStatus": "fa-brands fa-audible",
+        "parameters.VotingType": "fa-brands fa-avianex",
+        "parameters.AssemblyStatus": "fa-brands fa-untappd",
+        "parameters.TopicOption": "fa-brands fa-tencent-weibo",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",
@@ -293,7 +357,8 @@ JAZZMIN_SETTINGS = {
         "administrative.ChartOfAccount": "fas fa-chart-pie",
         "administrative.Project": "fas fa-project-diagram",
         "administrative.Task": "fas fa-tasks",
-        "administrative.VirtualAssembly": "fa-solid fa-elevator",
+        "administrative.VirtualMeeting": "fa-solid fa-elevator",
+        "administrative.BankAccount": "fas fa-piggy-bank",
         "financial.Agreement": "fas fa-handshake",
         "financial.PaymentSlip": "fas fa-file-invoice-dollar",
         "financial.Cash": "fas fa-cash-register",
@@ -357,18 +422,6 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     }
 }
-
-# Email Settings
-EMAIL_PROVIDER = os.environ.get('EMAIL_PROVIDER', 'smtp')
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 1025))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
-EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Brasil Condo <no-reply@brasilcondo.local>')
-SERVER_EMAIL = os.environ.get('SERVER_EMAIL', 'Brasil Condo <server@brasilcondo.local>')
 
 # Email Settings
 EMAIL_PROVIDER = os.environ.get('EMAIL_PROVIDER', 'smtp')

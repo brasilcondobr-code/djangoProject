@@ -1,0 +1,1117 @@
+diff --git a/celerybeat-schedule b/celerybeat-schedule
+index 4401a9c..c7b333f 100644
+Binary files a/celerybeat-schedule and b/celerybeat-schedule differ
+diff --git a/domains/email_service/admin.py b/domains/email_service/admin.py
+index e9d1625..63a0ed1 100644
+--- a/domains/email_service/admin.py
++++ b/domains/email_service/admin.py
+@@ -1,19 +1,36 @@
+-from django.contrib import admin, messages
++from django.contrib import admin
+ from django.utils import timezone
+-from .forms import ConnectionStatusForm, TypesProviderForm, SMTPConfigurationForm
+-from .models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, ShippingQueue, EmailHistory, TypesPriority
+-from core.services.smtp_validator_service import SMTPValidator
+-from domains.email_service.services.queue_processor_service import QueueProcessorService
+-from domains.email_service.services.retry_service import RetryService
++from django.utils.html import format_html
++from .forms import (
++    ConnectionStatusForm,
++    TypesProviderForm,
++    SMTPConfigurationForm,
++    UsageProfilesForm,
++    ShippingQueueForm
++)
++from .models import (
++    ConnectionStatus,
++    TypesProvider,
++    SMTPConfiguration,
++    UsageProfiles,
++    ShippingQueue,
++    EmailHistory,
++    TypesPriority
++)
++from .services.queue_processor_service import QueueProcessorService
++from .services.retry_service import RetryService
++from .tasks import process_single_email_task
++
+ 
+ @admin.register(TypesProvider)
+ class TypesProviderAdmin(admin.ModelAdmin):
+     form = TypesProviderForm
+-    list_display = ('provider', 'is_active')
++    list_display = ('provider', 'is_active', 'created_at', 'updated_at')
+     search_fields = ('provider',)
+-    list_filter = ('is_active',)
++    list_filter = ('is_active', 'created_at')
+     readonly_fields = ('created_at', 'updated_at')
+     list_per_page = 25
++    ordering = ('provider',)
+     
+     class Meta:
+         model = TypesProvider
+@@ -23,16 +40,21 @@ class TypesProviderAdmin(admin.ModelAdmin):
+     class Media:
+         js = (
+             'js/custom-emailservice-typesprovider.js',
+-            )
+-    
++        )
++        css = {
++            'all': ('css/custom-emailservice.css',)
++        }
++
++
+ @admin.register(ConnectionStatus)
+ class ConnectionStatusAdmin(admin.ModelAdmin):
+     form = ConnectionStatusForm
+-    list_display = ('status', 'description', 'is_active')
+-    search_fields = ('status',)
+-    list_filter = ('status', 'is_active')
++    list_display = ('status', 'description', 'is_active', 'created_at', 'updated_at')
++    search_fields = ('status', 'description')
++    list_filter = ('is_active', 'created_at')
+     readonly_fields = ('created_at', 'updated_at')
+     list_per_page = 25
++    ordering = ('status',)
+     
+     class Meta:
+         model = ConnectionStatus
+@@ -42,21 +64,35 @@ class ConnectionStatusAdmin(admin.ModelAdmin):
+     class Media:
+         js = (
+             'js/custom-emailservice-connectionstatus.js',
+-            )
+-    
++        )
++        css = {
++            'all': ('css/custom-emailservice.css',)
++        }
++
++
+ @admin.register(TypesPriority)
+ class TypesPriorityAdmin(admin.ModelAdmin):
+-    list_display = ('priority', 'is_active')
++    list_display = ('priority', 'is_active', 'created_at', 'updated_at')
+     search_fields = ('priority',)
+-    list_filter = ('is_active',)
++    list_filter = ('is_active', 'created_at')
+     readonly_fields = ('created_at', 'updated_at')
+     list_per_page = 25
++    ordering = ('priority',)
+     
+     class Meta:
+         model = TypesPriority
+         verbose_name = "03. Tipo de Prioridade"
+         verbose_name_plural = "03. Tipos de Prioridade"
+     
++    class Media:
++        js = (
++            'js/custom-emailservice-typespriority.js',
++        )
++        css = {
++            'all': ('css/custom-emailservice.css',)
++        }
++
++
+ @admin.register(SMTPConfiguration)
+ class SMTPConfigurationAdmin(admin.ModelAdmin):
+     form = SMTPConfigurationForm
+@@ -66,23 +102,38 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
+         'smtp_host',
+         'smtp_port',
+         'is_default',
+-        'is_active'
++        'is_active',
++        'created_at',
++        'updated_at'
+     )
+     search_fields = (
+         'description',
+         'provider_code',
+-        'smtp_host'
++        'smtp_host',
++        'provider_type__provider'
+     )
+     list_filter = (
+         'provider_type',
+         'is_default',
+-        'is_active'
++        'is_active',
++        'use_tls',
++        'use_ssl',
++        'created_at'
+     )
+     readonly_fields = (
+         'created_at',
+         'updated_at',
+-        'last_connection_tested_at'
++        'last_connection_tested_at',
++        'last_validation_message',
++        'last_error_message',
++        'last_test_duration',
++        'last_successful_connection_at',
++        'last_response_time_ms',
++        'validation_attempts',
++        'last_validated_by'
+     )
++    list_per_page = 25
++    ordering = ('description',)
+     
+     fieldsets = (
+         ('Principal', {
+@@ -102,7 +153,12 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
+             'classes': ('collapse',),
+         }),
+         ('Testes e Monitoramento', {
+-            'fields': ('test_email_address', 'last_connection_tested_at', 'connection_status', 'last_error_message', 'last_test_duration'),
++            'fields': (
++                'test_email_address', 'last_connection_tested_at', 'connection_status', 
++                'last_error_message', 'last_test_duration', 'last_validation_message',
++                'last_successful_connection_at', 'last_response_time_ms',
++                'validation_attempts', 'last_validated_by'
++            ),
+             'classes': ('collapse',),
+         }),
+         ('Auditoria', {
+@@ -114,14 +170,21 @@ class SMTPConfigurationAdmin(admin.ModelAdmin):
+     class Media:
+         js = (
+             'js/custom-emailservice-smtpconfiguration.js',
+-            )
+-
++        )
++        css = {
++            'all': ('css/custom-emailservice.css',)
++        }
++    
+     def save_model(self, request, obj, form, change):
+         super().save_model(request, obj, form, change)
+         if obj.is_default:
+-            from domains.email_service.services.smtp_service import SMTPService
+             SMTPService.set_default_configuration(obj.pk)
+     
++    def get_form(self, request, obj=None, **kwargs):
++        form = super().get_form(request, obj, **kwargs)
++        return form
++
++
+ @admin.register(UsageProfiles)
+ class UsageProfilesAdmin(admin.ModelAdmin):
+     list_display = (
+@@ -132,6 +195,7 @@ class UsageProfilesAdmin(admin.ModelAdmin):
+     )
+     list_filter = (
+         'is_active',
++        'created_at',
+     )
+     search_fields = (
+         'purpose',
+@@ -143,6 +207,8 @@ class UsageProfilesAdmin(admin.ModelAdmin):
+         'created_at',
+         'updated_at',
+     )
++    list_per_page = 25
++    
+     fieldsets = (
+         (
+             'Principal',
+@@ -177,8 +243,12 @@ class UsageProfilesAdmin(admin.ModelAdmin):
+     class Media:
+         js = (
+             'js/custom-emailservice-usageprofiles.js',
+-            )
+-    
++        )
++        css = {
++            'all': ('css/custom-emailservice.css',)
++        }
++
++
+ @admin.register(ShippingQueue)
+ class ShippingQueueAdmin(admin.ModelAdmin):
+     list_display = (
+@@ -186,8 +256,10 @@ class ShippingQueueAdmin(admin.ModelAdmin):
+         'to_email',
+         'status',
+         'priority',
++        'is_active',
++        'sent_at',
+         'retry_count',
+-        'is_active'
++        'created_at'
+     )
+     list_filter = (
+         'status',
+@@ -195,12 +267,15 @@ class ShippingQueueAdmin(admin.ModelAdmin):
+         'usage_profile',
+         'smtp_configuration',
+         'is_active',
++        'scheduled_at',
++        'created_at'
+     )
+     search_fields = (
+         'subject',
+         'to_email',
+         'provider_message_id',
+         'uuid',
++        'module_origin'
+     )
+     readonly_fields = (
+         'uuid',
+@@ -214,13 +289,19 @@ class ShippingQueueAdmin(admin.ModelAdmin):
+         'next_retry_at',
+         'last_error_message',
+         'logs',
++        'processing_started_at',
++        'created_by',
++        'attachments_preview'
+     )
++    list_per_page = 25
++    ordering = ('-created_at',)
++    
+     fieldsets = (
+         ('Principal', {
+             'fields': (
+                 'condominium', 'module_origin', 'reference_id', 'uuid',
+                 'subject', 'to_email', 'cc', 'bcc', 'reply_to',
+-                'message', 'html_message', 'attachments'
++                'message', 'html_message', 'attachments', 'attachments_preview'
+             )
+         }),
+         ('Configuração', {
+@@ -228,11 +309,18 @@ class ShippingQueueAdmin(admin.ModelAdmin):
+             'classes': ('collapse',),
+         }),
+         ('Processamento', {
+-            'fields': ('is_active', 'status', 'processing_started_at', 'sent_at', 'retry_count', 'max_retry_attempts', 'next_retry_at'),
++            'fields': (
++                'is_active', 'status', 'processing_started_at', 'sent_at', 
++                'retry_count', 'max_retry_attempts', 'next_retry_at'
++            ),
+             'classes': ('collapse',),
+         }),
+         ('Auditoria', {
+-            'fields': ('last_error_message', 'provider_response', 'logs', 'response_time_ms', 'provider_message_id', 'created_by', 'created_at', 'updated_at'),
++            'fields': (
++                'last_error_message', 'provider_response', 'logs', 
++                'response_time_ms', 'provider_message_id', 'created_by', 
++                'created_at', 'updated_at'
++            ),
+             'classes': ('collapse',),
+         }),
+     )
+@@ -257,7 +345,6 @@ class ShippingQueueAdmin(admin.ModelAdmin):
+     
+     @admin.action(description="Realizar envio")
+     def perform_send(self, request, queryset):
+-        from domains.email_service.tasks import process_single_email_task
+         count = queryset.count()
+         for item in queryset:
+             process_single_email_task.delay(item.id)
+@@ -270,7 +357,20 @@ class ShippingQueueAdmin(admin.ModelAdmin):
+     
+     actions = ['perform_send', 'reprocess_queue', 'cancel_sending', 'mark_as_sent', 'export_logs']
+     
++    def attachments_preview(self, obj):
++        if obj.attachments:
++            return format_html(
++                '<a href="{}" target="_blank">Visualizar Anexo</a>',
++                obj.attachments.url
++            )
++        return "-"
++    
++    attachments_preview.short_description = "Pré-visualização de Anexos"
++    
+     class Media:
+         js = (
+             'js/custom-emailservice-shippingqueue.js',
+-            )
++        )
++        css = {
++            'all': ('css/custom-emailservice.css',)
++        }
+\ No newline at end of file
+diff --git a/domains/email_service/forms.py b/domains/email_service/forms.py
+index 9d733c5..64f6a8d 100644
+--- a/domains/email_service/forms.py
++++ b/domains/email_service/forms.py
+@@ -1,27 +1,499 @@
+ from django import forms
+-from domains.email_service.models import ConnectionStatus, TypesProvider, SMTPConfiguration, UsageProfiles, ShippingQueue, EmailHistory, TypesPriority
++from django.core.exceptions import ValidationError
++from django.utils.translation import gettext_lazy as _
++from domains.email_service.models import (
++    ConnectionStatus,
++    TypesProvider,
++    SMTPConfiguration,
++    UsageProfiles,
++    ShippingQueue,
++    EmailHistory,
++    TypesPriority
++)
++
+ 
+ class ConnectionStatusForm(forms.ModelForm):
+     class Meta:
+         model = ConnectionStatus
+         fields = '__all__'
++        widgets = {
++            'status': forms.TextInput(attrs={
++                'class': 'form-control mask-status',
++                'placeholder': 'Ex: Ativo, Inativo, Pendente',
++                'data-validation': 'required|unique|maxlength[255]'
++            }),
++            'description': forms.Textarea(attrs={
++                'class': 'form-control mask-description',
++                'rows': 3,
++                'placeholder': 'Descrição opcional do status de conexão',
++                'data-validation': 'maxlength[255]'
++            }),
++            'is_active': forms.Select(attrs={
++                'class': 'form-select mask-is_active',
++                'data-validation': 'required'
++            }),
++        }
++        help_texts = {
++            'status': _('O status de conexão único para este registro (ex: Ativo, Inativo).'),
++            'description': _('Descrição opcional para fornecer mais detalhes sobre este status.'),
++            'is_active': _('Define se este status está disponível para uso.'),
++        }
++        error_messages = {
++            'status': {
++                'required': _('O status é obrigatório.'),
++                'unique': _('Já existe um status com este nome.'),
++                'max_length': _('O status não pode ter mais de 255 caracteres.'),
++            }
++        }
++
++    def clean_status(self):
++        status = self.cleaned_data.get('status')
++        if status:
++            status = status.strip()
++            if len(status) < 2:
++                raise ValidationError(_('O status deve ter pelo menos 2 caracteres.'))
++            if not status.replace(' ', '').isalnum():
++                raise ValidationError(_('O status deve conter apenas letras, números e espaços.'))
++        return status
++
++    def clean_description(self):
++        description = self.cleaned_data.get('description', '')
++        if description:
++            description = description.strip()
++        return description
++
++    def save(self, commit=True):
++        instance = super().save(commit=False)
++        instance.status = instance.status.strip() if instance.status else instance.status
++        if commit:
++            instance.save()
++        return instance
++
+ 
+ class TypesProviderForm(forms.ModelForm):
+     class Meta:
+         model = TypesProvider
+         fields = '__all__'
++        widgets = {
++            'provider': forms.TextInput(attrs={
++                'class': 'form-control mask-provider',
++                'placeholder': 'Ex: SMTP Gmail, Amazon SES',
++                'data-validation': 'required|unique|maxlength[255]'
++            }),
++            'is_active': forms.Select(attrs={
++                'class': 'form-select mask-is_active',
++                'data-validation': 'required'
++            }),
++        }
++        help_texts = {
++            'provider': _('O nome do provedor de e-mail (ex: SMTP Gmail, Amazon SES).'),
++            'is_active': _('Define se este provedor está disponível para uso.'),
++        }
++
++    def clean_provider(self):
++        provider = self.cleaned_data.get('provider')
++        if provider:
++            provider = provider.strip()
++            if len(provider) < 2:
++                raise ValidationError(_('O provedor deve ter pelo menos 2 caracteres.'))
++        return provider
++
+ 
+ class SMTPConfigurationForm(forms.ModelForm):
+     class Meta:
+         model = SMTPConfiguration
+         fields = '__all__'
++        widgets = {
++            'description': forms.TextInput(attrs={
++                'class': 'form-control mask-description',
++                'placeholder': 'Ex: Servidor de produção Gmail',
++                'data-validation': 'required|unique|maxlength[100]'
++            }),
++            'provider_code': forms.TextInput(attrs={
++                'class': 'form-control mask-provider_code',
++                'placeholder': 'Ex: GMAIL_PRODUCTION',
++                'data-validation': 'required|unique|maxlength[50]|regex^[A-Z_]+$'
++            }),
++            'provider_type': forms.Select(attrs={
++                'class': 'form-select mask-provider_type',
++                'data-validation': 'required'
++            }),
++            'smtp_host': forms.TextInput(attrs={
++                'class': 'form-control mask-smtp_host',
++                'placeholder': 'Ex: smtp.gmail.com',
++                'data-validation': 'required|maxlength[255]|email_host'
++            }),
++            'smtp_port': forms.NumberInput(attrs={
++                'class': 'form-control mask-number mask-smtp_port',
++                'placeholder': 'Ex: 587',
++                'min': 1,
++                'max': 65535,
++                'data-validation': 'required|number|min[1]|max[65535]'
++            }),
++            'username': forms.EmailInput(attrs={
++                'class': 'form-control mask-username',
++                'placeholder': 'Ex: usuario@exemplo.com',
++                'data-validation': 'email|required_if_auth'
++            }),
++            'password': forms.PasswordInput(attrs={
++                'class': 'form-control mask-password',
++                'placeholder': '••••••••',
++                'data-validation': 'required_if_auth| minlength[8]'
++            }),
++            'use_tls': forms.Select(attrs={
++                'class': 'form-select mask-use_tls',
++                'data-validation': 'required'
++            }),
++            'use_ssl': forms.Select(attrs={
++                'class': 'form-select mask-use_ssl',
++                'data-validation': 'required'
++            }),
++            'smtp_authentication': forms.Select(attrs={
++                'class': 'form-select mask-smtp_authentication',
++                'data-validation': 'required'
++            }),
++            'api_supported': forms.Select(attrs={
++                'class': 'form-select mask-api_supported',
++                'data-validation': 'required'
++            }),
++            'is_default': forms.CheckboxInput(attrs={
++                'class': 'form-check-input mask-is_default',
++                'data-validation': 'required'
++            }),
++            'is_active': forms.Select(attrs={
++                'class': 'form-select mask-is_active',
++                'data-validation': 'required'
++            }),
++            'api_url': forms.URLInput(attrs={
++                'class': 'form-control mask-api_url',
++                'placeholder': 'Ex: https://api.example.com/v1',
++                'data-validation': 'url|maxlength[500]'
++            }),
++            'api_key': forms.TextInput(attrs={
++                'class': 'form-control mask-api_key',
++                'placeholder': 'Sua chave API',
++                'data-validation': 'maxlength[255]'
++            }),
++            'api_secret': forms.PasswordInput(attrs={
++                'class': 'form-control mask-api_secret',
++                'placeholder': '••••••••',
++                'data-validation': 'maxlength[500]'
++            }),
++            'api_version': forms.TextInput(attrs={
++                'class': 'form-control mask-api_version',
++                'placeholder': 'Ex: v1, 2024-01',
++                'data-validation': 'maxlength[50]'
++            }),
++            'emails_per_hour': forms.NumberInput(attrs={
++                'class': 'form-control mask-number mask-emails_per_hour',
++                'placeholder': 'Ex: 100',
++                'min': 0,
++                'data-validation': 'number|min[0]'
++            }),
++            'emails_per_day': forms.NumberInput(attrs={
++                'class': 'form-control mask-number mask-emails_per_day',
++                'placeholder': 'Ex: 1000',
++                'min': 0,
++                'data-validation': 'number|min[0]'
++            }),
++            'max_recipients_per_email': forms.NumberInput(attrs={
++                'class': 'form-control mask-number mask-max_recipients_per_email',
++                'placeholder': 'Ex: 50',
++                'min': 1,
++                'data-validation': 'number|min[1]'
++            }),
++            'test_email_address': forms.EmailInput(attrs={
++                'class': 'form-control mask-test_email_address',
++                'placeholder': 'Ex: teste@exemplo.com',
++                'data-validation': 'email'
++            }),
++            'connection_status': forms.Select(attrs={
++                'class': 'form-select mask-connection_status',
++                'data-validation': 'required'
++            }),
++            'last_validation_message': forms.Textarea(attrs={
++                'class': 'form-control mask-last_validation_message',
++                'rows': 2,
++                'readonly': True,
++                'data-validation': 'maxlength[500]'
++            }),
++            'last_error_message': forms.Textarea(attrs={
++                'class': 'form-control mask-last_error_message',
++                'rows': 2,
++                'readonly': True,
++                'data-validation': 'maxlength[500]'
++            }),
++            'connection_timeout': forms.NumberInput(attrs={
++                'class': 'form-control mask-number mask-connection_timeout',
++                'placeholder': 'Ex: 30',
++                'min': 1,
++                'data-validation': 'required|number|min[1]'
++            }),
++        }
++        help_texts = {
++            'description': _('Descrição única para esta configuração SMTP.'),
++            'provider_code': _('Código único do provedor (letras maiúsculas e underscores).'),
++            'provider_type': _('O tipo de provedor (Gmail, Amazon SES, etc.).'),
++            'smtp_host': _('Endereço do servidor SMTP (ex: smtp.gmail.com).'),
++            'smtp_port': _('Porta do servidor SMTP (ex: 587 para TLS, 465 para SSL).'),
++            'username': _('Endereço de e-mail completo para autenticação (ex: usuario@exemplo.com).'),
++            'password': _('Senha para autenticação SMTP.'),
++            'use_tls': _('Se deve usar TLS (Transport Layer Security).'),
++            'use_ssl': _('Se deve usar SSL (Secure Sockets Layer).'),
++            'smtp_authentication': _('Se requer autenticação SMTP.'),
++            'api_supported': _('Se este provedor suporta API REST.'),
++            'is_default': _('Se esta é a configuração padrão para novos envios.'),
++            'is_active': _('Define se esta configuração está disponível para uso.'),
++            'api_url': _('URL da API do provedor (se suportada).'),
++            'api_key': _('Chave de API para autenticação (se suportada).'),
++            'api_secret': _('Segredo da API para autenticação (se suportada).'),
++            'api_version': _('Versão da API do provedor (se suportada).'),
++            'emails_per_hour': _('Limite máximo de e-mails por hora para este provedor.'),
++            'emails_per_day': _('Limite máximo de e-mails por dia para este provedor.'),
++            'max_recipients_per_email': _('Número máximo de destinatários por e-mail.'),
++            'test_email_address': _('Endereço de e-mail para testes de conexão.'),
++            'connection_status': _('Status atual da conexão com este provedor.'),
++            'connection_timeout': _('Tempo limite de conexão em segundos.'),
++        }
++
++    def clean(self):
++        cleaned_data = super().clean()
++        
++        use_tls = cleaned_data.get('use_tls')
++        use_ssl = cleaned_data.get('use_ssl')
++        
++        if use_tls and use_ssl:
++            raise ValidationError(
++                _('Não é possível usar TLS e SSL simultaneamente. Selecione apenas um.')
++            )
++        
++        smtp_host = cleaned_data.get('smtp_host')
++        smtp_port = cleaned_data.get('smtp_port')
++        
++        if smtp_host and smtp_port:
++            if smtp_port in [465] and not use_ssl:
++                raise ValidationError(
++                    _('Para a porta 465, SSL deve ser obrigatório.')
++                )
++            if smtp_port in [587, 2525] and not use_tls:
++                raise ValidationError(
++                    _('Para as portas 587 e 2525, TLS deve ser obrigatório.')
++                )
++        
++        username = cleaned_data.get('username')
++        password = cleaned_data.get('password')
++        
++        smtp_auth = cleaned_data.get('smtp_authentication')
++        if smtp_auth and smtp_auth in [True, 'True', 'on', 'Sim']:
++            if not username:
++                self.add_error('username', _('Usuário e senha são obrigatórios para autenticação SMTP.'))
++            if not password:
++                self.add_error('password', _('Usuário e senha são obrigatórios para autenticação SMTP.'))
++            if username and password:
++                if len(password) < 8:
++                    self.add_error('password', _('A senha deve ter pelo menos 8 caracteres.'))
++        
++        return cleaned_data
++
++    def clean_smtp_host(self):
++        host = self.cleaned_data.get('smtp_host', '').strip()
++        if host:
++            if host.lower() in ['localhost', '127.0.0.1']:
++                raise ValidationError(_('Não é permitido usar localhost ou IP local como servidor SMTP.'))
++            if len(host) > 255:
++                raise ValidationError(_('O host SMTP não pode ter mais de 255 caracteres.'))
++        return host
++
++    def clean_provider_code(self):
++        provider_code = self.cleaned_data.get('provider_code', '').strip()
++        if provider_code:
++            if not provider_code.replace('_', '').isalnum():
++                raise ValidationError(_('O código do provedor deve conter apenas letras, números e underscores.'))
++        return provider_code
++
++    def save(self, commit=True):
++        instance = super().save(commit=False)
++        if commit:
++            instance.full_clean()
++            instance.save()
++        return instance
++
+ 
+ class UsageProfilesForm(forms.ModelForm):
+     class Meta:
+         model = UsageProfiles
+         fields = '__all__'
++        widgets = {
++            'purpose': forms.TextInput(attrs={
++                'class': 'form-control mask-purpose',
++                'placeholder': 'Ex: Newsletter, Comunicações Administrativas',
++                'data-validation': 'required|unique|maxlength[100]'
++            }),
++            'is_active': forms.Select(attrs={
++                'class': 'form-select mask-is_active',
++                'data-validation': 'required'
++            }),
++        }
++        help_texts = {
++            'purpose': _('O propósito único para este perfil de uso (ex: Newsletter, Alertas).'),
++            'is_active': _('Define se este perfil está disponível para uso.'),
++        }
++
++    def clean_purpose(self):
++        purpose = self.cleaned_data.get('purpose')
++        if purpose:
++            purpose = purpose.strip()
++            if len(purpose) < 3:
++                raise ValidationError(_('O propósito deve ter pelo menos 3 caracteres.'))
++        return purpose
++
+ 
+ class ShippingQueueForm(forms.ModelForm):
+     class Meta:
+         model = ShippingQueue
+         fields = '__all__'
++        widgets = {
++            'subject': forms.TextInput(attrs={
++                'class': 'form-control mask-subject',
++                'placeholder': 'Assunto do e-mail',
++                'data-validation': 'required|maxlength[255]'
++            }),
++            'to_email': forms.EmailInput(attrs={
++                'class': 'form-control mask-to_email',
++                'placeholder': 'Ex: destinatario@exemplo.com',
++                'data-validation': 'required|email'
++            }),
++            'cc': forms.Textarea(attrs={
++                'class': 'form-control mask-cc',
++                'rows': 2,
++                'placeholder': 'E-mails separados por vírgula',
++                'data-validation': 'email_list'
++            }),
++        'bcc': forms.Textarea(attrs={
++            'class': 'form-control mask-bcc',
++            'rows': 2,
++            'placeholder': 'E-mails separados por vírgula',
++            'data-validation': 'email_list'
++        }),
++        'condominium': forms.Select(attrs={
++            'class': 'form-select mask-condominium',
++            'data-validation': 'required'
++        }),
++            'reply_to': forms.EmailInput(attrs={
++                'class': 'form-control mask-reply_to',
++                'placeholder': 'Ex: responder@exemplo.com',
++                'data-validation': 'email'
++            }),
++            'message': forms.Textarea(attrs={
++                'class': 'form-control mask-message',
++                'rows': 6,
++                'placeholder': 'Conteúdo do e-mail',
++                'data-validation': 'required|min_length[10]'
++            }),
++            'html_message': forms.Textarea(attrs={
++                'class': 'form-control mask-html_message',
++                'rows': 4,
++                'placeholder': '<html>...</html>',
++                'data-validation': 'html_content'
++            }),
++            'smtp_configuration': forms.Select(attrs={
++                'class': 'form-select mask-smtp_configuration',
++                'data-validation': 'required'
++            }),
++            'usage_profile': forms.Select(attrs={
++                'class': 'form-select mask-usage_profile',
++                'data-validation': 'required'
++            }),
++            'status': forms.Select(attrs={
++                'class': 'form-select mask-status',
++                'data-validation': 'required'
++            }),
++            'priority': forms.Select(attrs={
++                'class': 'form-select mask-priority',
++                'data-validation': 'required'
++            }),
++            'scheduled_at': forms.DateTimeInput(attrs={
++                'class': 'form-control mask-datetime',
++                'type': 'datetime-local',
++                'data-validation': 'datetime'
++            }),
++            'processing_started_at': forms.DateTimeInput(attrs={
++                'class': 'form-control mask-datetime',
++                'type': 'datetime-local',
++                'readonly': True,
++                'data-validation': 'readonly'
++            }),
++            'sent_at': forms.DateTimeInput(attrs={
++                'class': 'form-control mask-datetime',
++                'type': 'datetime-local',
++                'readonly': True,
++                'data-validation': 'readonly'
++            }),
++        }
++        help_texts = {
++            'subject': _('Assunto do e-mail que será enviado.'),
++            'to_email': _('Endereço de e-mail principal do destinatário.'),
++            'cc': _('E-mails em cópia (separados por vírgula).'),
++            'bcc': _('E-mails em cópia oculta (separados por vírgula).'),
++            'reply_to': _('Endereço de e-mail para respostas.'),
++            'message': _('Conteúdo principal do e-mail (texto puro).'),
++            'html_message': _('Conteúdo HTML do e-mail (se aplicável).'),
++            'condominium': _('Condomínio associado a este envio de e-mail (se aplicável).'),
++            'smtp_configuration': _('A configuração SMTP a ser usada para este envio.'),
++            'usage_profile': _('O perfil de uso que define as regras para este e-mail.'),
++            'status': _('Status atual do processamento deste e-mail na fila.'),
++            'priority': _('A prioridade de processamento deste e-mail.'),
++            'scheduled_at': _('Data e hora agendadas para este envio (deixe em branco para envio imediato).'),
++        }
++
++    def clean_subject(self):
++        subject = self.cleaned_data.get('subject', '').strip()
++        if not subject:
++            raise ValidationError(_('O assunto é obrigatório.'))
++        if len(subject) > 255:
++            raise ValidationError(_('O assunto não pode ter mais de 255 caracteres.'))
++        return subject
++
++    def clean_to_email(self):
++        to_email = self.cleaned_data.get('to_email')
++        if not to_email:
++            raise ValidationError(_('O destinatário é obrigatório.'))
++        return to_email
++
++    def clean_message(self):
++        message = self.cleaned_data.get('message', '').strip()
++        if not message:
++            raise ValidationError(_('A mensagem é obrigatória.'))
++        if len(message) < 10:
++            raise ValidationError(_('A mensagem deve ter pelo menos 10 caracteres.'))
++        return message
++
++    def clean(self):
++        cleaned_data = super().clean()
++        
++        if self._meta.model.__name__ != 'ShippingQueue':
++            return cleaned_data
++        
++        cc = cleaned_data.get('cc', '')
++        bcc = cleaned_data.get('bcc', '')
++        
++        all_emails = []
++        if cc:
++            cc_emails = [email.strip() for email in cc.split(',') if email.strip()]
++            all_emails.extend(cc_emails)
++        if bcc:
++            bcc_emails = [email.strip() for email in bcc.split(',') if email.strip()]
++            all_emails.extend(bcc_emails)
++        
++        email_list = []
++        email_list.append(cleaned_data.get('to_email'))
++        email_list.extend(all_emails)
++        
++        emails_seen = set()
++        for email in email_list:
++            if email:
++                if email in emails_seen:
++                    raise ValidationError(_('Endereço de e-mail duplicado encontrado: %s') % email)
++                emails_seen.add(email)
++        
++        return cleaned_data
+diff --git a/domains/email_service/static/js/custom-emailservice-typesprovider.js b/domains/email_service/static/js/custom-emailservice-typesprovider.js
+index 8f7aa39..dce1041 100644
+--- a/domains/email_service/static/js/custom-emailservice-typesprovider.js
++++ b/domains/email_service/static/js/custom-emailservice-typesprovider.js
+@@ -1,14 +1,248 @@
+-(function($) {
+-    'use strict';
++document.addEventListener('DOMContentLoaded', function() {
++    const form = document.querySelector('form');
++    if (!form) return;
+ 
+-    $(document).ready(function() {
+-        console.log('O arquivo custom-emailservice-typesprovider.js está carregado');
++    const fields = form.querySelectorAll('input, select, textarea');
++    const validationMessages = {};
++    
++    fields.forEach(field => {
++        const fieldName = field.name || field.id;
++        const isRequired = field.hasAttribute('required') || 
++                          field.classList.contains('mask-required') ||
++                          (field.tagName === 'SELECT' && field.options.length > 0 && field.options[0].value === '');
++        
++        field.addEventListener('blur', function(e) {
++            validateField(this, isRequired, validationMessages);
++        });
++        
++        field.addEventListener('input', function(e) {
++            clearFieldError(this);
++        });
++    });
+ 
+-        if ($().jquery) {
+-            console.log('O jQuery está carregado corretamente');
++    form.addEventListener('submit', function(e) {
++        let isValid = true;
++        
++        fields.forEach(field => {
++            const fieldName = field.name || field.id;
++            const isRequired = field.hasAttribute('required') || 
++                              field.classList.contains('mask-required') ||
++                              (field.tagName === 'SELECT' && field.options.length > 0 && field.options[0].value === '');
++            
++            if (!validateField(field, isRequired, validationMessages)) {
++                isValid = false;
++            }
++        });
++        
++        if (!isValid) {
++            e.preventDefault();
++            showFormValidationSummary();
++        }
++    });
++
++    function validateField(field, isRequired, messages) {
++        let isValid = true;
++        let errorMessage = '';
++        
++        const value = field.value.trim();
++        const fieldType = field.type;
++        const fieldClasses = field.className.split(' ');
++        
++        if (isRequired && !value) {
++            errorMessage = getFieldRequiredMessage(field);
++            isValid = false;
++        }
++        
++        if (value && !isValid) {
++            if (fieldClasses.includes('mask-email') || field.type === 'email') {
++                if (!isValidEmail(value)) {
++                    errorMessage = 'Por favor, insira um endereço de e-mail válido.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-number')) {
++                if (!isValidNumber(value, field)) {
++                    errorMessage = 'Por favor, insira um número válido.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-provider_code')) {
++                if (!isValidProviderCode(value)) {
++                    errorMessage = 'O código deve conter apenas letras, números e underscores.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-smtp_port')) {
++                if (!isValidPort(value)) {
++                    errorMessage = 'Por favor, insira um número de porta válido (1-65535).';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-url') || fieldClasses.includes('mask-api_url')) {
++                if (!isValidUrl(value)) {
++                    errorMessage = 'Por favor, insira uma URL válida.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-username')) {
++                if (!isValidEmail(value)) {
++                    errorMessage = 'O nome de usuário deve ser um endereço de e-mail válido.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-password') && value) {
++                if (value.length < 8) {
++                    errorMessage = 'A senha deve ter pelo menos 8 caracteres.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-provider')) {
++                if (value.length < 2) {
++                    errorMessage = 'O provedor deve ter pelo menos 2 caracteres.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-status') && value) {
++                if (value.length < 2) {
++                    errorMessage = 'O status deve ter pelo menos 2 caracteres.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-purpose') && value) {
++                if (value.length < 3) {
++                    errorMessage = 'O propósito deve ter pelo menos 3 caracteres.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-subject') && value) {
++                if (value.length > 255) {
++                    errorMessage = 'O assunto não pode ter mais de 255 caracteres.';
++                    isValid = false;
++                }
++            }
++            
++            if (fieldClasses.includes('mask-description') && value) {
++                if (value.length > 100) {
++                    errorMessage = 'A descrição não pode ter mais de 100 caracteres.';
++                    isValid = false;
++                }
++            }
++        }
++        
++        if (isValid) {
++            field.classList.remove('error');
++            const errorElement = field.closest('.form-group').querySelector('.error-message');
++            if (errorElement) {
++                errorElement.remove();
++            }
+         } else {
+-            console.log('O jQuery não está sendo carregado corretamente');
++            field.classList.add('error');
++            showFieldError(field, errorMessage);
++            messages[fieldName] = errorMessage;
+         }
+         
+-    });
+-})(window.django ? django.jQuery : jQuery);
+\ No newline at end of file
++        return isValid;
++    }
++
++    function showFieldError(field, message) {
++        clearFieldError(field);
++        
++        const formGroup = field.closest('.form-group') || field.parentElement;
++        if (formGroup) {
++            const errorElement = document.createElement('div');
++            errorElement.className = 'error-message';
++            errorElement.style.color = '#dc3545';
++            errorElement.style.fontSize = '0.875rem';
++            errorElement.style.marginTop = '0.25rem';
++            errorElement.textContent = message;
++            formGroup.appendChild(errorElement);
++        }
++    }
++
++    function clearFieldError(field) {
++        field.classList.remove('error');
++        const errorElement = field.closest('.form-group').querySelector('.error-message');
++        if (errorElement) {
++            errorElement.remove();
++        }
++    }
++
++    function getFieldRequiredMessage(field) {
++        const label = field.closest('.form-group').querySelector('label');
++        const labelText = label ? label.textContent : field.name;
++        return `${labelText} é obrigatório.`;
++    }
++
++    function isValidEmail(email) {
++        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
++        return emailRegex.test(email);
++    }
++
++    function isValidNumber(value, field) {
++        if (!/^-?\d*\.?\d*$/.test(value)) {
++            return false;
++        }
++        const num = parseFloat(value);
++        if (isNaN(num)) {
++            return false;
++        }
++        
++        const min = field.hasAttribute('min') ? parseFloat(field.getAttribute('min')) : -Infinity;
++        const max = field.hasAttribute('max') ? parseFloat(field.getAttribute('max')) : Infinity;
++        
++        return num >= min && num <= max;
++    }
++
++    function isValidProviderCode(value) {
++        return /^[A-Z_]+$/i.test(value);
++    }
++
++    function isValidPort(value) {
++        const num = parseInt(value);
++        return !isNaN(num) && num >= 1 && num <= 65535;
++    }
++
++    function isValidUrl(value) {
++        try {
++            new URL(value);
++            return true;
++        } catch (_) {
++            return false;
++        }
++    }
++
++    function showFormValidationSummary() {
++        let errorCount = 0;
++        document.querySelectorAll('.error').forEach(field => {
++            errorCount++;
++        });
++        
++        if (errorCount > 0) {
++            const summary = document.createElement('div');
++            summary.className = 'validation-summary';
++            summary.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #dc3545; color: white; padding: 15px; border-radius: 5px; z-index: 1000;';
++            summary.innerHTML = `
++                <h4>Erros de Validação (${errorCount})</h4>
++                <p>Por favor, corrija os erros destacados nos campos acima.</p>
++                <button onclick="this.parentElement.remove()" style="background: white; color: #dc3545; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Fechar</button>
++            `;
++            document.body.appendChild(summary);
++            
++            setTimeout(() => {
++                if (summary.parentElement) {
++                    summary.remove();
++                }
++            }, 5000);
++        }
++    }
++});
+\ No newline at end of file
+diff --git a/project/settings.py b/project/settings.py
+index 5802f72..2150421 100644
+--- a/project/settings.py
++++ b/project/settings.py
+@@ -161,6 +161,9 @@ STATICFILES_DIRS = [
+ MEDIA_URL = 'media/'
+ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+ 
++# CKEditor Upload Path
++CKEDITOR_UPLOAD_PATH = os.path.join('ckeditor', 'uploads')
++
+ # Default primary key field type
+ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+ 

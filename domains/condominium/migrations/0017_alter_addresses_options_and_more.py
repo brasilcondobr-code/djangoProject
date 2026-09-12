@@ -10,16 +10,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='addresses',
-            options={'ordering': ['country', 'state', 'city', 'street', 'complement', 'is_active', 'created_at'], 'verbose_name': '4. Endereço', 'verbose_name_plural': '4. Endereços'},
-        ),
-        migrations.AlterUniqueTogether(
-            name='addresses',
-            unique_together={('street', 'neighborhood', 'city', 'state', 'zip_code')},
-        ),
-        migrations.RemoveField(
-            model_name='addresses',
-            name='number',
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterModelOptions(
+                    name='addresses',
+                    options={'ordering': ['country', 'state', 'city', 'street', 'complement', 'is_active', 'created_at'], 'verbose_name': '4. Endereço', 'verbose_name_plural': '4. Endereços'},
+                ),
+                migrations.AlterUniqueTogether(
+                    name='addresses',
+                    unique_together={('street', 'neighborhood', 'city', 'state', 'zip_code')},
+                ),
+                migrations.RemoveField(
+                    model_name='addresses',
+                    name='number',
+                ),
+            ],
+            database_operations=[],
         ),
     ]

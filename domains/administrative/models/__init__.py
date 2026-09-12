@@ -1,4 +1,5 @@
 from domains.administrative.models.bank import Bank
+from domains.administrative.models.bank_accounts import BankAccount
 from domains.administrative.models.circular import Circular
 from domains.administrative.models.documents import Documents
 from domains.administrative.models.infraction import Infraction
@@ -7,4 +8,8 @@ from domains.administrative.models.patrimony import Patrimony
 from domains.administrative.models.budget_forecast import BudgetForecast
 from domains.administrative.models.chart_of_account import ChartOfAccount
 from domains.administrative.models.task import Task
-from domains.administrative.models.virtual_assembly import VirtualAssembly
+from domains.administrative.models.task_history import TaskHistory
+from domains.administrative.models.virtual_meeting import VirtualMeeting
+from domains.administrative.models.virtual_meeting_topic import VirtualMeetingTopic
+from domains.administrative.models.virtual_meeting_topic_attachment import VirtualMeetingTopicAttachment
+from domains.administrative.models.virtual_meeting_participant import VirtualMeetingParticipant

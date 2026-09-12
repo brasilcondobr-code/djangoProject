@@ -144,3 +144,4 @@ GitHub.sublime-settings
 !.vscode/launch.json
 !.vscode/extensions.json
 .historyapp/static_collected/
+.aider*

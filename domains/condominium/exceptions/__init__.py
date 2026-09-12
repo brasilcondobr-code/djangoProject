@@ -1,1 +1,8 @@
-from .condominium_exceptions import CondominiumException, CondominiumNotFoundError
+from .condominium_exceptions import (
+    CondominiumException,
+    CondominiumNotFoundError,
+    CollaboratorException,
+    CollaboratorNotFoundError,
+    TypesCollaboratorException,
+    TypesCollaboratorNotFoundError,
+)

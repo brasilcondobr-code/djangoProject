@@ -10,9 +10,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='addresses',
-            name='number',
-            field=models.CharField(max_length=10, verbose_name='Número'),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterField(
+                    model_name='addresses',
+                    name='number',
+                    field=models.CharField(max_length=10, verbose_name='Número'),
+                ),
+            ],
+            database_operations=[],
         ),
     ]

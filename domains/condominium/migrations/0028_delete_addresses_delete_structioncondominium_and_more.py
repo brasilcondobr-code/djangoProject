@@ -10,14 +10,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name='Addresses',
-        ),
-        migrations.DeleteModel(
-            name='StructionCondominium',
-        ),
-        migrations.DeleteModel(
-            name='TypesCondominium',
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.DeleteModel(name='Addresses'),
+                migrations.DeleteModel(name='StructionCondominium'),
+                migrations.DeleteModel(name='TypesCondominium'),
+            ],
+            database_operations=[],
         ),
         migrations.AlterModelOptions(
             name='collaborators',

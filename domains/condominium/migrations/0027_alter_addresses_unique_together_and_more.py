@@ -12,43 +12,43 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='addresses',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='addresses',
-            name='state',
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterUniqueTogether(
+                    name='addresses',
+                    unique_together=None,
+                ),
+                migrations.RemoveField(
+                    model_name='addresses',
+                    name='state',
+                ),
+                migrations.AlterUniqueTogether(
+                    name='structioncondominium',
+                    unique_together=None,
+                ),
+                migrations.AlterUniqueTogether(
+                    name='typescondominium',
+                    unique_together=None,
+                ),
+                migrations.DeleteModel(
+                    name='States',
+                ),
+            ],
+            database_operations=[],
         ),
         migrations.AlterField(
             model_name='condominium',
             name='address',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='condominium', to='parameters.addresses', verbose_name='Endereço'),
         ),
-        migrations.AlterUniqueTogether(
-            name='structioncondominium',
-            unique_together=None,
-        ),
         migrations.AlterField(
             model_name='condominium',
             name='struction_condominium',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='condominium', to='parameters.structioncondominium', verbose_name='Estrutura do Condomínio'),
         ),
-        migrations.AlterUniqueTogether(
-            name='typescondominium',
-            unique_together=None,
-        ),
         migrations.AlterField(
             model_name='condominium',
             name='type_condominium',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='condominium', to='parameters.typescondominium', verbose_name='Tipo de Condomínio'),
-        ),
-        migrations.SeparateDatabaseAndState(
-            database_operations=[],
-            state_operations=[
-                migrations.DeleteModel(
-                    name='States',
-                ),
-            ],
         ),
     ]

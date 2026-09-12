@@ -15,6 +15,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('email/', include('domains.email_service.urls')),
     path('administrative/', include('domains.administrative.urls')),
+    path('system/', include('domains.system.urls')),
     path('parameters/', include('domains.parameters.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('', home, name='home'),

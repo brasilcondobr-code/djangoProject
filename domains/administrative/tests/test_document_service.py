@@ -1,13 +1,12 @@
 import pytest
 from domains.administrative.models.documents import Documents
-from domains.condominium.models import Condominium
 from domains.parameters.models import DocumentType
 from domains.administrative.services.document_service import DocumentService
 
 @pytest.mark.django_db
 class TestDocumentService:
-    def test_document_exists_for_condominium(self, admin_user):
-        condo = Condominium.objects.create(name="Condo Test")
+    def test_document_exists_for_condominium(self, _condo, admin_user):
+        condo = _condo
         doc_type = DocumentType.objects.create(description="RG")
         
         Documents.objects.create(
@@ -30,8 +29,8 @@ class TestDocumentService:
             registration_date="2023-01-01"
         ) is False
 
-    def test_document_exists_exclude_id(self, admin_user):
-        condo = Condominium.objects.create(name="Condo Test")
+    def test_document_exists_exclude_id(self, _condo, admin_user):
+        condo = _condo
         doc_type = DocumentType.objects.create(description="RG")
         
         doc = Documents.objects.create(

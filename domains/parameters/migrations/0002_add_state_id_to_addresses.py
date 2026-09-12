@@ -11,14 +11,8 @@ class Migration(migrations.Migration):
         migrations.SeparateDatabaseAndState(
             database_operations=[
                 migrations.RunSQL(
-                    sql=[
-                        "ALTER TABLE condominium_addresses ADD COLUMN IF NOT EXISTS state_id bigint NOT NULL;",
-                        "ALTER TABLE condominium_addresses ADD CONSTRAINT condominium_addresses_state_id_fk FOREIGN KEY (state_id) REFERENCES condominium_states (id) DEFERRABLE INITIALLY DEFERRED;",
-                    ],
-                    reverse_sql=[
-                        "ALTER TABLE condominium_addresses DROP CONSTRAINT IF EXISTS condominium_addresses_state_id_fk;",
-                        "ALTER TABLE condominium_addresses DROP COLUMN IF EXISTS state_id;",
-                    ],
+                    sql="SELECT 1;",
+                    reverse_sql="SELECT 1;",
                 ),
             ],
             state_operations=[],

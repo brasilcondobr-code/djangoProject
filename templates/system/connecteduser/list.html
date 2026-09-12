@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}06. Usuários Conectados{% endblock %}
+
+{% block content %}
+<div class="content-wrapper p-3">
+  <section class="content-header px-0">
+    <h1>06. Usuários Conectados</h1>
+  </section>
+  <section class="content px-0">
+    <form id="connected-users-filters" class="form-row mb-3" method="get">
+      <div class="col-md-5 mb-2">
+        <label class="sr-only" for="connected-users-search">Pesquisar</label>
+        <input id="connected-users-search" name="search" class="form-control"
+          placeholder="Pesquisar usuário ou e-mail..." value="{{ request.GET.search|default:'' }}">
+      </div>
+      <div class="col-md-3 mb-2">
+        <label class="sr-only" for="connected-users-group">Grupo</label>
+        <select id="connected-users-group" name="group" class="form-control">
+          <option value="">Todos os grupos</option>
+          {% for group in groups %}
+          <option value="{{ group.pk }}" {% if request.GET.group == group.pk|stringformat:'s' %}selected{% endif %}>{{ group.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 mb-2">
+        <label class="sr-only" for="connected-users-staff">Membro da equipe</label>
+        <select id="connected-users-staff" name="is_staff" class="form-control">
+          <option value="">Todos os perfis</option>
+          <option value="true" {% if request.GET.is_staff == 'true' %}selected{% endif %}>Membros da equipe</option>
+          <option value="false" {% if request.GET.is_staff == 'false' %}selected{% endif %}>Demais usuários</option>
+        </select>
+      </div>
+      <div class="col-md-1 mb-2"><button class="btn btn-primary w-100" type="submit">Filtrar</button></div>
+    </form>
+    <div id="connected-users-status" class="alert d-none" role="status"></div>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover" id="connected-users-table">
+        <thead><tr><th>Usuário</th><th>Endereço de E-mail</th><th>Grupos</th><th>Ativo</th><th>Membro da equipe</th><th>Último login</th></tr></thead>
+        <tbody>
+          {% for item in page_obj %}
+          <tr><td>{{ item.user.username }}</td><td>{{ item.user.email }}</td><td>{% for group in item.user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</td><td>{{ item.user.is_active|yesno:"Sim,Não" }}</td><td>{{ item.user.is_staff|yesno:"Sim,Não" }}</td><td>{{ item.user.last_login|default:"-" }}</td></tr>
+          {% empty %}<tr><td colspan="6" class="text-center">Nenhum usuário conectado.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-muted">Última atualização: <span id="connected-users-updated">Agora</span></p>
+  </section>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script>window.connectedUsersConfig = {dataUrl: "{{ data_url }}", pollInterval: {{ poll_interval }}};</script>
+<script src="{% static 'system/js/connected-users.js' %}"></script>
+{% endblock %}
