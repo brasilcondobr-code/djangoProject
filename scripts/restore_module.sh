@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# Script de restauração do BrasilCondo.
-# Restaura o sistema a partir de um arquivo de backup .tar.gz.
-# Executa de forma segura e registra o resultado no módulo BackupModule.
+# Script de restauração do BrasilCondo (módulo 01. Backups — backupmodule).
+#
+# Restaura um backup .tar.gz gerado pelo backup_module.sh:
+#   - dump do motor Python (backup_engine.py): DROP SCHEMA + `manage.py
+#     migrate` (recria o schema) + load dos dados + ajuste de sequências;
+#   - dump via Docker (pg_dump): mesmo fluxo do restore.sh original (psql
+#     dentro do container `db`).
+#
 # Compatível com execucao via subprocess.run (lista estruturada, sem shell).
 
 set -u
@@ -19,140 +24,149 @@ fi
 
 BACKUP_FILE="$1"
 
-if [ ! -f "${BACKUP_ROOT}/${BACKUP_FILE}" ] && [ ! -f "${BACKUP_FILE}" ]; then
-    echo "❌ Erro: Arquivo '${BACKUP_FILE}' não encontrado no diretório de backups (${BACKUP_ROOT})."
-    exit 1
-fi
-
-# Se o caminho for relativo, assume-se que está em BACKUP_ROOT
-if [ -n "${BACKUP_FILE}" ] && ! echo "${BACKUP_FILE}" | grep -q '/'; then
+# Aceita caminho relativo (interpretado dentro de BACKUP_ROOT) ou absoluto.
+if [ ! -f "${BACKUP_FILE}" ] && [ -f "${BACKUP_ROOT}/${BACKUP_FILE}" ]; then
     BACKUP_FILE="${BACKUP_ROOT}/${BACKUP_FILE}"
 fi
 
-# Verifica se o arquivo existe após a normalização do caminho
 if [ ! -f "${BACKUP_FILE}" ]; then
     echo "❌ Erro: Arquivo '${BACKUP_FILE}' não encontrado."
     exit 1
 fi
 
-TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
-BACKUP_DIR=$(mktemp -d)
-
-log() {
-    echo "🔧 ${1}"
-}
-
-log "Iniciando restauração do sistema BrasilCondo"
-log "Arquivo de backup: ${BACKUP_FILE}"
-
 # Carrega variáveis de ambiente
-ENV_LOADED=0
 if [ -f "${PROJECT_ROOT}/dotenv_files/.env" ]; then
     set -a
     source "${PROJECT_ROOT}/dotenv_files/.env"
     set +a
-    ENV_LOADED=1
 elif [ -f "${PROJECT_ROOT}/.env" ]; then
     set -a
     source "${PROJECT_ROOT}/.env"
     set +a
-    ENV_LOADED=1
 fi
 
-# --- 1. Verificar integridade do backup ---
+DB_USER="${POSTGRES_USER:-postgres}"
+DB_NAME="${POSTGRES_DB:-brasilio}"
+
+log() { echo "🔧 ${1}"; }
+
+# Detecta um interpretador Python com psycopg2 + Django
+detect_python() {
+    for cand in python3 python "${PROJECT_ROOT}/venv/bin/python"; do
+        if command -v "$cand" >/dev/null 2>&1 && \
+           "$cand" -c "import psycopg2, django" >/dev/null 2>&1; then
+            echo "$cand"
+            return 0
+        fi
+    done
+    return 1
+}
+
+docker_available() {
+    command -v docker >/dev/null 2>&1 || return 1
+    docker compose ps >/dev/null 2>&1 || return 1
+    return 0
+}
+
+fail() {
+    log "❌ ${1}"
+    exit 1
+}
+
+BACKUP_DIR=$(mktemp -d)
+trap 'rm -rf "${BACKUP_DIR}"' EXIT
+
+log "Iniciando restauração do sistema BrasilCondo"
+log "Arquivo de backup: ${BACKUP_FILE}"
+
+# --- 1. Verificar integridade e extrair ---
 log "1. Verificando integridade do arquivo de backup..."
-
-if [ ! -f "${BACKUP_FILE}" ]; then
-    echo "❌ Erro: Arquivo de backup não encontrado após normalização de caminho."
-    rm -rf "${BACKUP_DIR}"
-    exit 1
-fi
-
-log "✅ Arquivo de backup verificado: ${BACKUP_FILE}"
-
-# --- 2. Extrair backup ---
-log "2. Extraindo backup para diretório temporário..."
-
 if ! tar -xzf "${BACKUP_FILE}" -C "${BACKUP_DIR}" 2>/dev/null; then
-    echo "❌ Erro: Falha ao extrair o arquivo de backup."
-    rm -rf "${BACKUP_DIR}"
-    exit 1
+    fail "Falha ao extrair o arquivo de backup."
 fi
+log "✅ Backup extraído com sucesso."
 
-log "✅ Backup extraído com sucesso para ${BACKUP_DIR}"
-
-# --- 3. Descobrir pasta extraída ---
 EXTRACTED_FOLDER=$(ls "${BACKUP_DIR}" | head -n 1)
 if [ -z "${EXTRACTED_FOLDER}" ]; then
-    echo "❌ Erro: Nenhuma pasta encontrada dentro do backup extraído."
-    rm -rf "${BACKUP_DIR}"
-    exit 1
+    fail "Nenhuma pasta encontrada dentro do backup extraído."
 fi
-
 BACKUP_PATH="${BACKUP_DIR}/${EXTRACTED_FOLDER}"
+if [ ! -f "${BACKUP_PATH}/db_dump.sql" ]; then
+    fail "'db_dump.sql' não encontrado dentro do backup."
+fi
 log "Pasta de backup identificada: ${BACKUP_PATH}"
 
-# --- 4. Restaurar Banco de Dados ---
-log "3. Restaurando Banco de Dados..."
+# --- 2. Restaurar Banco de Dados ---
+log "2. Restaurando Banco de Dados..."
 
-if [ -f "${BACKUP_PATH}/db_dump.sql" ]; then
-    DB_USER="${POSTGRES_USER:-postgres}"
-    DB_NAME="${POSTGRES_DB:-brasilio}"
+if grep -q "backup_engine.py" "${BACKUP_PATH}/db_dump.sql"; then
+    # Dump gerado pelo motor Python: schema via migrations + dados via COPY.
+    PYTHON_BIN="$(detect_python)" || \
+        fail "Este backup exige Python+psycopg2 (dump do motor Python)."
+    log "   - Dump do motor Python detectado (schema via migrations)."
 
-    # Dropa e recria o schema para garantir limpeza
-    log "   - Dropping schema public..."
-    if docker compose exec -T "db" psql -U "${DB_USER}" -d "${DB_NAME}" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" > /dev/null 2>&1; then
-        log "   - Schema public droppado e recriado."
-    else
-        log "⚠️  Aviso: Não foi possível droppar o schema via Docker. Tentando continuar..."
-    fi
+    log "   - Recriando schema public..."
+    "${PYTHON_BIN}" "${SCRIPT_DIR}/backup_engine.py" drop-schema || \
+        fail "Falha ao recriar o schema public."
 
-    # Restaura o dump
-    if [ -f "${BACKUP_PATH}/db_dump.sql" ]; then
-        if cat "${BACKUP_PATH}/db_dump.sql" | docker compose exec -T "db" psql -U "${DB_USER}" -d "${DB_NAME}" > /dev/null 2>&1; then
-            log "✅ Banco de dados restaurado com sucesso."
-        else
-            log "❌ Erro: Falha ao restaurar o banco de dados."
-            rm -rf "${BACKUP_DIR}"
-            exit 1
-        fi
-    else
-        log "⚠️  Arquivo db_dump.sql não encontrado no backup. Pular restauração do banco."
-    fi
+    log "   - Aplicando migrations (schema canônico)..."
+    ( cd "${PROJECT_ROOT}" && "${PYTHON_BIN}" manage.py migrate --noinput ) || \
+        fail "Falha ao aplicar as migrations."
+
+    log "   - Carregando dados..."
+    "${PYTHON_BIN}" "${SCRIPT_DIR}/backup_engine.py" load "${BACKUP_PATH}/db_dump.sql" || \
+        fail "Falha ao restaurar os dados."
+
+    log "   - Ajustando sequências..."
+    "${PYTHON_BIN}" "${SCRIPT_DIR}/backup_engine.py" fix-sequences || \
+        fail "Falha ao ajustar as sequências."
+    log "✅ Banco de dados restaurado."
 else
-    log "⚠️  Arquivo db_dump.sql não encontrado no backup. Pular restauração do banco de dados."
+    # Dump via Docker (pg_dump) — mesmo fluxo do restore.sh original.
+    if ! docker_available; then
+        fail "Este backup foi gerado via Docker (pg_dump) e exige Docker para restaurar."
+    fi
+    log "   - Dump pg_dump detectado (restauração via container db)."
+    docker compose exec -T db psql -U "${DB_USER}" -d "${DB_NAME}" \
+        -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null 2>&1 || \
+        fail "Falha ao recriar o schema public."
+    cat "${BACKUP_PATH}/db_dump.sql" | \
+        docker compose exec -T db psql -U "${DB_USER}" -d "${DB_NAME}" >/dev/null 2>&1 || \
+        fail "Falha ao restaurar o dump."
+    log "✅ Banco de dados restaurado."
 fi
 
-# --- 5. Restaurar Mídia ---
-log "4. Restaurando arquivos de mídia..."
-
+# --- 3. Restaurar Mídia ---
+log "3. Restaurando arquivos de mídia..."
 if [ -d "${BACKUP_PATH}/media" ]; then
-    if docker compose cp "${BACKUP_PATH}/media/." "${APP_CONTAINER:-web}:/app/media/" 2>/dev/null; then
-        log "✅ Mídia restaurada com sucesso."
+    if docker_available; then
+        if docker compose cp "${BACKUP_PATH}/media/." web:/app/media/ 2>/dev/null; then
+            log "✅ Mídia restaurada (via container)."
+        else
+            log "⚠️  Não foi possível copiar mídia via Docker. Tentando cópia local..."
+            cp -r "${BACKUP_PATH}/media/." "${PROJECT_ROOT}/media/" 2>/dev/null && \
+                log "⚠️  Mídia copiada localmente (fallback)." || \
+                log "⚠️  Não foi possível restaurar mídia."
+        fi
     else
-        log "⚠️  Aviso: Não foi possível copiar mídia via Docker. Verifique se o container está rodando."
-        # Tenta copiar localmente se possível
-        cp -r "${BACKUP_PATH}/media/"* "${PROJECT_ROOT}/media/" 2>/dev/null && \
-            log "⚠️  Mídia copiada localmente como fallback." || log "⚠️  Não foi possível restaurar mídia."
+        if cp -r "${BACKUP_PATH}/media/." "${PROJECT_ROOT}/media/" 2>/dev/null; then
+            log "✅ Mídia restaurada."
+        else
+            log "⚠️  Não foi possível restaurar mídia."
+        fi
     fi
 else
     log "⚠️  Pasta de mídia não encontrada no backup. Pular restauração de mídia."
 fi
 
-# --- 6. Aviso sobre .env ---
-log "5. Verificando arquivo .env do backup..."
-
+# --- 4. Aviso sobre .env ---
+log "4. Verificando arquivo .env do backup..."
 if [ -f "${BACKUP_PATH}/.env_backup" ]; then
     log "⚙️  Arquivo .env encontrado no backup."
-    echo "   (O script não sobrescreve o .env atual automaticamente por segurança)"
+    log "   (O script não sobrescreve o .env atual automaticamente por segurança)"
 else
     log "⚠️  Arquivo .env não encontrado no backup."
 fi
-
-# --- 7. Limpeza ---
-log "6. Fazendo cleanup..."
-
-rm -rf "${BACKUP_DIR}"
 
 log "=========================================="
 log "✅ Restauração Concluída com Sucesso!"

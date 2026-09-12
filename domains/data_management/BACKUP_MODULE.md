@@ -8,14 +8,14 @@ App: `data_management` (Gestão de Dados) · Django 5 · PostgreSQL · Jazzmin �
 
 CRUD completo do registro de backup no Django Admin/Jazzmin, com:
 
-- **Action “Executar Backup”** — executa `scripts/backup.sh` (configurável), marca
+- **Action “Executar Backup”** — executa `scripts/backup_module.sh` (configurável), marca
   `file_url` com o `.tar.gz` gerado e transiciona o status
   (`Pendente`/`Falha` → `Em Execução` → `Concluído`/`Falha`).
 - **Action “Fazer Download”** — baixa o arquivo de UM registro (streaming, validação
   de caminho no backend). Também existe URL dedicada dentro do Admin:
   `/admin/data_management/backupmodule/<id>/download/`.
 - **Action “Executar Restaurar”** — exige exatamente UM registro concluído com
-  arquivo válido e executa `scripts/restore.sh <arquivo>` (configurável).
+  arquivo válido e executa `scripts/restore_module.sh <arquivo>` (configurável).
 
 ### Formulário
 
@@ -34,8 +34,8 @@ Adicione (já feito em `project/settings.py`):
 
 ```python
 BACKUP_ROOT = BASE_DIR / 'backups'                              # diretório permitido
-BACKUP_SCRIPT_PATH = os.environ.get('BACKUP_SCRIPT_PATH', str(BASE_DIR / 'scripts' / 'backup.sh'))
-BACKUP_RESTORE_SCRIPT_PATH = os.environ.get('BACKUP_RESTORE_SCRIPT_PATH', str(BASE_DIR / 'scripts' / 'restore.sh'))
+BACKUP_SCRIPT_PATH = os.environ.get('BACKUP_SCRIPT_PATH', str(BASE_DIR / 'scripts' / 'backup_module.sh'))
+BACKUP_RESTORE_SCRIPT_PATH = os.environ.get('BACKUP_RESTORE_SCRIPT_PATH', str(BASE_DIR / 'scripts' / 'restore_module.sh'))
 BACKUP_EXECUTION_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_EXECUTION_TIMEOUT_SECONDS', 300))
 BACKUP_RESTORE_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_RESTORE_TIMEOUT_SECONDS', 600))
 ```
@@ -47,11 +47,24 @@ python manage.py makemigrations data_management
 python manage.py migrate data_management
 ```
 
-### Docker
+### Docker / ambiente de execução
 
-Os scripts `backup.sh`/`restore.sh` usam o cliente `docker compose` **dentro do
-container**. Para execução real a partir do Admin é necessário que o serviço `web`
-tenha o socket do Docker e o binário `docker` (ver “Limitações”).
+Os scripts do módulo (`scripts/backup_module.sh` e `scripts/restore_module.sh` —
+**não** confundir com os originais `scripts/backup.sh`/`restore.sh`, usados como
+referência e intocados) são **ambiente-agnósticos** e escolhem o mecanismo
+disponível:
+
+1. **Docker** (execução manual no host): `pg_dump` via container `db` + mídia via
+   `docker compose cp` — mesmo fluxo dos scripts originais;
+2. **Motor Python** (container `web`, onde não há `pg_dump`/`docker`):
+   `scripts/backup_engine.py` (psycopg2) gera um dump de dados via `COPY`;
+   na restauração o schema é recriado por `manage.py migrate` (fonte canônica),
+   os dados são aplicados com FKs/triggers suspensos e as sequências são
+   ajustadas automaticamente.
+
+O artefato é um `.tar.gz` com `db_dump.sql` + `media/` + `.env_backup`, gravado em
+`BACKUP_ROOT` com o nome `backup_<timestamp>.tar.gz` (o caminho relativo
+`backups/backup_<ts>.tar.gz` é o que fica em `file_url`).
 
 ## 3. Estrutura implementada (Service Layer / Clean Architecture)
 
@@ -103,19 +116,22 @@ restore múltiplo bloqueado, permissões 403/404, POST adulterado ignorado.
 
 ## 6. Limitações conhecidas
 
-1. **Restore ponta-a-ponta**: `restore.sh` solicita confirmação interativa no
-   stdin; executado sem TTY (via Admin) o script é cancelado (retcode ≠ 0) e o
-   registro vai para `Falha`. Para restore real hoje é necessário executar o
-   script manualmente no terminal (ou adicionar modo `--yes`/confirmar antes do
-   disparo). Recomenda-se confirmação explícita em etapa intermediária antes de
-   liberar restore destrutivo pelo Admin.
-2. **Docker**: executar `backup.sh`/`restore.sh` de dentro do container `web`
-   exige socket do Docker + CLI `docker` no container (atualmente não montados
-   no `docker-compose.yml`).
-3. **Bloqueio global de restores** é verificado + transição atômica por registro;
+1. **Restore é destrutivo**: a restauração recria o schema (`DROP SCHEMA public
+   CASCADE` + `migrate`) e substitui os dados. O módulo exige registro `Concluído`
+   e arquivo válido, mas **não** pede uma segunda confirmação explícita no Admin —
+   para produção, adicionar etapa intermediária de confirmação (a ser feito).
+2. **Dump do motor Python não é compatível com o `restore.sh` original**: o
+   `db_dump.sql` do motor contém apenas dados (`COPY`); o schema vem das
+   migrations. Backups gerados via Docker (`pg_dump`) são restaurados pelo
+   caminho Docker do script. A restauração detecta o formato automaticamente.
+3. **Tabelas fora do schema do projeto** (órfãs, sem modelo/migration) são
+   preservadas no dump, mas não podem ser recarregadas após o restore (aviso
+   listado durante a restauração). Ex.: `administrative_notification`,
+   `data_management_auditmodule`/`data_management_restoremodule` (históricas).
+4. **Bloqueio global de restores** é verificado + transição atômica por registro;
    serialização estrita entre registros diferentes será reforçada com lock
-   (advisory lock/advisory) quando a execução for migrada para fila única.
-4. Falha pré-existente fora do escopo: teste de `system/ConnectedUser`
+   (advisory lock) quando a execução for migrada para fila única.
+5. Falha pré-existente fora do escopo: teste de `system/ConnectedUser`
    (`test_connected_user_admin_is_read_only`).
 
 ## 7. Próximos passos sugeridos (Celery/RabbitMQ/Flower)

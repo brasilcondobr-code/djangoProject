@@ -2,7 +2,14 @@ import datetime
 
 import pytest
 
-from domains.data_management.models import BackupModule
+from domains.condominium.models import Condominium
+from domains.data_management.models import BackupModule, ExportModule
+from domains.parameters.models import (
+    Addresses,
+    States,
+    StructionCondominium,
+    TypesCondominium,
+)
 
 
 @pytest.fixture
@@ -57,3 +64,52 @@ def _backup_file(backup_root):
     return lambda name='backup_mensal.tar.gz', content=b'fake-backup-data': make_backup_file(
         backup_root, name=name, content=content
     )
+
+
+# ---------------------------------------------------------------------------
+# Fixtures do módulo 02. Exportações
+# ---------------------------------------------------------------------------
+@pytest.fixture
+def _condominium(db):
+    """Condomínio mínimo para as configurações de exportação."""
+    state = States.objects.create(
+        name='São Paulo', abbreviation='SP', capital='São Paulo',
+        region='Região Sudeste',
+    )
+    address = Addresses.objects.create(
+        zip_code='01000-000', street='Rua A', number=10, neighborhood='Centro',
+        city='São Paulo', state=state, country='Brasil',
+    )
+    type_cond = TypesCondominium.objects.create(name='Residencial')
+    structure = StructionCondominium.objects.create(name='Padrão')
+    return Condominium.objects.create(
+        code='COND001', name='Condomínio Teste', cnpj='12345678000199',
+        is_active=True, state_registration='123', municipal_registration='456',
+        type_condominium=type_cond, struction_condominium=structure,
+        address=address,
+    )
+
+
+@pytest.fixture
+def _export(db, _condominium):
+    """Factory de configurações de exportação (default: parameters.condominium_types)."""
+    def factory(**overrides):
+        defaults = dict(
+            condominium=_condominium,
+            group='parameters',
+            module='condominium_types',
+            file_format=ExportModule.FileFormat.CSV,
+            export_service='parameters.condominium_types',
+        )
+        defaults.update(overrides)
+        return ExportModule.objects.create(**defaults)
+    return factory
+
+
+@pytest.fixture
+def export_root(tmp_path, settings):
+    """Diretório isolado de exportações (nunca toca em media/exports real)."""
+    root = tmp_path / 'exports'
+    settings.EXPORT_ROOT = str(root)
+    root.mkdir(parents=True, exist_ok=True)
+    return root

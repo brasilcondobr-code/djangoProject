@@ -1,6 +1,3 @@
-import csv
-from django.http import HttpResponse
-from django import forms
 from django.contrib import admin
 from django.db import IntegrityError, transaction
 
@@ -15,36 +12,14 @@ from .models import (
 )
 from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm
 
-class ExportCsvMixin:
-    def init(self, model, *args, **kwargs):
-        self.model = model
-        super().__init__(*args, **kwargs)
-
-    def export_as_csv(self, request, queryset):
-        meta = self.model._meta
-        field_names = [field.name for field in meta.fields]
-
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename={meta}.csv'
-        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
-        writer.writerow([field.verbose_name.title() for field in meta.fields])
-
-        for obj in queryset:
-            row = [getattr(obj, field) for field in field_names]
-            writer.writerow(row)
-        return response
-
-    export_as_csv.short_description = "Exportar para CSV"
-
 
 @admin.register(TypesCondominium)
-class TypesCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
+class TypesCondominiumAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_active')
     search_fields = ('name',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
     
     class Meta:
         verbose_name = "1. Tipo de Condomínio"
@@ -55,13 +30,12 @@ class TypesCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 
 @admin.register(StructionCondominium)
-class StructionCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
+class StructionCondominiumAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_active')
     search_fields = ('name',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
     
     class Meta:
         verbose_name = "2. Estrutura do Condomínio"
@@ -72,14 +46,13 @@ class StructionCondominiumAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 
 @admin.register(States)
-class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
+class StatesAdmin(admin.ModelAdmin):
     form = StatesForm
     list_display = ('name', 'abbreviation', 'capital', 'region')
     search_fields = ('name', 'abbreviation', 'capital', 'region')
     list_filter = ('name', 'abbreviation')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
     
     class Meta:
         verbose_name = "3. Estado"
@@ -95,14 +68,13 @@ class StatesAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 
 @admin.register(Addresses)
-class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AddressesAdmin(admin.ModelAdmin):
     form = AddressesForm
     list_display = ('street', 'number', 'neighborhood', 'city', 'state', 'is_active')
     search_fields = ('street', 'city', 'state')
     list_filter = ('state', 'city', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
     
     class Meta:
         verbose_name = "4. Endereço"
@@ -114,10 +86,10 @@ class AddressesAdmin(ExportCsvMixin, admin.ModelAdmin):
         js = (
             'js/custom-parameters-address.js',
             )
-        
+
 
 @admin.register(TypesVisitorRestrictions)
-class TypesVisitorRestrictionsAdmin(ExportCsvMixin, admin.ModelAdmin):
+class TypesVisitorRestrictionsAdmin(admin.ModelAdmin):
     form = TypesVisitorRestrictionsForm
     list_display = ('description', 'is_active')
     search_fields = ('description',)
@@ -130,7 +102,6 @@ class TypesVisitorRestrictionsAdmin(ExportCsvMixin, admin.ModelAdmin):
         }),
     )
     readonly_fields = ('created_at', 'updated_at')
-    actions = ["export_as_csv"]
     
     class Meta:
         verbose_name = "5. Tipo de Restrição para Visitante"
@@ -144,168 +115,156 @@ class TypesVisitorRestrictionsAdmin(ExportCsvMixin, admin.ModelAdmin):
             'js/custom-parameters-types-visitor-restrictions.js',
             )
 
+
 @admin.register(ResidentType)
-class ResidentTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class ResidentTypeAdmin(admin.ModelAdmin):
     form = ResidentTypeForm
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     ordering = ('description',)
     list_per_page = 25
-    actions = ["export_as_csv"]
+
 
 @admin.register(DocumentType)
-class DocumentTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class DocumentTypeAdmin(admin.ModelAdmin):
     form = DocumentTypeForm
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     ordering = ('description',)
     list_per_page = 25
-    actions = ["export_as_csv"]
+
 
 @admin.register(InfractionsType)
-class InfractionsTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class InfractionsTypeAdmin(admin.ModelAdmin):
     form = InfractionsTypeForm
     list_display = ('description', 'infraction_type', 'is_active')
     search_fields = ('description',)
     list_filter = ('infraction_type', 'is_active',)
     ordering = ('description',)
     list_per_page = 25
-    actions = ["export_as_csv"]
+
 
 @admin.register(MeterType)
-class MeterTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class MeterTypeAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(AssetType)
-class AssetTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AssetTypeAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(AssetCategory)
-class AssetCategoryAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AssetCategoryAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(AssetStatus)
-class AssetStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AssetStatusAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(AssetStateCondition)
-class AssetStateConditionAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AssetStateConditionAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(AssetBrand)
-class AssetBrandAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AssetBrandAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(AssetMaintenanceFrequency)
-class AssetMaintenanceFrequencyAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AssetMaintenanceFrequencyAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(BankAccountType)
-class BankAccountTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class BankAccountTypeAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(Chartofaccountstype)
-class ChartofaccountstypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class ChartofaccountstypeAdmin(admin.ModelAdmin):
     list_display = ('code', 'description', 'nature', 'is_active')
     search_fields = ('code', 'description')
     list_filter = ('nature', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(Accountingclasstypes)
-class AccountingclasstypesAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AccountingclasstypesAdmin(admin.ModelAdmin):
     list_display = ('code', 'description', 'account_type', 'is_active')
     search_fields = ('code', 'description', 'account_type__description')
     list_filter = ('account_type', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(ChartofaccountsMaingroup)
-class ChartofaccountsMaingroupAdmin(ExportCsvMixin, admin.ModelAdmin):
+class ChartofaccountsMaingroupAdmin(admin.ModelAdmin):
     list_display = ('code', 'description', 'account_class', 'is_active')
     search_fields = ('code', 'description', 'account_class__description')
     list_filter = ('account_class', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(ChartofaccountsSubgroup)
-class ChartofaccountsSubgroupAdmin(ExportCsvMixin, admin.ModelAdmin):
+class ChartofaccountsSubgroupAdmin(admin.ModelAdmin):
     list_display = ('code', 'description', 'main_group', 'is_active')
     search_fields = ('code', 'description', 'main_group__description')
     list_filter = ('main_group', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(ChartofaccountsStatus)
-class ChartofaccountsStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
+class ChartofaccountsStatusAdmin(admin.ModelAdmin):
     list_display = ('description', 'is_active')
     search_fields = ('description',)
     list_filter = ('is_active',)
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
-    actions = ["export_as_csv"]
 
 
 @admin.register(VotingType)
-class VotingTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
+class VotingTypeAdmin(admin.ModelAdmin):
     form = VotingTypeForm
     list_display = ('description', 'is_active', 'created_at', 'updated_at')
     list_display_links = ('description',)
@@ -315,7 +274,7 @@ class VotingTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     empty_value_display = '-'
-    actions = ["export_as_csv"]
+    
     fieldsets = (
         ('Dados principais', {
             'fields': ('description', 'is_active'),
@@ -328,7 +287,7 @@ class VotingTypeAdmin(ExportCsvMixin, admin.ModelAdmin):
 
 
 @admin.register(AssemblyStatus)
-class AssemblyStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
+class AssemblyStatusAdmin(admin.ModelAdmin):
     form = AssemblyStatusForm
     list_display = (
         'description', 'is_pending', 'is_running', 'is_complete',
@@ -341,23 +300,10 @@ class AssemblyStatusAdmin(ExportCsvMixin, admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     empty_value_display = '-'
-    actions = ["export_as_csv"]
-
-    def save_model(self, request, obj, form, change):
-        try:
-            with transaction.atomic():
-                super().save_model(request, obj, form, change)
-        except IntegrityError as exc:
-            message = 'Já existe um status de assembleia com este valor.'
-            if 'unique_running_assembly_status' in str(exc):
-                message = 'Já existe um status marcado como "Em execução".'
-            elif 'unique_complete_assembly_status' in str(exc):
-                message = 'Já existe um status marcado como "Completo".'
-            raise forms.ValidationError(message) from exc
 
 
 @admin.register(TopicOption)
-class TopicOptionAdmin(ExportCsvMixin, admin.ModelAdmin):
+class TopicOptionAdmin(admin.ModelAdmin):
     form = TopicOptionForm
     list_display = ('description', 'is_active', 'created_at', 'updated_at')
     list_display_links = ('description',)
@@ -367,5 +313,3 @@ class TopicOptionAdmin(ExportCsvMixin, admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     empty_value_display = '-'
-    actions = ["export_as_csv"]
-

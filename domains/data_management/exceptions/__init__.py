@@ -7,4 +7,11 @@ from domains.data_management.exceptions.data_management_exceptions import (
     BackupRestoreInProgress,
     BackupValidationException,
     DataManagementException,
+    ExportAlreadyProcessing,
+    ExportException,
+    ExportFileNotFound,
+    ExportInvalidState,
+    ExportPermanentFailure,
+    ExportServiceNotFound,
+    ExportValidationException,
 )

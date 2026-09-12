@@ -48,6 +48,9 @@ services:
     command: celery -A project worker -l info
     volumes:
       - .:/app
+      # Volume compartilhado de mídia: os arquivos de exportação gerados pelo
+      # worker precisam ser visíveis pelo container web (download no Admin).
+      - ./data/web/media:/app/media
     env_file:
       - ./dotenv_files/.env
     depends_on:

@@ -2,7 +2,9 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from core.services.validators import validate_date
-from .models import BackupModule
+from .exceptions import ExportValidationException
+from .models import BackupModule, ExportModule
+from .services.export_validation_service import ExportValidationService
 
 
 class BackupModuleForm(forms.ModelForm):
@@ -86,5 +88,138 @@ class BackupModuleForm(forms.ModelForm):
             if queryset.exists():
                 raise ValidationError(
                     'Já existe um backup com este título para a data informada.'
+                )
+        return cleaned_data
+
+
+class ExportModuleForm(forms.ModelForm):
+    """Formulário administrativo do módulo 02. Exportações."""
+
+    class Meta:
+        model = ExportModule
+        # Campos técnicos (generate_datetime, file_generate, file_status,
+        # created_at, updated_at) ficam FORA do form: submissões manipuladas
+        # no POST são ignoradas pelo Django (segurança não depende de HTML).
+        fields = [
+            'condominium', 'group', 'module', 'file_format',
+            'export_service', 'description', 'is_active',
+        ]
+        widgets = {
+            'condominium': forms.Select(
+                attrs={'class': 'form-control'}
+            ),
+            'group': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'maxlength': 250,
+                    'placeholder': 'parameters',
+                }
+            ),
+            'module': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'maxlength': 250,
+                    'placeholder': 'condominium_types',
+                }
+            ),
+            'file_format': forms.Select(
+                attrs={'class': 'form-control'}
+            ),
+            'export_service': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'maxlength': 255,
+                    'placeholder': 'parameters.condominium_types',
+                }
+            ),
+            'description': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'rows': 3,
+                    'placeholder': 'Informe uma descrição opcional',
+                }
+            ),
+            'is_active': forms.CheckboxInput(
+                attrs={'class': 'form-check-input'}
+            ),
+        }
+        help_texts = {
+            'condominium': 'Condomínio dono desta configuração.',
+            'group': 'Grupo do módulo (ex.: parameters, condominium, residents).',
+            'module': 'Módulo a exportar (ex.: condominium_types, states).',
+            'file_format': 'Formato do arquivo gerado: CSV ou XLSX.',
+            'export_service': 'Chave do serviço de exportação registrado no código '
+                              '(ex.: parameters.condominium_types).',
+            'description': 'Descrição opcional da exportação.',
+            'is_active': 'Indica se o registro está ativo.',
+        }
+        error_messages = {
+            'condominium': {'required': 'O condomínio é obrigatório.'},
+            'group': {
+                'required': 'O grupo é obrigatório.',
+                'max_length': 'O grupo deve ter no máximo 250 caracteres.',
+            },
+            'module': {
+                'required': 'O módulo é obrigatório.',
+                'max_length': 'O módulo deve ter no máximo 250 caracteres.',
+            },
+            'export_service': {
+                'required': 'O serviço de exportação é obrigatório.',
+                'max_length': 'O serviço deve ter no máximo 255 caracteres.',
+            },
+        }
+
+    def _validate_or_raise(self, validator, value, *args, **kwargs):
+        try:
+            return validator(value, *args, **kwargs)
+        except ExportValidationException as exc:
+            # Domínio -> formulário: erros de validação viram ValidationError.
+            raise ValidationError(str(exc)) from exc
+
+    def clean_group(self):
+        value = self.cleaned_data.get('group')
+        if value:
+            value = self._validate_or_raise(
+                ExportValidationService.validate_group_module,
+                value, field_label='Grupo',
+            )
+        return value
+
+    def clean_module(self):
+        value = self.cleaned_data.get('module')
+        if value:
+            value = self._validate_or_raise(
+                ExportValidationService.validate_group_module,
+                value, field_label='Módulo',
+            )
+        return value
+
+    def clean_export_service(self):
+        value = self.cleaned_data.get('export_service')
+        if value:
+            value = self._validate_or_raise(
+                ExportValidationService.validate_service_key, value
+            )
+        return value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        condominium = cleaned_data.get('condominium')
+        group = cleaned_data.get('group')
+        module = cleaned_data.get('module')
+        file_format = cleaned_data.get('file_format')
+        if condominium and group and module and file_format:
+            queryset = ExportModule.objects.filter(
+                condominium=condominium,
+                group=group,
+                module=module,
+                file_format=file_format,
+            )
+            if self.instance and self.instance.pk:
+                queryset = queryset.exclude(pk=self.instance.pk)
+            if queryset.exists():
+                raise ValidationError(
+                    'Já existe uma configuração de exportação com este '
+                    'condomínio, grupo, módulo e formato.'
                 )
         return cleaned_data

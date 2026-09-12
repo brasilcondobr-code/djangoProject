@@ -191,6 +191,14 @@ BACKUP_RESTORE_SCRIPT_PATH = os.environ.get(
 BACKUP_EXECUTION_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_EXECUTION_TIMEOUT_SECONDS', 300))
 BACKUP_RESTORE_TIMEOUT_SECONDS = int(os.environ.get('BACKUP_RESTORE_TIMEOUT_SECONDS', 600))
 
+# ==============================================================================
+# Módulo 02. Exportações (data_management)
+# ==============================================================================
+# Diretório permitido para os arquivos gerados (configurável por ambiente).
+EXPORT_ROOT = os.environ.get('EXPORT_ROOT', str(BASE_DIR / 'media' / 'exports'))
+# Timeout (segundos) da task de exportação.
+EXPORT_TASK_TIMEOUT_SECONDS = int(os.environ.get('EXPORT_TASK_TIMEOUT_SECONDS', 600))
+
 
 LOGGING = {
     'version': 1,

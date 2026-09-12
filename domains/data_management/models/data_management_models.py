@@ -3,20 +3,125 @@ from django.db import models
 class ImportModule(models.Model):
     class Meta:
         app_label = 'data_management'
-        verbose_name = "05. Importação"
-        verbose_name_plural = "05. Importações"
+        verbose_name = "03. Importação"
+        verbose_name_plural = "03. Importações"
 
     def __str__(self):
         return "Importação"
 
 class ExportModule(models.Model):
+
+    class FileFormat(models.TextChoices):
+        CSV = 'csv', 'CSV'
+        XLSX = 'xlsx', 'XLSX'
+
+    class FileStatus(models.TextChoices):
+        PENDING = 'pending', 'Pendente'
+        QUEUED = 'queued', 'Na fila'
+        PROCESSING = 'processing', 'Processando'
+        COMPLETED = 'completed', 'Concluído'
+        FAILED = 'failed', 'Falha'
+        CANCELLED = 'cancelled', 'Cancelado'
+
+    condominium = models.ForeignKey(
+        'condominium.Condominium',
+        on_delete=models.CASCADE,
+        related_name='exports',
+        verbose_name='Condomínio',
+        help_text='Condomínio dono desta configuração de exportação',
+    )
+    group = models.CharField(
+        max_length=250,
+        blank=False,
+        null=False,
+        verbose_name='Grupo',
+        help_text='Grupo do módulo, ex.: parameters',
+    )
+    module = models.CharField(
+        max_length=250,
+        blank=False,
+        null=False,
+        verbose_name='Módulo',
+        help_text='Módulo a exportar, ex.: condominium_types',
+    )
+    file_format = models.CharField(
+        max_length=10,
+        choices=FileFormat.choices,
+        default=FileFormat.CSV,
+        verbose_name='Formato do arquivo',
+        help_text='CSV ou XLSX',
+    )
+    export_service = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        verbose_name='Serviço de exportação',
+        help_text='Chave do serviço registrado no código, ex.: parameters.condominium_types',
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Descrição',
+        help_text='Descrição opcional da exportação',
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Ativo',
+        help_text='Indica se o registro está ativo',
+    )
+    generate_datetime = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name='Data/hora da geração',
+        help_text='Preenchido automaticamente quando o arquivo é gerado',
+    )
+    file_generate = models.CharField(
+        max_length=250,
+        blank=True,
+        default='',
+        editable=False,
+        verbose_name='Arquivo gerado',
+        help_text='Nome do arquivo gerado (somente leitura)',
+    )
+    file_status = models.CharField(
+        max_length=20,
+        choices=FileStatus.choices,
+        default=FileStatus.PENDING,
+        editable=False,
+        verbose_name='Status do arquivo',
+        help_text='Status da exportação (somente leitura)',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Criado em',
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Atualizado em',
+    )
+
     class Meta:
         app_label = 'data_management'
-        verbose_name = "04. Exportação"
-        verbose_name_plural = "04. Exportações"
+        verbose_name = "02. Exportação"
+        verbose_name_plural = "02. Exportações"
+        ordering = ['-updated_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['condominium', 'group', 'module', 'file_format'],
+                name='unique_export_configuration',
+            ),
+        ]
+        indexes = [
+            # Consultas frequentes do Admin: filtro por status + ordenação por
+            # atualização (listagem) e varredura de tarefas pendentes.
+            models.Index(
+                fields=['file_status', 'updated_at'],
+                name='idx_export_status_updated',
+            ),
+        ]
 
     def __str__(self):
-        return "Exportação"
+        return f'{self.group}.{self.module} ({self.get_file_format_display()})'
 
 class LogModule(models.Model):
     class Meta:
@@ -26,15 +131,6 @@ class LogModule(models.Model):
 
     def __str__(self):
         return "Log"
-
-class AuditModule(models.Model):
-    class Meta:
-        app_label = 'data_management'
-        verbose_name = "03. Auditoria"
-        verbose_name_plural = "03. Auditorias"
-
-    def __str__(self):
-        return "Auditoria"
 
 class ScheduledTaskModule(models.Model):
 
@@ -105,8 +201,8 @@ class ScheduledTaskModule(models.Model):
 
     class Meta:
         app_label = 'data_management'
-        verbose_name = "07. Tarefa Agendada"
-        verbose_name_plural = "07. Tarefas Agendadas"
+        verbose_name = "05. Tarefa Agendada"
+        verbose_name_plural = "05. Tarefas Agendadas"
         ordering = ['-created_at']
         constraints = [
             models.UniqueConstraint(
@@ -192,8 +288,8 @@ class ScheduledTaskRecipient(models.Model):
 class IntegrationModule(models.Model):
     class Meta:
         app_label = 'data_management'
-        verbose_name = "06. Integração"
-        verbose_name_plural = "06. Integrações"
+        verbose_name = "04. Integração"
+        verbose_name_plural = "04. Integrações"
 
     def __str__(self):
         return "Integração"
@@ -268,12 +364,3 @@ class BackupModule(models.Model):
 
     def __str__(self):
         return self.title
-
-class RestoreModule(models.Model):
-    class Meta:
-        app_label = 'data_management'
-        verbose_name = "02. Restauração"
-        verbose_name_plural = "02. Restaurações"
-
-    def __str__(self):
-        return "Restauração"
