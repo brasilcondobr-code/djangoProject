@@ -423,6 +423,29 @@ class TopicOptionExporter(BaseExporter):
     fields = ('description', 'is_active', 'created_at', 'updated_at')
 
 
+class TypesCollaboratorExporter(BaseExporter):
+    service_key = 'condominium.typescollaborator'
+    model = 'condominium.TypesCollaborator'
+    headers = ('Tipo de Colaborador', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('name', 'is_active', 'created_at', 'updated_at')
+
+
+class CollaboratorExporter(BaseExporter):
+    service_key = 'condominium.collaborator'
+    model = 'condominium.Collaborator'
+    headers = ('Condomínio', 'Nome', 'CPF', 'RG', 'E-mail', 'Telefone', 'Tipo de Colaborador', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('condominium__name', 'name', 'cpf', 'rg', 'email', 'phone_number', 'type_collaborator__name', 'is_active', 'created_at', 'updated_at')
+    select_related = ('condominium', 'type_collaborator')
+
+
+class CondominiumExporter(BaseExporter):
+    service_key = 'condominium.condominium'
+    model = 'condominium.Condominium'
+    headers = ('Código', 'Nome', 'CNPJ', 'Ativo', 'Inscrição Estadual', 'Inscrição Municipal', 'Tipo de Condomínio', 'Estrutura do Condomínio', 'Endereço', 'Criado em', 'Atualizado em')
+    fields = ('code', 'name', 'cnpj', 'is_active', 'state_registration', 'municipal_registration', 'type_condominium__name', 'struction_condominium__name', 'address', 'created_at', 'updated_at')
+    select_related = ('type_condominium', 'struction_condominium')
+
+
 # ---------------------------------------------------------------------------
 # Registro no registry global (importação deste módulo registra os serviços)
 # ---------------------------------------------------------------------------
@@ -451,6 +474,9 @@ _DEFAULT_EXPORTERS = (
     VotingTypeExporter,
     AssemblyStatusExporter,
     TopicOptionExporter,
+    TypesCollaboratorExporter,
+    CollaboratorExporter,
+    CondominiumExporter,
     CondominiumsExporter,
     CollaboratorsExporter,
     UnitsExporter,
