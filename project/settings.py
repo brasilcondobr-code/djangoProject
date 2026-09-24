@@ -149,6 +149,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 
 # Local onde você salva os arquivos estáticos durante o desenvolvimento
 STATICFILES_DIRS = [
+    '/app/domains/gatehouse/static',
+
     os.path.join(BASE_DIR, 'domains/administrative/static'),
     os.path.join(BASE_DIR, 'domains/condominium/static'),
     os.path.join(BASE_DIR, 'domains/email_service/static'),
