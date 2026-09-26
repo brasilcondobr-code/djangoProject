@@ -317,6 +317,7 @@ JAZZMIN_SETTINGS = {
         "parameters.VotingType": "fa-brands fa-avianex",
         "parameters.AssemblyStatus": "fa-brands fa-untappd",
         "parameters.TopicOption": "fa-brands fa-tencent-weibo",
+        "parameters.ConciergeServiceCategory": "fa-solid fa-concierge-bell",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",

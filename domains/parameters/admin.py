@@ -8,9 +8,9 @@ from .models import (
     AssetBrand, AssetMaintenanceFrequency, BankAccountType,
     Chartofaccountstype, Accountingclasstypes, ChartofaccountsMaingroup,
     ChartofaccountsSubgroup, ChartofaccountsStatus, VotingType,
-    AssemblyStatus, TopicOption,
+    AssemblyStatus, TopicOption, ConciergeServiceCategory,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm
 
 
 @admin.register(TypesCondominium)
@@ -313,3 +313,25 @@ class TopicOptionAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 25
     empty_value_display = '-'
+
+@admin.register(ConciergeServiceCategory)
+class ConciergeServiceCategoryAdmin(admin.ModelAdmin):
+    form = ConciergeServiceCategoryForm
+    list_display = ('description', 'is_active', 'created_at', 'updated_at')
+    list_display_links = ('description',)
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    empty_value_display = '-'
+
+    fieldsets = (
+        ('Dados principais', {
+            'fields': ('description', 'is_active'),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': ('created_at', 'updated_at'),
+        }),
+    )

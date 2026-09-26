@@ -1,4 +1,6 @@
+from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Shift(models.Model):
@@ -112,9 +114,117 @@ class ServiceTransition(models.Model):
         app_label = "gatehouse"
         verbose_name = "02. Passagem de Serviço"
         verbose_name_plural = "02. Passagens de Serviços"
+        ordering = ["-releaseDate", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["condominium", "collaboratorEnd", "collaboratorStart", "releaseDate"],
+                name="uniq_svctrans_cond_end_date",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["releaseDate"], name="idx_svctrans_release_date"),
+        ]
+
+    condominium = models.ForeignKey(
+        "condominium.Condominium",
+        on_delete=models.CASCADE,
+        related_name="service_transitions",
+        verbose_name="Condomínio",
+        blank=False,
+        null=False,
+    )
+    collaboratorEnd = models.ForeignKey(
+        "condominium.Collaborator",
+        on_delete=models.CASCADE,
+        related_name="service_transitions_end",
+        verbose_name="Colaborador de saída",
+        blank=False,
+        null=False,
+    )
+    collaboratorStart = models.ForeignKey(
+        "condominium.Collaborator",
+        on_delete=models.CASCADE,
+        related_name="service_transitions_start",
+        verbose_name="Colaborador de entrada",
+        blank=False,
+        null=False,
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=False,
+        null=False,
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
-        return "02. Passagem de Serviço"
+        return "02. Passagem de Serviço %s" % self.id
+
+
+class ServiceTransitionObject(models.Model):
+    class Meta:
+        app_label = "gatehouse"
+        verbose_name = "02. Objeto da Passagem de Serviço"
+        verbose_name_plural = "02. Objetos da Passagem de Serviço"
+        ordering = ["shiftDate", "id"]
+
+    service_transition = models.ForeignKey(
+        "gatehouse.ServiceTransition",
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="Passagem de serviço",
+    )
+    categoryObj = models.ForeignKey(
+        "parameters.ConciergeServiceCategory",
+        on_delete=models.CASCADE,
+        related_name="parameters",
+        verbose_name="Categoria",
+        blank=False,
+        null=False,
+    )
+    itemObj = models.CharField(
+        "Item",
+        max_length=255,
+        blank=False,
+        null=False,
+    )
+    amountObj = models.IntegerField(
+        "Quantidade",
+        default=1,
+        validators=[MinValueValidator(1)],
+    )
+    shiftDate = models.DateField(
+        "Data do turno",
+        default=timezone.localdate,
+        blank=False,
+        null=False,
+    )
+
+    def __str__(self):
+        return "%s (%s)" % (self.itemObj, self.amountObj)
 
 
 class UsefulPhoneNumber(models.Model):

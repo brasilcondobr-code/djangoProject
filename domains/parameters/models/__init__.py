@@ -22,3 +22,4 @@ from .chartofaccountsstatus import ChartofaccountsStatus
 from .voting_type import VotingType
 from .assembly_status import AssemblyStatus
 from .topic_options import TopicOption
+from .concierge_service_categories import ConciergeServiceCategory

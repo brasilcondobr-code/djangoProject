@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.db import models
-from domains.gatehouse.models import Shift, ShiftScale, ServiceTransition, UsefulPhoneNumber, Order, VisitorsRegister, Correspondence, Occurrence, Bag, ElectronicTimeClock
+from domains.gatehouse.forms import ServiceTransitionForm, ServiceTransitionObjectForm
+from domains.gatehouse.models import Shift, ShiftScale, ServiceTransition, ServiceTransitionObject, UsefulPhoneNumber, Order, VisitorsRegister, Correspondence, Occurrence, Bag, ElectronicTimeClock
 
 
 class ShiftScaleInline(admin.TabularInline):
@@ -103,10 +104,77 @@ class ShiftAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class ServiceTransitionObjectInline(admin.TabularInline):
+    """Inline para objetos vinculados (aba Objetos) dentro da passagem de serviço."""
+    model = ServiceTransitionObject
+    form = ServiceTransitionObjectForm
+    extra = 1
+    fields = ("categoryObj", "itemObj", "amountObj", "shiftDate")
+    verbose_name = "Objeto"
+    verbose_name_plural = "Objetos"
+
+
 @admin.register(ServiceTransition)
 class ServiceTransitionAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")
-    ordering = ["id"]
+    """Administração do modelo ServiceTransition com abas Principal, Objetos e Auditoria."""
+
+    form = ServiceTransitionForm
+    list_display = (
+        "id",
+        "condominium",
+        "collaboratorEnd",
+        "collaboratorStart",
+        "releaseDate",
+        "is_active",
+        "created_at",
+    )
+    list_filter = ("condominium", "is_active", "releaseDate")
+    search_fields = ("condominium__name", "collaboratorEnd__name", "collaboratorStart__name", "observations")
+    ordering = ["-releaseDate", "-id"]
+    jazzmin_section_order = ["Principal", "Objetos", "Auditoria"]
+
+    fieldsets = (
+        (
+            _("Principal"),
+            {
+                "fields": (
+                    "condominium",
+                    "collaboratorEnd",
+                    "collaboratorStart",
+                    "releaseDate",
+                    "observations",
+                ),
+            },
+        ),
+        (
+            _("Auditoria"),
+            {
+                "fields": ("is_active", "created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    inlines = [ServiceTransitionObjectInline]
+    readonly_fields = ("created_by", "created_at", "updated_at")
+    list_per_page = 25
+
+    class Media:
+        css = {
+            "all": ("gatehouse/css/servicetransition_admin.css",),
+        }
+
+    def get_queryset(self, request):
+        """Otimiza queries com select_related e prefetch dos objetos."""
+        return super().get_queryset(request).select_related(
+            "condominium", "collaboratorEnd", "collaboratorStart", "created_by"
+        ).prefetch_related("items")
+
+    def save_model(self, request, obj, form, change):
+        """Preenche o criado_by automaticamente na criação."""
+        if not obj.pk:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(UsefulPhoneNumber)

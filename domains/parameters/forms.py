@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory
 
 
 
@@ -466,3 +466,50 @@ class TopicOptionForm(forms.ModelForm):
 
 
 
+class ConciergeServiceCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ConciergeServiceCategory
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição da categoria de serviço portaria',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para a categoria de serviço portaria.',
+            'is_active': 'Define se a categoria de serviço portaria poderá ser utilizada em novos registros.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'Informe a descrição da categoria de serviço portaria.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('Informe a descrição da categoria de serviço portaria.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = ConciergeServiceCategory.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe uma categoria de serviço portaria com esta descrição.'
+            )
+
+        return description

@@ -1,1 +1,4 @@
-from domains.gatehouse.exceptions.gatehouse_exceptions import GatehouseException
+from domains.gatehouse.exceptions.gatehouse_exceptions import (
+    GatehouseException,
+    ServiceTransitionError,
+)
