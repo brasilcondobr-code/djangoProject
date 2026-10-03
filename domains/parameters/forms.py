@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone
 
 
 
@@ -513,3 +513,52 @@ class ConciergeServiceCategoryForm(forms.ModelForm):
             )
 
         return description
+
+
+class CategoryPhoneForm(forms.ModelForm):
+    class Meta:
+        model = CategoryPhone
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe o nome da categoria de telefone',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'name': 'Nome',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'name': 'Informe um nome único para a categoria de telefone.',
+            'is_active': 'Define se a categoria de telefone poderá ser utilizada em novos registros.',
+        }
+        error_messages = {
+            'name': {
+                'required': 'Informe o nome da categoria de telefone.',
+            },
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if not name:
+            raise forms.ValidationError('Informe o nome da categoria de telefone.')
+
+        name = name.strip()
+
+        if not name:
+            raise forms.ValidationError('O nome não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = CategoryPhone.objects.filter(name__iexact=name)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe uma categoria de telefone com este nome.'
+            )
+
+        return name

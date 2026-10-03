@@ -2,8 +2,16 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.db import models
-from domains.gatehouse.forms import ServiceTransitionForm, ServiceTransitionObjectForm
-from domains.gatehouse.models import Shift, ShiftScale, ServiceTransition, ServiceTransitionObject, UsefulPhoneNumber, Order, VisitorsRegister, Correspondence, Occurrence, Bag, ElectronicTimeClock
+from domains.gatehouse.forms import (
+    ServiceTransitionForm,
+    ServiceTransitionObjectForm,
+    UsefulPhoneNumberForm,
+)
+from domains.gatehouse.models import (
+    Shift, ShiftScale, ServiceTransition,
+    ServiceTransitionObject, UsefulPhoneNumber, Order, VisitorsRegister,
+    Correspondence, Occurrence, Bag, ElectronicTimeClock,
+)
 
 
 class ShiftScaleInline(admin.TabularInline):
@@ -179,7 +187,79 @@ class ServiceTransitionAdmin(admin.ModelAdmin):
 
 @admin.register(UsefulPhoneNumber)
 class UsefulPhoneNumberAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")
+    """Administração do modelo UsefulPhoneNumber com abas Principal e Auditoria.
+
+    Divergência de requisito assumida: o item pede "CRUD completo" mas tambem
+    "sem edicao" — aqui a edicao e bloqueada (has_change_permission -> False);
+    sao permitidos apenas criar (C), visualizar (R) e excluir (D).
+    """
+
+    form = UsefulPhoneNumberForm
+    list_display = (
+        "id",
+        "name",
+        "condominium",
+        "categoryPhone",
+        "phone1",
+        "releaseDate",
+        "is_active",
+    )
+    list_filter = ("condominium", "categoryPhone", "is_active")
+    search_fields = ("name", "phone1", "condominium__name", "categoryPhone__name")
+    ordering = ["name", "id"]
+    jazzmin_section_order = ["Principal", "Auditoria"]
+
+    fieldsets = (
+        (
+            _("Principal"),
+            {
+                "fields": (
+                    "condominium",
+                    "categoryPhone",
+                    "releaseDate",
+                    "name",
+                    "phone1",
+                    "phone2",
+                    "phone3",
+                    "phone4",
+                    "phone5",
+                    "observations",
+                ),
+            },
+        ),
+        (
+            _("Auditoria"),
+            {
+                "fields": ("is_active", "created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    readonly_fields = ("created_by", "created_at", "updated_at")
+    list_per_page = 25
+
+    class Media:
+        js = (
+            "js/utils.js",
+            "js/gatehouse_usefulphone_admin.js",
+        )
+
+    def get_queryset(self, request):
+        """Otimiza queries com select_related."""
+        return super().get_queryset(request).select_related(
+            "condominium", "categoryPhone", "created_by"
+        )
+
+    def save_model(self, request, obj, form, change):
+        """Preenche o criado_by automaticamente na criação."""
+        if not obj.pk:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+    def has_change_permission(self, request, obj=None):
+        """Bloqueia a edicao (divergencia: 'sem edicao' do modulo 03)."""
+        return False
 
 
 @admin.register(Order)

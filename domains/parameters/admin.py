@@ -8,9 +8,9 @@ from .models import (
     AssetBrand, AssetMaintenanceFrequency, BankAccountType,
     Chartofaccountstype, Accountingclasstypes, ChartofaccountsMaingroup,
     ChartofaccountsSubgroup, ChartofaccountsStatus, VotingType,
-    AssemblyStatus, TopicOption, ConciergeServiceCategory,
+    AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm
 
 
 @admin.register(TypesCondominium)
@@ -333,5 +333,23 @@ class ConciergeServiceCategoryAdmin(admin.ModelAdmin):
         ('Auditoria', {
             'classes': ('collapse',),
             'fields': ('created_at', 'updated_at'),
+        }),
+    )
+
+
+@admin.register(CategoryPhone)
+class CategoryPhoneAdmin(admin.ModelAdmin):
+    form = CategoryPhoneForm
+    list_display = ('name', 'is_active')
+    list_display_links = ('name',)
+    search_fields = ('name',)
+    list_filter = ('is_active',)
+    ordering = ('name',)
+    list_per_page = 25
+    empty_value_display = '-'
+
+    fieldsets = (
+        ('Dados principais', {
+            'fields': ('name', 'is_active'),
         }),
     )

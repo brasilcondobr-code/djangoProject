@@ -1,2 +1,3 @@
 from domains.gatehouse.services.gatehouse_service import GatehouseService
 from domains.gatehouse.services.servicetransition_service import ServiceTransitionService
+from domains.gatehouse.services.usefulphonenumber_service import UsefulPhoneNumberService

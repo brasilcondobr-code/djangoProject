@@ -1,9 +1,13 @@
 from django import forms
 from django.db.models import Q
 
+from core.services.validators import validate_date, validate_phone
 from domains.condominium.models import Collaborator, Condominium
-from domains.gatehouse.models import ServiceTransition, ServiceTransitionObject, Shift, ShiftScale
-from domains.parameters.models import ConciergeServiceCategory
+from domains.gatehouse.models import (
+    ServiceTransition, ServiceTransitionObject, Shift, ShiftScale,
+    UsefulPhoneNumber,
+)
+from domains.parameters.models import CategoryPhone, ConciergeServiceCategory
 
 SELECT_ATTRS = {
     "class": "servicetransition-select",
@@ -183,4 +187,104 @@ class ShiftForm(forms.ModelForm):
                 "A data final deve ser maior ou igual à data inicial."
             )
 
+        return cleaned_data
+
+
+class UsefulPhoneNumberForm(forms.ModelForm):
+    """Formulário do módulo 03. Telefones Úteis."""
+
+    class Meta:
+        model = UsefulPhoneNumber
+        fields = (
+            "condominium",
+            "categoryPhone",
+            "releaseDate",
+            "name",
+            "phone1",
+            "phone2",
+            "phone3",
+            "phone4",
+            "phone5",
+            "observations",
+            "is_active",
+        )
+        widgets = {
+            "condominium": forms.Select(attrs=SELECT_ATTRS),
+            "categoryPhone": forms.Select(attrs=SELECT_ATTRS),
+            "releaseDate": ISODateInput(attrs={"type": "date"}),
+            "name": forms.TextInput(attrs={"placeholder": "Nome do telefone útil"}),
+            "phone1": forms.TextInput(attrs={"class": "mask-phone", "placeholder": "(99) 99999-9999"}),
+            "phone2": forms.TextInput(attrs={"class": "mask-phone", "placeholder": "(99) 99999-9999"}),
+            "phone3": forms.TextInput(attrs={"class": "mask-phone", "placeholder": "(99) 99999-9999"}),
+            "phone4": forms.TextInput(attrs={"class": "mask-phone", "placeholder": "(99) 99999-9999"}),
+            "phone5": forms.TextInput(attrs={"class": "mask-phone", "placeholder": "(99) 99999-9999"}),
+            "observations": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Observações (opcional)"},
+            ),
+        }
+        help_texts = {
+            "condominium": "Condomínio do telefone útil",
+            "categoryPhone": "Categoria do telefone",
+            "releaseDate": "Data de lançamento do registro",
+            "name": "Nome de até 255 caracteres",
+            "phone1": "Digite no seguinte formato: (99) 99999-9999",
+            "phone2": "Digite no seguinte formato: (99) 99999-9999",
+            "phone3": "Digite no seguinte formato: (99) 99999-9999",
+            "phone4": "Digite no seguinte formato: (99) 99999-9999",
+            "phone5": "Digite no seguinte formato: (99) 99999-9999",
+            "observations": "Observações adicionais (opcional)",
+            "is_active": "Indica se o telefone está ativo",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Em paginas de visualizacao (sem permissao de edicao) o Django monta o
+        # form com todos os campos excluidos — entao nao ha o que configurar.
+        if "condominium" in self.fields:
+            self.fields["condominium"].queryset = active_queryset(
+                Condominium, self.instance, "condominium"
+            )
+        if "categoryPhone" in self.fields:
+            self.fields["categoryPhone"].queryset = active_queryset(
+                CategoryPhone, self.instance, "categoryPhone", order_by="name"
+            )
+        # categoryPhone e releaseDate sao obrigatorios no form embora sejam
+        # nullable no banco (ver divergencia de requisitos do modulo 03).
+        if "categoryPhone" in self.fields:
+            self.fields["categoryPhone"].required = True
+        if "releaseDate" in self.fields:
+            self.fields["releaseDate"].required = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get("name")
+        if isinstance(name, str):
+            cleaned_data["name"] = name.strip()
+
+        release_date = cleaned_data.get("releaseDate")
+        if release_date and not validate_date(release_date):
+            raise forms.ValidationError("Informe uma data de lançamento válida.")
+
+        for field in ("phone1", "phone2", "phone3", "phone4", "phone5"):
+            phone = cleaned_data.get(field)
+            if phone and not validate_phone(phone):
+                raise forms.ValidationError(
+                    "Telefone inválido no campo %s. Use o formato: (99) 99999-9999."
+                    % self.fields[field].label
+                )
+
+        condominium = cleaned_data.get("condominium")
+        category = cleaned_data.get("categoryPhone")
+        if condominium and category and cleaned_data.get("name") and release_date:
+            duplicated = UsefulPhoneNumber.objects.filter(
+                condominium=condominium,
+                categoryPhone=category,
+                name=cleaned_data.get("name"),
+                releaseDate=release_date,
+            ).exclude(pk=self.instance.pk if self.instance.pk else None)
+            if duplicated.exists():
+                raise forms.ValidationError(
+                    "Já existe um telefone útil com os mesmos condomínio, "
+                    "categoria, nome e data de lançamento."
+                )
         return cleaned_data

@@ -228,12 +228,111 @@ class ServiceTransitionObject(models.Model):
 
 
 class UsefulPhoneNumber(models.Model):
+    """Registro de telefone útil da portaria (módulo 03)."""
+
     class Meta:
         app_label = "gatehouse"
         verbose_name = "03. Telefone Útil"
         verbose_name_plural = "03. Telefones Úteis"
+        ordering = ["name", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("condominium", "categoryPhone", "name", "releaseDate"),
+                name="uniq_uphone_cond_cat_name_date",
+            ),
+        ]
+
+    condominium = models.ForeignKey(
+        "condominium.Condominium",
+        on_delete=models.CASCADE,
+        verbose_name="Condomínio",
+        blank=False,
+        null=False,
+    )
+    categoryPhone = models.ForeignKey(
+        "parameters.CategoryPhone",
+        on_delete=models.CASCADE,
+        verbose_name="Categoria do telefone",
+        blank=True,
+        null=True,
+        help_text="Categoria do telefone (obrigatória no formulário)",
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=True,
+        null=True,
+        help_text="Data de lançamento (obrigatória no formulário)",
+    )
+    name = models.CharField(
+        "Nome",
+        max_length=255,
+        blank=False,
+        null=False,
+    )
+    phone1 = models.CharField(
+        "Telefone 1",
+        max_length=25,
+        blank=False,
+        null=False,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone2 = models.CharField(
+        "Telefone 2",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone3 = models.CharField(
+        "Telefone 3",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone4 = models.CharField(
+        "Telefone 4",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone5 = models.CharField(
+        "Telefone 5",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se o telefone está ativo",
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário que criou o registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da criação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
 
     def __str__(self):
+        if self.name:
+            return ("%s - %s" % (self.name, self.phone1 or "")).strip(" -")
         return "03. Telefone Útil"
 
 

@@ -6,3 +6,8 @@ class GatehouseException(Exception):
 class ServiceTransitionError(GatehouseException):
     """Erro de regra de negócio no módulo 02. Passagens de Serviços."""
     pass
+
+
+class UsefulPhoneNumberError(GatehouseException):
+    """Erro de regra de negócio no módulo 03. Telefones Úteis."""
+    pass
