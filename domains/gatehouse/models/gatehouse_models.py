@@ -337,13 +337,137 @@ class UsefulPhoneNumber(models.Model):
 
 
 class Order(models.Model):
+    """Registro de encomenda recebida na portaria (módulo 04)."""
+
     class Meta:
         app_label = "gatehouse"
         verbose_name = "04. Encomenda"
         verbose_name_plural = "04. Encomendas"
+        ordering = ["-releaseDate", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("unit", "releaseDate", "documentNumber"),
+                name="uniq_order_unit_date_doc",
+            ),
+        ]
+
+    unit = models.ForeignKey(
+        "residents.CondominiumUnit",
+        on_delete=models.CASCADE,
+        related_name="orders",
+        verbose_name="Unidade",
+        blank=False,
+        null=False,
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=True,
+        null=True,
+        help_text="Data de chegada da encomenda (preenchida pelo servidor na criação)",
+    )
+    documentNumber = models.CharField(
+        "Número do documento",
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Conteúdo numérico ou alfanumérico, sem máscara (opcional)",
+    )
+    fileImage = models.FileField(
+        "Arquivo",
+        upload_to="gatehouse/orders/",
+        blank=True,
+        null=False,
+        help_text=(
+            "Imagem ou PDF de até 10 MB (.jpg, .jpeg, .png, .pdf). "
+            "Opcional quando houver ao menos uma foto anexada"
+        ),
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se a encomenda está ativa",
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário que criou o registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da criação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
 
     def __str__(self):
+        if self.documentNumber:
+            return "Encomenda %s" % self.documentNumber
+        if self.releaseDate:
+            return "Encomenda %s" % self.releaseDate
         return "04. Encomenda"
+
+
+class OrderPhoto(models.Model):
+    """Foto anexada a uma encomenda (módulo 04), via botão 'Foto'."""
+
+    class Meta:
+        app_label = "gatehouse"
+        verbose_name = "Foto de Encomenda"
+        verbose_name_plural = "Fotos de Encomenda"
+        ordering = ["id"]
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="photos",
+        verbose_name="Encomenda",
+        blank=False,
+        null=False,
+    )
+    file = models.FileField(
+        "Foto",
+        upload_to="gatehouse/orders/photos/",
+        blank=False,
+        null=False,
+        help_text="Imagem de até 10 MB (.jpg, .jpeg, .png)",
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário que anexou a foto",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da anexação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
+
+    def __str__(self):
+        if self.order_id:
+            return "Foto %s — %s" % (self.pk, self.order)
+        return "Foto de Encomenda"
 
 
 class VisitorsRegister(models.Model):

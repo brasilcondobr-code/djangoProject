@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.db import models
 from domains.gatehouse.forms import (
+    OrderForm,
     ServiceTransitionForm,
     ServiceTransitionObjectForm,
     UsefulPhoneNumberForm,
@@ -264,7 +265,74 @@ class UsefulPhoneNumberAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")
+    """Administração do modelo Order (módulo 04) com abas Principal e Auditoria.
+
+    Edição liberada (decisão de requisito): o CRUD é completo e
+    ``created_by`` só é preenchido na criação (nunca sobrescrito na edição).
+    """
+
+    form = OrderForm
+    list_display = (
+        "id",
+        "unit",
+        "releaseDate",
+        "documentNumber",
+        "is_active",
+    )
+    list_filter = ("unit", "is_active")
+    search_fields = (
+        "documentNumber",
+        "observations",
+        "unit__unit_number",
+        "unit__condominium__name",
+    )
+    ordering = ["-releaseDate", "-id"]
+    jazzmin_section_order = ["Principal", "Auditoria"]
+
+    fieldsets = (
+        (
+            _("Principal"),
+            {
+                "fields": (
+                    "unit",
+                    "releaseDate",
+                    "documentNumber",
+                    "fileImage",
+                    "observations",
+                ),
+            },
+        ),
+        (
+            _("Auditoria"),
+            {
+                "fields": ("is_active", "created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    readonly_fields = ("created_by", "created_at", "updated_at")
+    list_per_page = 25
+
+    class Media:
+        js = ("js/gatehouse_order_admin.js",)
+
+    def get_queryset(self, request):
+        """Otimiza queries com select_related."""
+        return super().get_queryset(request).select_related(
+            "unit", "unit__condominium", "created_by"
+        )
+
+    def save_model(self, request, obj, form, change):
+        """Preenche created_by apenas na criação (nunca sobrescrito)."""
+        if not obj.pk:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+    def save_related(self, request, form, formsets, change):
+        """Após salvar o pedido, persiste as fotos do botão 'Foto'."""
+        super().save_related(request, form, formsets, change)
+        form.persist_photos(form.instance, request.user)
 
 
 @admin.register(VisitorsRegister)

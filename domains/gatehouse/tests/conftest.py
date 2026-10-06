@@ -7,6 +7,7 @@ from domains.condominium.models.collaborator import Collaborator
 from domains.condominium.models.condominium import Condominium
 from domains.gatehouse.models import ServiceTransition
 from domains.parameters.models import Addresses, ConciergeServiceCategory, States, TypesCondominium
+from domains.residents.models import CondominiumUnit
 
 
 @pytest.fixture
@@ -103,6 +104,26 @@ def transition(condominium, collaborator_out, collaborator_in):
 @pytest.fixture
 def inactive_category(db, category):
     return ConciergeServiceCategory.objects.create(description="Arquivado", is_active=False)
+
+
+@pytest.fixture
+def unit(condominium):
+    return CondominiumUnit.objects.create(
+        condominium=condominium,
+        tower="A",
+        unit_number="101",
+        floor="1",
+    )
+
+
+@pytest.fixture
+def other_unit(condominium):
+    return CondominiumUnit.objects.create(
+        condominium=condominium,
+        tower="B",
+        unit_number="202",
+        floor="2",
+    )
 
 
 @pytest.fixture

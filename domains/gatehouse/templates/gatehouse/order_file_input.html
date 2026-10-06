@@ -1,0 +1,8 @@
+<div class="order-file-widget">
+  {% if widget.is_initial %}{{ widget.initial_text }}: <a href="{{ widget.value.url }}">{{ widget.value }}</a><br>{{ widget.input_text }}:{% endif %}
+  <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+</div>
+<div class="order-photo-actions" style="margin-top: 6px;">
+  <label for="id_photos" class="btn btn-secondary" style="margin-bottom: 0; cursor: pointer;">Foto</label>
+  <input type="file" name="photos" id="id_photos" accept="image/*" capture="environment" multiple>
+</div>

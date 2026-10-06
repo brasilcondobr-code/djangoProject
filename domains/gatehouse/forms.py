@@ -1,13 +1,21 @@
 from django import forms
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.db.models import Q
 
 from core.services.validators import validate_date, validate_phone
 from domains.condominium.models import Collaborator, Condominium
+from domains.gatehouse.exceptions import OrderError
 from domains.gatehouse.models import (
-    ServiceTransition, ServiceTransitionObject, Shift, ShiftScale,
-    UsefulPhoneNumber,
+    Order, OrderPhoto, ServiceTransition, ServiceTransitionObject, Shift,
+    ShiftScale, UsefulPhoneNumber,
 )
+from domains.gatehouse.services import OrderService
+from domains.gatehouse.validators import IMAGE_EXTENSIONS, validate_order_file
 from domains.parameters.models import CategoryPhone, ConciergeServiceCategory
+from domains.residents.models import CondominiumUnit
 
 SELECT_ATTRS = {
     "class": "servicetransition-select",
@@ -288,3 +296,212 @@ class UsefulPhoneNumberForm(forms.ModelForm):
                     "categoria, nome e data de lançamento."
                 )
         return cleaned_data
+
+
+class OrderFileInput(forms.ClearableFileInput):
+    """Arquivo da encomenda com botão 'Foto' (câmera) ao lado.
+
+    O input de fotos (name=photos, múltiplo) vive neste template; as fotos
+    chegam por request.FILES.getlist("photos") e são validadas/persistidas
+    pelo OrderForm — não existe campo de formulário 'photos'.
+    """
+
+    template_name = "gatehouse/order_file_input.html"
+
+
+class OrderForm(forms.ModelForm):
+    """Formulário do módulo 04. Encomendas."""
+
+    class Meta:
+        model = Order
+        fields = (
+            "unit",
+            "releaseDate",
+            "documentNumber",
+            "fileImage",
+            "observations",
+            "is_active",
+        )
+        widgets = {
+            "unit": forms.Select(attrs=SELECT_ATTRS),
+            "releaseDate": ISODateInput(attrs={"type": "date"}),
+            "documentNumber": forms.TextInput(
+                attrs={"placeholder": "Ex.: 12345 ou NF-2026/001"},
+            ),
+            "fileImage": OrderFileInput(),
+            "observations": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Observações (opcional)"},
+            ),
+        }
+        labels = {
+            "unit": "Unidade",
+            "releaseDate": "Data de lançamento",
+            "documentNumber": "Número do documento",
+            "fileImage": "Arquivo",
+            "observations": "Observações",
+            "is_active": "Ativo",
+        }
+        help_texts = {
+            "unit": "Unidade de destino da encomenda",
+            "releaseDate": "Data de chegada da encomenda (preenchida pelo servidor na criação)",
+            "documentNumber": "Conteúdo numérico ou alfanumérico, sem máscara (opcional)",
+            "fileImage": "Formatos aceitos: .jpg, .jpeg, .png, .pdf. Máx: 10 MB",
+            "observations": "Observações adicionais (opcional)",
+            "is_active": "Indica se a encomenda está ativa",
+        }
+        error_messages = {
+            "unit": {
+                "required": "A unidade é obrigatória.",
+                "invalid_choice": "Selecione uma unidade válida.",
+            },
+            "fileImage": {
+                "required": "O arquivo é obrigatório.",
+            },
+            "releaseDate": {
+                "invalid": "Informe uma data de lançamento válida.",
+            },
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["unit"].queryset = (
+            CondominiumUnit.objects.select_related("condominium").order_by(
+                "tower", "unit_number"
+            )
+        )
+        if not self.instance.pk:
+            # Criacao: data somente leitura no navegador e preenchida pelo
+            # servidor quando o valor nao e enviado.
+            self.fields["releaseDate"].widget.attrs["readonly"] = "readonly"
+            self.fields["releaseDate"].initial = timezone.localdate()
+            self.fields["releaseDate"].required = False
+        else:
+            self.fields["releaseDate"].required = True
+            self.fields["fileImage"].help_text = self._build_file_help_text()
+
+    def _build_file_help_text(self):
+        """Help do campo Arquivo + lista de fotos já anexadas (edição)."""
+        base = "Formatos aceitos: .jpg, .jpeg, .png, .pdf. Máx: 10 MB"
+        photos = list(self.instance.photos.all())
+        if not photos:
+            return base
+        items = mark_safe(
+            "".join(
+                format_html(
+                    '<span class="order-photo-item" style="display:inline-block;'
+                    ' margin:4px; text-align:center;">'
+                    '<a href="{0}" target="_blank" rel="noopener">'
+                    '<img src="{0}" alt="Foto da encomenda" style="max-width:80px;'
+                    ' max-height:80px;"></a><br>'
+                    '<label><input type="checkbox" name="photo_delete"'
+                    ' value="{1}"> Remover</label></span>',
+                    photo.file.url,
+                    photo.pk,
+                )
+                for photo in photos
+            )
+        )
+        return format_html(
+            '{}<div class="order-photo-list" style="margin-top:4px;">'
+            "<strong>Fotos anexadas:</strong>{}</div>",
+            base,
+            items,
+        )
+
+    @staticmethod
+    def _uploaded_photos(form_files):
+        """Lista dos arquivos enviados no input 'photos' (aceita dict simples)."""
+        files = form_files or {}
+        if hasattr(files, "getlist"):
+            return files.getlist("photos")
+        value = files.get("photos") or []
+        return value if isinstance(value, list) else [value]
+
+    @staticmethod
+    def _deleted_photo_ids(form_data):
+        """Ids marcados para remoção no checkbox 'photo_delete'."""
+        data = form_data or {}
+        if hasattr(data, "getlist"):
+            return data.getlist("photo_delete")
+        value = data.get("photo_delete") or []
+        return value if isinstance(value, list) else [value]
+
+    def clean_releaseDate(self):
+        release_date = self.cleaned_data.get("releaseDate")
+        if not release_date:
+            if self.instance.pk:
+                raise forms.ValidationError(
+                    "A data de lançamento é obrigatória."
+                )
+            release_date = timezone.localdate()
+        if not validate_date(release_date):
+            raise forms.ValidationError("Informe uma data de lançamento válida.")
+        return release_date
+
+    def clean_documentNumber(self):
+        document_number = self.cleaned_data.get("documentNumber")
+        if document_number is None:
+            return None
+        document_number = document_number.strip()
+        if not document_number:
+            return None
+        return document_number
+
+    def clean_fileImage(self):
+        file = self.cleaned_data.get("fileImage")
+        if not file:
+            # Arquivo opcional: a exigencia (arquivo OU ao menos uma foto)
+            # e conferida em clean().
+            return None
+        from django.core.files.uploadedfile import UploadedFile
+        if isinstance(file, UploadedFile):
+            validate_order_file(file)
+        return file
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_photos = self._uploaded_photos(getattr(self, "files", None))
+        for photo in new_photos:
+            try:
+                validate_order_file(photo, extensions=IMAGE_EXTENSIONS)
+            except DjangoValidationError as exc:
+                self.add_error("fileImage", "; ".join(exc.messages))
+                break
+        has_file = bool(cleaned_data.get("fileImage"))
+        has_existing_evidence = bool(
+            self.instance.pk
+            and (
+                self.instance.fileImage
+                or self.instance.photos.exists()
+            )
+        )
+        if not (has_file or new_photos or has_existing_evidence):
+            self.add_error(
+                "fileImage", "Anexe o arquivo ou tire ao menos uma foto."
+            )
+        if cleaned_data.get("unit") and cleaned_data.get("releaseDate"):
+            try:
+                OrderService.check_duplicate(
+                    cleaned_data,
+                    instance=self.instance if self.instance.pk else None,
+                )
+            except OrderError as exc:
+                raise forms.ValidationError(str(exc))
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        if commit:
+            self.persist_photos(instance)
+        return instance
+
+    def persist_photos(self, order, user=None):
+        """Cria as fotos enviadas e remove as marcadas (após o pedido salvo).
+
+        No admin o form é salvo com commit=False; a chamada acontece em
+        ``OrderAdmin.save_related`` com o usuário da requisição.
+        """
+        for photo_id in self._deleted_photo_ids(self.data):
+            OrderPhoto.objects.filter(order=order, pk=photo_id).delete()
+        for photo in self._uploaded_photos(getattr(self, "files", None)):
+            OrderPhoto.objects.create(order=order, file=photo, created_by=user)

@@ -1,4 +1,5 @@
 import os
+import tempfile
 from pathlib import Path
 from .settings import *
 
@@ -12,6 +13,9 @@ DATABASES = {
 
 # Allow test client to access localhost without depending on env vars
 ALLOWED_HOSTS = ['*']
+
+# Isolate media files created by tests (uploads) from the real MEDIA_ROOT
+MEDIA_ROOT = Path(tempfile.mkdtemp(prefix="brasilcondo_test_media_"))
 
 # Disable some features that might interfere with tests or require external services
 DEBUG = True

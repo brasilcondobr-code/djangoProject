@@ -11,3 +11,8 @@ class ServiceTransitionError(GatehouseException):
 class UsefulPhoneNumberError(GatehouseException):
     """Erro de regra de negócio no módulo 03. Telefones Úteis."""
     pass
+
+
+class OrderError(GatehouseException):
+    """Erro de regra de negócio no módulo 04. Encomendas."""
+    pass
