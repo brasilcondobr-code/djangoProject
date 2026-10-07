@@ -471,12 +471,74 @@ class OrderPhoto(models.Model):
 
 
 class VisitorsRegister(models.Model):
+    """Registro de visita de um visitante na portaria (módulo 05).
+
+    Cada linha é um registro simples: um visitante em uma data. O mesmo
+    visitante pode ter vários registros em datas diferentes (unicidade
+    por visitor + visitDate). ``created_by`` representa o usuário da
+    última gravação (decisão de requisito do módulo 05).
+    """
+
     class Meta:
         app_label = "gatehouse"
+        ordering = ["-visitDate", "-id"]
         verbose_name = "05. Reg. Visitante"
         verbose_name_plural = "05. Reg. Visitantes"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("visitor", "visitDate"),
+                name="uniq_visitreg_visitor_date",
+            ),
+        ]
+
+    visitor = models.ForeignKey(
+        "residents.Visitor",
+        on_delete=models.CASCADE,
+        related_name="visit_registers",
+        verbose_name="Visitante",
+        blank=False,
+        null=False,
+        help_text="Visitante responsável pela visita",
+    )
+    visitDate = models.DateField(
+        "Data da visita",
+        blank=True,
+        null=True,
+        help_text=(
+            "Data da visita (obrigatória no formulário; "
+            "preenchida pelo servidor na criação)"
+        ),
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário da última gravação do registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
+        if self.visitor_id:
+            return "Visita %s — %s" % (self.visitDate or "s/ data", self.visitor)
         return "05. Reg. Visitante"
 
 

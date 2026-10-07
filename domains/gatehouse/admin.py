@@ -7,6 +7,7 @@ from domains.gatehouse.forms import (
     ServiceTransitionForm,
     ServiceTransitionObjectForm,
     UsefulPhoneNumberForm,
+    VisitorsRegisterForm,
 )
 from domains.gatehouse.models import (
     Shift, ShiftScale, ServiceTransition,
@@ -337,7 +338,55 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(VisitorsRegister)
 class VisitorsRegisterAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")
+    """Administração do modelo VisitorsRegister (módulo 05) com abas.
+
+    Edição liberada (decisão de requisito). Divergência aprovada: aqui
+    ``created_by`` passa a representar o usuário da última gravação
+    (criação e edição) — os demais módulos preservam o criador original.
+    """
+
+    form = VisitorsRegisterForm
+    list_display = (
+        "id",
+        "visitor",
+        "visitDate",
+        "is_active",
+        "created_at",
+    )
+    list_filter = ("visitor", "is_active", "visitDate")
+    search_fields = ("visitor__name", "observations")
+    ordering = ["-visitDate", "-id"]
+    jazzmin_section_order = ["Principal", "Auditoria"]
+
+    fieldsets = (
+        (
+            _("Principal"),
+            {
+                "fields": ("visitor", "visitDate", "observations"),
+            },
+        ),
+        (
+            _("Auditoria"),
+            {
+                "fields": ("is_active", "created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    readonly_fields = ("created_by", "created_at", "updated_at")
+    list_per_page = 25
+
+    def get_queryset(self, request):
+        """Otimiza queries com select_related."""
+        return super().get_queryset(request).select_related(
+            "visitor", "created_by"
+        )
+
+    def save_model(self, request, obj, form, change):
+        """created_by = usuário desta gravação (criação e edição)."""
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Correspondence)

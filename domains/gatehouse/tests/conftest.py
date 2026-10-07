@@ -7,7 +7,7 @@ from domains.condominium.models.collaborator import Collaborator
 from domains.condominium.models.condominium import Condominium
 from domains.gatehouse.models import ServiceTransition
 from domains.parameters.models import Addresses, ConciergeServiceCategory, States, TypesCondominium
-from domains.residents.models import CondominiumUnit
+from domains.residents.models import CondominiumUnit, Visitor
 
 
 @pytest.fixture
@@ -123,6 +123,41 @@ def other_unit(condominium):
         tower="B",
         unit_number="202",
         floor="2",
+    )
+
+
+@pytest.fixture
+def visitor(unit):
+    return Visitor.objects.create(
+        condo_unit=unit,
+        name="Visitante Teste",
+        cpf="CPF000000001",
+        rg="RG-VIS-01",
+        phone="11999990001",
+        purpose="Visita de teste",
+    )
+
+
+@pytest.fixture
+def other_visitor(other_unit):
+    return Visitor.objects.create(
+        condo_unit=other_unit,
+        name="Outro Visitante",
+        cpf="CPF000000002",
+        rg="RG-VIS-02",
+        phone="11999990002",
+    )
+
+
+@pytest.fixture
+def inactive_visitor(unit):
+    return Visitor.objects.create(
+        condo_unit=unit,
+        name="Visitante Inativo",
+        cpf="CPF000000003",
+        rg="RG-VIS-03",
+        phone="11999990003",
+        is_active=False,
     )
 
 

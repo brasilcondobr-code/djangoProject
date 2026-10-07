@@ -16,3 +16,8 @@ class UsefulPhoneNumberError(GatehouseException):
 class OrderError(GatehouseException):
     """Erro de regra de negócio no módulo 04. Encomendas."""
     pass
+
+
+class VisitorsRegisterError(GatehouseException):
+    """Erro de regra de negócio no módulo 05. Reg. Visitantes."""
+    pass

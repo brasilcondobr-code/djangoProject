@@ -10,12 +10,12 @@ from domains.condominium.models import Collaborator, Condominium
 from domains.gatehouse.exceptions import OrderError
 from domains.gatehouse.models import (
     Order, OrderPhoto, ServiceTransition, ServiceTransitionObject, Shift,
-    ShiftScale, UsefulPhoneNumber,
+    ShiftScale, UsefulPhoneNumber, VisitorsRegister,
 )
 from domains.gatehouse.services import OrderService
 from domains.gatehouse.validators import IMAGE_EXTENSIONS, validate_order_file
 from domains.parameters.models import CategoryPhone, ConciergeServiceCategory
-from domains.residents.models import CondominiumUnit
+from domains.residents.models import CondominiumUnit, Visitor
 
 SELECT_ATTRS = {
     "class": "servicetransition-select",
@@ -505,3 +505,87 @@ class OrderForm(forms.ModelForm):
             OrderPhoto.objects.filter(order=order, pk=photo_id).delete()
         for photo in self._uploaded_photos(getattr(self, "files", None)):
             OrderPhoto.objects.create(order=order, file=photo, created_by=user)
+
+
+class VisitorsRegisterForm(forms.ModelForm):
+    """Formulário do módulo 05. Reg. Visitantes."""
+
+    class Meta:
+        model = VisitorsRegister
+        fields = ("visitor", "visitDate", "observations", "is_active")
+        widgets = {
+            "visitor": forms.Select(attrs=SELECT_ATTRS),
+            "visitDate": ISODateInput(attrs={"type": "date"}),
+            "observations": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Observações (opcional)"},
+            ),
+        }
+        labels = {
+            "visitor": "Visitante",
+            "visitDate": "Data da visita",
+            "observations": "Observações",
+            "is_active": "Ativo",
+        }
+        help_texts = {
+            "visitor": "Visitante responsável pela visita",
+            "visitDate": (
+                "Data da visita (preenchida pelo servidor na criação; "
+                "editável na edição)"
+            ),
+            "observations": "Observações adicionais (opcional)",
+            "is_active": "Indica se o registro está ativo",
+        }
+        error_messages = {
+            "visitor": {
+                "required": "O visitante é obrigatório.",
+                "invalid_choice": "Selecione um visitante válido.",
+            },
+            "visitDate": {
+                "invalid": "Informe uma data de visita válida.",
+            },
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "visitor" in self.fields:
+            self.fields["visitor"].queryset = active_queryset(
+                Visitor, self.instance, "visitor"
+            )
+        if "visitDate" in self.fields:
+            if not self.instance.pk:
+                # Criacao: campo somente leitura no navegador e a data e
+                # atribuida pelo servidor em clean_visitDate.
+                self.fields["visitDate"].widget.attrs["readonly"] = "readonly"
+                self.fields["visitDate"].initial = timezone.localdate()
+                self.fields["visitDate"].required = False
+            else:
+                self.fields["visitDate"].required = True
+
+    def clean_visitDate(self):
+        if not self.instance.pk:
+            # Criacao: ignora o valor enviado (campo somente leitura) e usa
+            # a data atual no fuso horario configurado (servidor).
+            return timezone.localdate()
+        visit_date = self.cleaned_data.get("visitDate")
+        if not visit_date:
+            raise forms.ValidationError("A data da visita é obrigatória.")
+        if not validate_date(visit_date):
+            raise forms.ValidationError("Informe uma data de visita válida.")
+        return visit_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        visitor = cleaned_data.get("visitor")
+        visit_date = cleaned_data.get("visitDate")
+        if visitor and visit_date:
+            duplicated = VisitorsRegister.objects.filter(
+                visitor=visitor,
+                visitDate=visit_date,
+            ).exclude(pk=self.instance.pk if self.instance.pk else None)
+            if duplicated.exists():
+                self.add_error(
+                    "visitDate",
+                    "Já existe um registro de visita para este visitante "
+                    "nesta data.",
+                )
+        return cleaned_data

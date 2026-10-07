@@ -3,4 +3,5 @@ from domains.gatehouse.exceptions.gatehouse_exceptions import (
     ServiceTransitionError,
     UsefulPhoneNumberError,
     OrderError,
+    VisitorsRegisterError,
 )
