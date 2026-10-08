@@ -5,3 +5,4 @@ from domains.gatehouse.services.order_service import OrderService
 from domains.gatehouse.services.visitorsregister_service import (
     VisitorsRegisterService,
 )
+from domains.gatehouse.services.occurrence_service import OccurrenceService

@@ -346,7 +346,6 @@ JAZZMIN_SETTINGS = {
         "gatehouse.UsefulPhoneNumber": "fa-solid fa-phone",
         "gatehouse.Order": "fa-solid fa-box",
         "gatehouse.VisitorsRegister": "fa-solid fa-clipboard-list",
-        "gatehouse.Correspondence": "fa-solid fa-envelope",
         "gatehouse.Occurrence": "fa-solid fa-hands-asl-interpreting",
         "gatehouse.Bag": "fa-solid fa-suitcase-rolling",
         "gatehouse.ElectronicTimeClock": "fa-solid fa-clipboard",

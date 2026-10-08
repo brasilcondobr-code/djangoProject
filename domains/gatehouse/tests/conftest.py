@@ -162,6 +162,24 @@ def inactive_visitor(unit):
 
 
 @pytest.fixture
+def participant_a(collaborator_factory):
+    return collaborator_factory("Participante A")
+
+
+@pytest.fixture
+def participant_b(collaborator_factory):
+    return collaborator_factory("Participante B")
+
+
+@pytest.fixture
+def foreign_participant(collaborator_factory, inactive_condominium):
+    return collaborator_factory(
+        "Colaborador Outro Condomínio",
+        condominium=inactive_condominium,
+    )
+
+
+@pytest.fixture
 def admin_user(django_user_model):
     return django_user_model.objects.create_superuser(
         username="admin",

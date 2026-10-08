@@ -542,23 +542,90 @@ class VisitorsRegister(models.Model):
         return "05. Reg. Visitante"
 
 
-class Correspondence(models.Model):
-    class Meta:
-        app_label = "gatehouse"
-        verbose_name = "06. Correspondência"
-        verbose_name_plural = "06. Correspondências"
-
-    def __str__(self):
-        return "06. Correspondência"
-
-
 class Occurrence(models.Model):
+    """Ocorrência registrada na portaria (módulo 07).
+
+    Cada linha é uma ocorrência simples em uma data/hora. Unicidade por
+    unidade + data/hora + assunto (sem unidade — valor nulo — o banco
+    permite duplicatas, decisão de requisito padrão do módulo 04).
+    ``created_user`` representa o usuário da última gravação (decisão de
+    requisito do módulo 07).
+    """
+
     class Meta:
         app_label = "gatehouse"
+        ordering = ["-releaseDate", "-id"]
         verbose_name = "07. Ocorrência"
         verbose_name_plural = "07. Ocorrências"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("unit", "releaseDate", "subject"),
+                name="uniq_occurrence_unit_date_subject",
+            ),
+        ]
+
+    unit = models.ForeignKey(
+        "residents.CondominiumUnit",
+        on_delete=models.CASCADE,
+        related_name="occurrences",
+        verbose_name="Unidade",
+        blank=True,
+        null=True,
+        help_text="Unidade da ocorrência (opcional)",
+    )
+    releaseDate = models.DateTimeField(
+        "Data/hora da ocorrência",
+        blank=True,
+        null=True,
+        help_text=(
+            "Data e hora da ocorrência (obrigatórias no formulário; "
+            "preenchidas pelo servidor na criação)"
+        ),
+    )
+    subject = models.CharField(
+        "Assunto",
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text="Assunto da ocorrência (até 255 caracteres)",
+    )
+    participants = models.ManyToManyField(
+        "condominium.Collaborator",
+        blank=True,
+        related_name="occurrences",
+        verbose_name="Participantes",
+        help_text="Colaboradores participantes (opcional)",
+    )
+    description = models.TextField(
+        "Descrição",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+    )
+    created_user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário da última gravação do registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
+        if self.subject:
+            return "Ocorrência %s" % self.subject
         return "07. Ocorrência"
 
 

@@ -7,12 +7,12 @@ from django.db.models import Q
 
 from core.services.validators import validate_date, validate_phone
 from domains.condominium.models import Collaborator, Condominium
-from domains.gatehouse.exceptions import OrderError
+from domains.gatehouse.exceptions import OccurrenceError, OrderError
 from domains.gatehouse.models import (
     Order, OrderPhoto, ServiceTransition, ServiceTransitionObject, Shift,
-    ShiftScale, UsefulPhoneNumber, VisitorsRegister,
+    ShiftScale, UsefulPhoneNumber, VisitorsRegister, Occurrence,
 )
-from domains.gatehouse.services import OrderService
+from domains.gatehouse.services import OccurrenceService, OrderService
 from domains.gatehouse.validators import IMAGE_EXTENSIONS, validate_order_file
 from domains.parameters.models import CategoryPhone, ConciergeServiceCategory
 from domains.residents.models import CondominiumUnit, Visitor
@@ -588,4 +588,128 @@ class VisitorsRegisterForm(forms.ModelForm):
                     "Já existe um registro de visita para este visitante "
                     "nesta data.",
                 )
+        return cleaned_data
+
+
+class OccurrenceForm(forms.ModelForm):
+    """Formulário do módulo 07. Ocorrências."""
+
+    class Meta:
+        model = Occurrence
+        fields = (
+            "unit",
+            "releaseDate",
+            "subject",
+            "participants",
+            "description",
+            "is_active",
+        )
+        widgets = {
+            "unit": forms.Select(attrs=SELECT_ATTRS),
+            "releaseDate": forms.DateTimeInput(
+                attrs={"type": "datetime-local"},
+                format="%Y-%m-%dT%H:%M",
+            ),
+            "subject": forms.TextInput(
+                attrs={"placeholder": "Assunto da ocorrência"},
+            ),
+            "description": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Descrição (opcional)"},
+            ),
+        }
+        labels = {
+            "unit": "Unidade",
+            "releaseDate": "Data/hora da ocorrência",
+            "subject": "Assunto",
+            "participants": "Participantes",
+            "description": "Descrição",
+            "is_active": "Ativo",
+        }
+        help_texts = {
+            "unit": "Unidade da ocorrência (opcional)",
+            "releaseDate": (
+                "Data e hora da ocorrência (preenchidas pelo servidor na "
+                "criação; editáveis na edição)"
+            ),
+            "subject": "Assunto da ocorrência (até 255 caracteres)",
+            "participants": (
+                "Colaboradores participantes (opcional); devem pertencer "
+                "ao condomínio da unidade selecionada"
+            ),
+            "description": "Descrição da ocorrência (opcional)",
+            "is_active": "Indica se a ocorrência está ativa",
+        }
+        error_messages = {
+            "unit": {
+                "invalid_choice": "Selecione uma unidade válida.",
+            },
+            "releaseDate": {
+                "required": "A data e hora da ocorrência são obrigatórias.",
+                "invalid": "Informe uma data e hora de ocorrência válidas.",
+            },
+            "subject": {
+                "required": "O assunto é obrigatório.",
+            },
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "unit" in self.fields:
+            self.fields["unit"].queryset = (
+                CondominiumUnit.objects.select_related("condominium").order_by(
+                    "tower", "unit_number"
+                )
+            )
+        if "participants" in self.fields:
+            # Colaboradores ativos; na edição preserva os selecionados
+            # mesmo que estejam inativos (validação continua no backend).
+            from django.db.models import Q
+
+            qs = Collaborator.objects.filter(is_active=True)
+            if self.instance.pk:
+                selected = self.instance.participants.values_list(
+                    "pk", flat=True
+                )
+                qs = Collaborator.objects.filter(
+                    Q(is_active=True) | Q(pk__in=selected)
+                )
+            self.fields["participants"].queryset = qs.order_by("name")
+        if "releaseDate" in self.fields:
+            if not self.instance.pk:
+                # Criacao: campo somente leitura no navegador e a data/hora
+                # e atribuida pelo servidor em clean_releaseDate.
+                self.fields["releaseDate"].widget.attrs["readonly"] = "readonly"
+                self.fields["releaseDate"].initial = timezone.now()
+                self.fields["releaseDate"].required = False
+            else:
+                self.fields["releaseDate"].required = True
+
+    def clean_releaseDate(self):
+        if not self.instance.pk:
+            # Criacao: ignora o valor enviado (campo somente leitura) e usa
+            # a data/hora atuais no fuso horario configurado (servidor).
+            return OccurrenceService.server_now()
+        release_date = self.cleaned_data.get("releaseDate")
+        if not release_date:
+            raise forms.ValidationError(
+                "A data e hora da ocorrência são obrigatórias."
+            )
+        return release_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        try:
+            OccurrenceService.validate_participants(
+                cleaned_data.get("participants"),
+                cleaned_data.get("unit"),
+            )
+        except OccurrenceError as exc:
+            self.add_error("participants", str(exc))
+        try:
+            OccurrenceService.check_duplicate(
+                cleaned_data,
+                instance=self.instance if self.instance.pk else None,
+            )
+        except OccurrenceError as exc:
+            self.add_error("subject", str(exc))
         return cleaned_data

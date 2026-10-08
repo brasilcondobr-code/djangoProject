@@ -6,13 +6,14 @@ from domains.gatehouse.forms import (
     OrderForm,
     ServiceTransitionForm,
     ServiceTransitionObjectForm,
+    OccurrenceForm,
     UsefulPhoneNumberForm,
     VisitorsRegisterForm,
 )
 from domains.gatehouse.models import (
     Shift, ShiftScale, ServiceTransition,
     ServiceTransitionObject, UsefulPhoneNumber, Order, VisitorsRegister,
-    Correspondence, Occurrence, Bag, ElectronicTimeClock,
+    Occurrence, Bag, ElectronicTimeClock,
 )
 
 
@@ -389,14 +390,82 @@ class VisitorsRegisterAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-@admin.register(Correspondence)
-class CorrespondenceAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")
-
-
 @admin.register(Occurrence)
 class OccurrenceAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")
+    """Administração do modelo Occurrence (módulo 07) com abas.
+
+    Edição liberada (decisão de requisito). Decisão aprovada: aqui
+    ``created_user`` passa a representar o usuário da última gravação
+    (criação e edição) — os demais módulos preservam o criador original.
+    """
+
+    form = OccurrenceForm
+    # O admin padrao aplica FORMFIELD_FOR_DBFIELD_DEFAULTS e troca
+    # DateTimeField por SplitDateTimeField (quebra o widget datetime-local e
+    # o has_changed do formulario); form_class vence o default e o widget do
+    # Meta continua sobrepondo o AdminSplitDateTime.
+    formfield_overrides = {
+        models.DateTimeField: {"form_class": forms.DateTimeField},
+    }
+    list_display = (
+        "id",
+        "unit",
+        "releaseDate",
+        "subject",
+        "is_active",
+        "created_at",
+    )
+    list_filter = ("unit", "is_active")
+    search_fields = (
+        "subject",
+        "description",
+        "unit__unit_number",
+        "unit__condominium__name",
+    )
+    ordering = ["-releaseDate", "-id"]
+    jazzmin_section_order = ["Principal", "Auditoria"]
+    filter_horizontal = ("participants",)
+
+    fieldsets = (
+        (
+            _("Principal"),
+            {
+                "fields": (
+                    "unit",
+                    "releaseDate",
+                    "subject",
+                    "participants",
+                    "description",
+                ),
+            },
+        ),
+        (
+            _("Auditoria"),
+            {
+                "fields": (
+                    "is_active",
+                    "created_user",
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    readonly_fields = ("created_user", "created_at", "updated_at")
+    list_per_page = 25
+
+    def get_queryset(self, request):
+        """Otimiza queries com select_related e prefetch."""
+        return super().get_queryset(request).select_related(
+            "unit", "unit__condominium", "created_user"
+        ).prefetch_related("participants")
+
+    def save_model(self, request, obj, form, change):
+        """created_user = usuário desta gravação (criação e edição)."""
+        obj.created_user = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Bag)

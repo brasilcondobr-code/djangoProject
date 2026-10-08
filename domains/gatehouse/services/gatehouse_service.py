@@ -23,10 +23,6 @@ class GatehouseService:
         return GatehouseSelector.get_all_visitors_registers()
 
     @staticmethod
-    def get_all_correspondences():
-        return GatehouseSelector.get_all_correspondences()
-
-    @staticmethod
     def get_all_occurrences():
         return GatehouseSelector.get_all_occurrences()
 
