@@ -7,12 +7,14 @@ from django.db.models import Q
 
 from core.services.validators import validate_date, validate_phone
 from domains.condominium.models import Collaborator, Condominium
-from domains.gatehouse.exceptions import OccurrenceError, OrderError
+from domains.gatehouse.exceptions import BagError, OccurrenceError, OrderError
 from domains.gatehouse.models import (
     Order, OrderPhoto, ServiceTransition, ServiceTransitionObject, Shift,
-    ShiftScale, UsefulPhoneNumber, VisitorsRegister, Occurrence,
+    ShiftScale, UsefulPhoneNumber, VisitorsRegister, Occurrence, Bag, BagItem,
 )
-from domains.gatehouse.services import OccurrenceService, OrderService
+from domains.gatehouse.services import (
+    BagService, OccurrenceService, OrderService,
+)
 from domains.gatehouse.validators import IMAGE_EXTENSIONS, validate_order_file
 from domains.parameters.models import CategoryPhone, ConciergeServiceCategory
 from domains.residents.models import CondominiumUnit, Visitor
@@ -712,4 +714,217 @@ class OccurrenceForm(forms.ModelForm):
             )
         except OccurrenceError as exc:
             self.add_error("subject", str(exc))
+        return cleaned_data
+
+
+class BagItemForm(forms.ModelForm):
+    """Formulário de cada item do malote (aba Itens, inline)."""
+
+    value = forms.CharField(
+        label="Valor",
+        required=False,
+        max_length=20,
+        help_text=(
+            "Valor do item (ex.: 1.234,56); até 10 dígitos e 2 casas "
+            "decimais; opcional"
+        ),
+        widget=forms.TextInput(
+            attrs={"class": "mask-currency", "placeholder": "0,00"}
+        ),
+    )
+    amount = forms.IntegerField(
+        label="Quantidade",
+        min_value=1,
+        max_value=999,
+        initial=1,
+        error_messages={
+            "min_value": "A quantidade do item deve estar entre 1 e 999.",
+            "max_value": "A quantidade do item deve estar entre 1 e 999.",
+        },
+        help_text="Quantidade do item (mínimo 1, máximo 999)",
+        widget=forms.NumberInput(
+            attrs={"min": 1, "max": 999, "step": 1, "placeholder": "1"}
+        ),
+    )
+
+    class Meta:
+        model = BagItem
+        fields = ("description", "documentNumber", "amount", "value")
+        widgets = {
+            "description": forms.TextInput(
+                attrs={"placeholder": "Descrição do item"}
+            ),
+            "documentNumber": forms.TextInput(
+                attrs={"placeholder": "Nº do documento (opcional)"}
+            ),
+        }
+        help_texts = {
+            "description": "Descrição do item (até 255 caracteres)",
+            "documentNumber": (
+                "Número do documento (opcional, até 30 caracteres)"
+            ),
+        }
+        error_messages = {
+            "description": {
+                "required": "A descrição do item é obrigatória.",
+            },
+        }
+
+    def clean_description(self):
+        value = self.cleaned_data.get("description")
+        if isinstance(value, str):
+            value = value.strip()
+        if not value:
+            raise forms.ValidationError("A descrição do item é obrigatória.")
+        return value
+
+    def clean_documentNumber(self):
+        value = self.cleaned_data.get("documentNumber")
+        if isinstance(value, str):
+            value = value.strip() or None
+        return value
+
+    def clean_value(self):
+        """Converte o valor pt-BR no backend (máscara é só visual)."""
+        raw = self.cleaned_data.get("value")
+        try:
+            return BagService.parse_value(raw)
+        except BagError as exc:
+            raise forms.ValidationError(str(exc))
+
+
+class BagForm(forms.ModelForm):
+    """Formulário do módulo 08. Malotes."""
+
+    class Meta:
+        model = Bag
+        fields = (
+            "condominium",
+            "releaseDate",
+            "title",
+            "sender",
+            "recipient",
+            "deliveryDate",
+            "handDelivery",
+            "observations",
+        )
+        widgets = {
+            "condominium": forms.Select(attrs=SELECT_ATTRS),
+            "releaseDate": ISODateInput(attrs={"type": "date"}),
+            "title": forms.TextInput(
+                attrs={"placeholder": "Título do malote"}
+            ),
+            "sender": forms.Select(attrs=SELECT_ATTRS),
+            "recipient": forms.TextInput(
+                attrs={"placeholder": "Destinatário do malote (opcional)"}
+            ),
+            "deliveryDate": ISODateInput(attrs={"type": "date"}),
+            "handDelivery": forms.RadioSelect(
+                choices=((True, "Sim"), (False, "Não"))
+            ),
+            "observations": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "placeholder": "Observações (opcional)",
+                }
+            ),
+        }
+        labels = {
+            "condominium": "Condomínio",
+            "releaseDate": "Data de lançamento",
+            "title": "Título",
+            "sender": "Remetente",
+            "recipient": "Destinatário",
+            "deliveryDate": "Data de entrega",
+            "handDelivery": "Entrega em mão",
+            "observations": "Observações",
+        }
+        help_texts = {
+            "condominium": "Condomínio de destino do malote",
+            "releaseDate": (
+                "Data de lançamento (preenchida pelo servidor na criação; "
+                "editável na edição)"
+            ),
+            "title": "Título do malote (até 255 caracteres)",
+            "sender": (
+                "Colaborador remetente (deve pertencer ao condomínio "
+                "selecionado)"
+            ),
+            "recipient": (
+                "Destinatário do malote (até 255 caracteres, opcional)"
+            ),
+            "deliveryDate": "Data de entrega do malote",
+            "handDelivery": "Indica se houve entrega em mão (opcional)",
+            "observations": "Observações sobre o malote (opcional)",
+        }
+        error_messages = {
+            "title": {"required": "O título do malote é obrigatório."},
+            "deliveryDate": {
+                "required": "A data de entrega do malote é obrigatória.",
+                "invalid": "Informe uma data de entrega válida.",
+            },
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "condominium" in self.fields:
+            self.fields["condominium"].queryset = active_queryset(
+                Condominium, self.instance, "condominium"
+            )
+        if "recipient" in self.fields:
+            self.fields["recipient"].required = False
+        if "sender" in self.fields:
+            self.fields["sender"].queryset = active_queryset(
+                Collaborator, self.instance, "sender"
+            )
+        if "releaseDate" in self.fields:
+            if not self.instance.pk:
+                # Criacao: campo somente leitura e data atribuida no servidor
+                self.fields["releaseDate"].widget.attrs["readonly"] = (
+                    "readonly"
+                )
+                self.fields["releaseDate"].initial = BagService.server_today()
+                self.fields["releaseDate"].required = False
+            else:
+                self.fields["releaseDate"].required = True
+
+    def clean_releaseDate(self):
+        if not self.instance.pk:
+            # Criacao: ignora o valor enviado e usa a data atual (servidor).
+            return BagService.server_today()
+        release_date = self.cleaned_data.get("releaseDate")
+        if not release_date:
+            raise forms.ValidationError(
+                "A data de lançamento do malote é obrigatória."
+            )
+        return release_date
+
+    def clean_deliveryDate(self):
+        delivery_date = self.cleaned_data.get("deliveryDate")
+        if delivery_date and not validate_date(delivery_date):
+            raise forms.ValidationError(
+                "A data de entrega do malote é inválida."
+            )
+        return delivery_date
+
+    def clean_handDelivery(self):
+        value = self.cleaned_data.get("handDelivery")
+        return False if value is None else value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        try:
+            BagService.validate_sender(
+                cleaned_data.get("sender"),
+                cleaned_data.get("condominium"),
+            )
+        except BagError as exc:
+            self.add_error("sender", str(exc))
+        try:
+            BagService.check_duplicate(
+                cleaned_data,
+                instance=self.instance if self.instance.pk else None,
+            )
+        except BagError as exc:
+            self.add_error("title", str(exc))
         return cleaned_data

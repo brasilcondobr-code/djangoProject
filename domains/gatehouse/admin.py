@@ -3,6 +3,8 @@ from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.db import models
 from domains.gatehouse.forms import (
+    BagForm,
+    BagItemForm,
     OrderForm,
     ServiceTransitionForm,
     ServiceTransitionObjectForm,
@@ -13,7 +15,7 @@ from domains.gatehouse.forms import (
 from domains.gatehouse.models import (
     Shift, ShiftScale, ServiceTransition,
     ServiceTransitionObject, UsefulPhoneNumber, Order, VisitorsRegister,
-    Occurrence, Bag, ElectronicTimeClock,
+    Occurrence, Bag, BagItem, ElectronicTimeClock,
 )
 
 
@@ -468,9 +470,89 @@ class OccurrenceAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class BagItemInline(admin.TabularInline):
+    """Inline para itens do malote (aba Itens)."""
+    model = BagItem
+    form = BagItemForm
+    extra = 1
+    fields = ("description", "documentNumber", "amount", "value")
+    verbose_name = "Item"
+    verbose_name_plural = "Itens"
+
+
 @admin.register(Bag)
 class BagAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")
+    """Administração do modelo Bag (módulo 08) com abas.
+
+    Edição liberada (decisão de requisito). Sem campos de usuário de
+    auditoria (apenas is_active/created_at/updated_at, conforme requisito).
+    """
+
+    form = BagForm
+    list_display = (
+        "id",
+        "condominium",
+        "releaseDate",
+        "title",
+        "sender",
+        "recipient",
+        "deliveryDate",
+        "is_active",
+    )
+    list_filter = ("condominium", "handDelivery", "is_active")
+    search_fields = (
+        "title",
+        "recipient",
+        "observations",
+        "condominium__name",
+        "sender__name",
+    )
+    ordering = ["-releaseDate", "-id"]
+    jazzmin_section_order = ["Principal", "Itens", "Auditoria"]
+
+    fieldsets = (
+        (
+            _("Principal"),
+            {
+                "fields": (
+                    "condominium",
+                    "releaseDate",
+                    "title",
+                    "sender",
+                    "recipient",
+                    "deliveryDate",
+                    "handDelivery",
+                    "observations",
+                ),
+            },
+        ),
+        (
+            _("Auditoria"),
+            {
+                "fields": ("is_active", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    inlines = [BagItemInline]
+    readonly_fields = ("created_at", "updated_at")
+    list_per_page = 25
+
+    class Media:
+        css = {
+            "all": ("gatehouse/css/bag_admin.css",),
+        }
+        js = (
+            "js/utils.js",
+            "js/gatehouse_bag_admin.js",
+        )
+
+    def get_queryset(self, request):
+        """Otimiza queries com select_related e prefetch dos itens."""
+        return super().get_queryset(request).select_related(
+            "condominium", "sender"
+        ).prefetch_related("items")
 
 
 @admin.register(ElectronicTimeClock)

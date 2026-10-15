@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -630,13 +630,155 @@ class Occurrence(models.Model):
 
 
 class Bag(models.Model):
+    """Malote (08): condomínio, remetente e itens vinculados.
+
+    Decisões aprovadas: CRUD completo com edição liberada; ``condominium``
+    aponta para Condominium (``related_name="condominium"``); unicidade
+    composta (condominium + releaseDate + title + sender); ``releaseDate``
+    é preenchida pelo servidor na criação; ``recipient`` é opcional;
+    ``handDelivery`` default False; sem campos de usuário de auditoria
+    (apenas is_active/created_at/updated_at).
+    """
+
     class Meta:
         app_label = "gatehouse"
         verbose_name = "08. Malote"
         verbose_name_plural = "08. Malotes"
+        ordering = ["-releaseDate", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("condominium", "releaseDate", "title", "sender"),
+                name="uniq_bag_condominium_date_title_sender",
+            )
+        ]
+
+    condominium = models.ForeignKey(
+        "condominium.Condominium",
+        on_delete=models.CASCADE,
+        related_name="condominium",
+        verbose_name="Condomínio",
+        blank=False,
+        null=True,
+        help_text="Condomínio de destino do malote",
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=True,
+        null=True,
+        help_text="Data de lançamento (preenchida pelo servidor na criação)",
+    )
+    title = models.CharField(
+        "Título",
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text="Título do malote (até 255 caracteres)",
+    )
+    sender = models.ForeignKey(
+        "condominium.Collaborator",
+        on_delete=models.CASCADE,
+        related_name="sent_bags",
+        verbose_name="Remetente",
+        blank=False,
+        null=True,
+        help_text="Colaborador remetente do malote",
+    )
+    recipient = models.CharField(
+        "Destinatário",
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Destinatário do malote (até 255 caracteres, opcional)",
+    )
+    deliveryDate = models.DateField(
+        "Data de entrega",
+        blank=False,
+        null=True,
+        help_text="Data de entrega do malote",
+    )
+    handDelivery = models.BooleanField(
+        "Entrega manual",
+        blank=True,
+        null=True,
+        default=False,
+        help_text="Indica se houve entrega em mão (Sim/Não); padrão Não",
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+        help_text="Observações sobre o malote (opcional)",
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se o malote está ativo",
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da criação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
 
     def __str__(self):
-        return "08. Malote"
+        if self.title and self.condominium_id:
+            return "Malote %s - %s" % (self.title, self.condominium)
+        return "Malote %s" % (self.title or "sem título")
+
+
+class BagItem(models.Model):
+    """Item vinculado a um malote (aba Itens)."""
+
+    class Meta:
+        app_label = "gatehouse"
+        verbose_name = "08. Item de Malote"
+        verbose_name_plural = "08. Itens de Malote"
+        ordering = ["id"]
+
+    bag = models.ForeignKey(
+        "gatehouse.Bag",
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="Malote",
+    )
+    description = models.CharField(
+        "Descrição",
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text="Descrição do item (até 255 caracteres)",
+    )
+    documentNumber = models.CharField(
+        "Número do documento",
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="Número do documento (opcional, até 30 caracteres)",
+    )
+    amount = models.PositiveSmallIntegerField(
+        "Quantidade",
+        blank=False,
+        null=False,
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(999)],
+        help_text="Quantidade do item (mínimo 1, máximo 999)",
+    )
+    value = models.DecimalField(
+        "Valor",
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Valor do item (até 10 dígitos e 2 casas decimais, opcional)",
+    )
+
+    def __str__(self):
+        return "%s (x%s)" % (self.description, self.amount)
 
 
 class ElectronicTimeClock(models.Model):

@@ -6,3 +6,4 @@ from domains.gatehouse.services.visitorsregister_service import (
     VisitorsRegisterService,
 )
 from domains.gatehouse.services.occurrence_service import OccurrenceService
+from domains.gatehouse.services.bag_service import BagService

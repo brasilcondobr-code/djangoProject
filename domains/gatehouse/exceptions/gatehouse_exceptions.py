@@ -26,3 +26,8 @@ class VisitorsRegisterError(GatehouseException):
 class OccurrenceError(GatehouseException):
     """Erro de regra de negócio no módulo 07. Ocorrências."""
     pass
+
+
+class BagError(GatehouseException):
+    """Erro de regra de negócio no módulo 08. Malotes."""
+    pass

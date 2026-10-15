@@ -5,4 +5,5 @@ from domains.gatehouse.exceptions.gatehouse_exceptions import (
     OrderError,
     VisitorsRegisterError,
     OccurrenceError,
+    BagError,
 )
