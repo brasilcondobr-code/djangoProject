@@ -1,6 +1,6 @@
 from domains.gatehouse.models.gatehouse_models import (
     Shift, ServiceTransition, UsefulPhoneNumber, Order, 
-    VisitorsRegister, Correspondence, Occurrence, Bag, ElectronicTimeClock
+    VisitorsRegister, Occurrence, Bag
 )
 
 class GatehouseSelector:
@@ -25,17 +25,9 @@ class GatehouseSelector:
         return VisitorsRegister.objects.all()
 
     @staticmethod
-    def get_all_correspondences():
-        return Correspondence.objects.all()
-
-    @staticmethod
     def get_all_occurrences():
         return Occurrence.objects.all()
 
     @staticmethod
     def get_all_bags():
         return Bag.objects.all()
-
-    @staticmethod
-    def get_all_electronic_time_clocks():
-        return ElectronicTimeClock.objects.all()

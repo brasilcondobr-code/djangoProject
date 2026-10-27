@@ -1,4 +1,5 @@
 from .gatehouse_models import (
-    Shift, ServiceTransition, UsefulPhoneNumber, Order, 
-    VisitorsRegister, Correspondence, Occurrence, Bag, ElectronicTimeClock
+    Shift, ShiftScale, ServiceTransition, ServiceTransitionObject,
+    UsefulPhoneNumber, Order, OrderPhoto, VisitorsRegister,
+    Occurrence, Bag, BagItem
 )

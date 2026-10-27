@@ -32,6 +32,12 @@ const BrasilCondoUtils = {
             if (v.length <= 4) return v.replace(/(\d{2})(\d+)/, '$1/$2');
             return v.replace(/(\d{2})(\d{2})(\d{4})/, '$1/$2/$3').slice(0, 10);
         },
+        time: function(v) {
+            v = v.replace(/\D/g, '');
+            if (v.length <= 2) return v;
+            if (v.length <= 4) return v.replace(/(\d{2})(\d+)/, '$1:$2');
+            return v.replace(/(\d{2})(\d{2})(\d+)/, '$1:$2:$3').slice(0, 8);
+        },
         email: function(v) {
             return v.replace(/[^a-zA-Z0-9@._-]/g, '');
         },

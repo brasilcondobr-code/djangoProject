@@ -424,6 +424,93 @@ class TopicOptionExporter(BaseExporter):
 
 
 # ---------------------------------------------------------------------------
+# Exportadores para residents
+# ---------------------------------------------------------------------------
+
+class CondominiumUnitExporter(BaseExporter):
+    service_key = 'residents.condominiumunit'
+    model = 'residents.CondominiumUnit'
+    headers = ('Bloco / Torre', 'Número', 'Pavimento', 'Identificação', 'Tipo', 'Quartos', 'Banheiros', 'Suítes', 'Vagas de garagem', 'Área total', 'Status', 'Para venda', 'Para aluguel', 'Preço de venda', 'Preço de aluguel', 'Criado em', 'Atualizado em')
+    fields = ('tower', 'unit_number', 'floor', 'identification', 'unit_type', 'bedrooms', 'bathrooms', 'suites', 'garage_spaces', 'area_total', 'status', 'for_sale', 'for_rent', 'sale_price', 'rent_price', 'created_at', 'updated_at')
+    select_related = ('condominium',)
+
+
+class ResidentExporter(BaseExporter):
+    service_key = 'residents.resident'
+    model = 'residents.Resident'
+    headers = ('Condomínio', 'Unidade', 'Tipo de morador', 'Nome', 'E-mail', 'Telefone', 'CPF', 'RG', 'Sexo', 'Data de nascimento', 'Profissão', 'Principal', 'É residente', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('unit__name', 'type_of_resident__name', 'name', 'email', 'phone', 'cpf', 'rg', 'sex', 'date_of_birth', 'profission', 'is_primary', 'is_resident', 'is_active', 'created_at', 'updated_at')
+    select_related = ('unit', 'type_of_resident')
+
+
+class VehicleExporter(BaseExporter):
+    service_key = 'residents.vehicle'
+    model = 'residents.Vehicle'
+    headers = ('Condomínio', 'Unidade', 'Tipo', 'Placa', 'Marca', 'Modelo', 'Cor', 'Ano', 'Vaga de garagem', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('condo_unit__name', 'vehicle_type', 'license_plate', 'brand', 'model', 'color', 'year', 'garage_space', 'is_active', 'created_at', 'updated_at')
+    select_related = ('condo_unit',)
+
+
+class EmergencyExporter(BaseExporter):
+    service_key = 'residents.emergency'
+    model = 'residents.Emergency'
+    headers = ('Tipo', 'Descrição', 'Data', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('type', 'description', 'occurred_at', 'is_active', 'created_at', 'updated_at')
+
+
+class AnimalExporter(BaseExporter):
+    service_key = 'residents.animal'
+    model = 'residents.Animal'
+    headers = ('Animal', 'Espécie', 'Raça', 'Idade', 'Cor', 'Gênero', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('name', 'species', 'breed', 'age', 'color', 'gender', 'is_active', 'created_at', 'updated_at')
+
+
+class VisitorExporter(BaseExporter):
+    service_key = 'residents.visitor'
+    model = 'residents.Visitor'
+    headers = ('Visitante', 'CPF', 'RG', 'Finalidade', 'Telefone', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('name', 'cpf', 'rg', 'purpose', 'phone', 'is_active', 'created_at', 'updated_at')
+
+
+class RealEstateAgencyExporter(BaseExporter):
+    service_key = 'residents.realestateagency'
+    model = 'residents.RealEstateAgency'
+    headers = ('Condomínio', 'Nome', 'CNPJ', 'Telefone', 'E-mail', 'Site', 'Contato', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('condo_unit__name', 'name', 'cnpj', 'phone', 'email', 'website', 'contact_person', 'is_active', 'created_at', 'updated_at')
+    select_related = ('condo_unit',)
+
+
+class DocumentsExporter(BaseExporter):
+    service_key = 'residents.documents'
+    model = 'residents.Documents'
+    headers = ('Título', 'Tipo de Documento', 'Descrição', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('title', 'document_type', 'description', 'is_active', 'created_at', 'updated_at')
+
+
+class TypesCollaboratorExporter(BaseExporter):
+    service_key = 'condominium.typescollaborator'
+    model = 'condominium.TypesCollaborator'
+    headers = ('Tipo de Colaborador', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('name', 'is_active', 'created_at', 'updated_at')
+
+
+class CollaboratorExporter(BaseExporter):
+    service_key = 'condominium.collaborator'
+    model = 'condominium.Collaborator'
+    headers = ('Condomínio', 'Nome', 'CPF', 'RG', 'E-mail', 'Telefone', 'Tipo de Colaborador', 'Ativo', 'Criado em', 'Atualizado em')
+    fields = ('condominium__name', 'name', 'cpf', 'rg', 'email', 'phone_number', 'type_collaborator__name', 'is_active', 'created_at', 'updated_at')
+    select_related = ('condominium', 'type_collaborator')
+
+
+class CondominiumExporter(BaseExporter):
+    service_key = 'condominium.condominium'
+    model = 'condominium.Condominium'
+    headers = ('Código', 'Nome', 'CNPJ', 'Ativo', 'Inscrição Estadual', 'Inscrição Municipal', 'Tipo de Condomínio', 'Estrutura do Condomínio', 'Endereço', 'Criado em', 'Atualizado em')
+    fields = ('code', 'name', 'cnpj', 'is_active', 'state_registration', 'municipal_registration', 'type_condominium__name', 'struction_condominium__name', 'address', 'created_at', 'updated_at')
+    select_related = ('type_condominium', 'struction_condominium')
+
+
+# ---------------------------------------------------------------------------
 # Registro no registry global (importação deste módulo registra os serviços)
 # ---------------------------------------------------------------------------
 _DEFAULT_EXPORTERS = (
@@ -451,12 +538,23 @@ _DEFAULT_EXPORTERS = (
     VotingTypeExporter,
     AssemblyStatusExporter,
     TopicOptionExporter,
+    TypesCollaboratorExporter,
+    CollaboratorExporter,
+    CondominiumExporter,
     CondominiumsExporter,
     CollaboratorsExporter,
     UnitsExporter,
     ResidentsExporter,
     VehiclesExporter,
     StructionCondominiumExporter,
+    CondominiumUnitExporter,
+    ResidentExporter,
+    VehicleExporter,
+    EmergencyExporter,
+    AnimalExporter,
+    VisitorExporter,
+    RealEstateAgencyExporter,
+    DocumentsExporter,
 )
 
 for _exporter_cls in _DEFAULT_EXPORTERS:

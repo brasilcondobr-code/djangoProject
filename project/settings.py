@@ -149,6 +149,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 
 # Local onde você salva os arquivos estáticos durante o desenvolvimento
 STATICFILES_DIRS = [
+    '/app/domains/gatehouse/static',
+
     os.path.join(BASE_DIR, 'domains/administrative/static'),
     os.path.join(BASE_DIR, 'domains/condominium/static'),
     os.path.join(BASE_DIR, 'domains/email_service/static'),
@@ -315,6 +317,9 @@ JAZZMIN_SETTINGS = {
         "parameters.VotingType": "fa-brands fa-avianex",
         "parameters.AssemblyStatus": "fa-brands fa-untappd",
         "parameters.TopicOption": "fa-brands fa-tencent-weibo",
+        "parameters.ConciergeServiceCategory": "fa-solid fa-concierge-bell",
+        "parameters.CategoryPhone": "fa-solid fa-tags",
+        "parameters.TypesOfRental": "fas fa-file-signature",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",
@@ -342,10 +347,8 @@ JAZZMIN_SETTINGS = {
         "gatehouse.UsefulPhoneNumber": "fa-solid fa-phone",
         "gatehouse.Order": "fa-solid fa-box",
         "gatehouse.VisitorsRegister": "fa-solid fa-clipboard-list",
-        "gatehouse.Correspondence": "fa-solid fa-envelope",
         "gatehouse.Occurrence": "fa-solid fa-hands-asl-interpreting",
         "gatehouse.Bag": "fa-solid fa-suitcase-rolling",
-        "gatehouse.ElectronicTimeClock": "fa-solid fa-clipboard",
         "administrative.Bank": "fas fa-university",
         "administrative.Circular": "fas fa-bullhorn",
         "administrative.Documents": "fas fa-file-alt",

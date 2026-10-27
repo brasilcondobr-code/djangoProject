@@ -1,0 +1,40 @@
+/* CSS específico para os selects do módulo 02. Passagens de Serviços */
+#servicetransition_form select {
+    color: #212529 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #ced4da !important;
+}
+
+#servicetransition_form select option {
+    color: #212529 !important;
+    background-color: #ffffff !important;
+}
+
+#servicetransition_form select:focus {
+    color: #212529 !important;
+    background-color: #e2e6e8 !important;
+    border-color: #86b7fe !important;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+#servicetransition_form select:hover {
+    border-color: #a0a5a9 !important;
+}
+
+#servicetransition_form select option:checked {
+    color: #212529 !important;
+    background-color: #e9ecef !important;
+}
+
+#servicetransition_form select:disabled {
+    color: #6c757d !important;
+    background-color: #e9ecef !important;
+}
+
+/* Campo Categoria na aba Objetos ocupa 100% da célula */
+#servicetransition_form select[name$="-categoryObj"] {
+    width: 100%;
+}
+
+

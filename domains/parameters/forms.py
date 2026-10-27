@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone, TypesOfRental
 
 
 
@@ -466,3 +466,166 @@ class TopicOptionForm(forms.ModelForm):
 
 
 
+class ConciergeServiceCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ConciergeServiceCategory
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição da categoria de serviço portaria',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para a categoria de serviço portaria.',
+            'is_active': 'Define se a categoria de serviço portaria poderá ser utilizada em novos registros.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'Informe a descrição da categoria de serviço portaria.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('Informe a descrição da categoria de serviço portaria.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = ConciergeServiceCategory.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe uma categoria de serviço portaria com esta descrição.'
+            )
+
+        return description
+
+
+class CategoryPhoneForm(forms.ModelForm):
+    class Meta:
+        model = CategoryPhone
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe o nome da categoria de telefone',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'name': 'Nome',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'name': 'Informe um nome único para a categoria de telefone.',
+            'is_active': 'Define se a categoria de telefone poderá ser utilizada em novos registros.',
+        }
+        error_messages = {
+            'name': {
+                'required': 'Informe o nome da categoria de telefone.',
+            },
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if not name:
+            raise forms.ValidationError('Informe o nome da categoria de telefone.')
+
+        name = name.strip()
+
+        if not name:
+            raise forms.ValidationError('O nome não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = CategoryPhone.objects.filter(name__iexact=name)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe uma categoria de telefone com este nome.'
+            )
+
+        return name
+
+
+class TypesOfRentalForm(forms.ModelForm):
+    class Meta:
+        model = TypesOfRental
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição do tipo de locação',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'numberOfAppointments': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a quantidade de agendamentos',
+            }),
+            'numberOfReservations': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a quantidade de reservas',
+            }),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+            'numberOfAppointments': 'Quantidade Agendamentos',
+            'numberOfReservations': 'Quantidade Reservas',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para o tipo de locação.',
+            'is_active': 'Define se o tipo de locação poderá ser utilizado em novos registros.',
+            'numberOfAppointments': 'Informe a quantidade mínima de agendamentos (mínimo 1). Deixe em branco se não houver limite.',
+            'numberOfReservations': 'Informe a quantidade mínima de reservas (mínimo 1). Deixe em branco se não houver limite.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'Informe a descrição do tipo de locação.',
+            },
+            'numberOfAppointments': {
+                'min_value': 'A quantidade de agendamentos deve ser no mínimo 1.',
+            },
+            'numberOfReservations': {
+                'min_value': 'A quantidade de reservas deve ser no mínimo 1.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('Informe a descrição do tipo de locação.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = TypesOfRental.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe um tipo de locação com esta descrição.'
+            )
+
+        return description

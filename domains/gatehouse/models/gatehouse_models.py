@@ -1,82 +1,781 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
+
 
 class Shift(models.Model):
     class Meta:
-        app_label = 'gatehouse'
+        app_label = "gatehouse"
         verbose_name = "01. Plantão"
         verbose_name_plural = "01. Plantões"
 
+    collaborator = models.ForeignKey(
+        "condominium.Collaborator",
+        on_delete=models.CASCADE,
+        verbose_name="Colaborador",
+    )
+    condominium = models.ForeignKey(
+        "condominium.Condominium",
+        on_delete=models.CASCADE,
+        verbose_name="Condomínio",
+    )
+    startDate = models.DateField(
+        verbose_name="Data Inicial",
+        help_text="Data inicial do plantão",
+    )
+    endDate = models.DateField(
+        verbose_name="Data Final",
+        help_text="Data final do plantão",
+    )
+    title = models.CharField(
+        "Título",
+        max_length=255,
+        help_text="Título do plantão",
+        blank=True,
+    )
+    status = models.ForeignKey(
+        "parameters.AssemblyStatus",
+        on_delete=models.CASCADE,
+        verbose_name="Status",
+        help_text="Status do plantão",
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se o plantão está ativo",
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário que criou o plantão",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da criação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
+
     def __str__(self):
-        return "01. Plantão"
+        return "01. Plantão %s" % self.id
+
+
+class ShiftScale(models.Model):
+    class Meta:
+        app_label = "gatehouse"
+        verbose_name = "01. Escala"
+        verbose_name_plural = "01. Escalas"
+
+    def __str__(self):
+        return "Escala %s - %s" % (self.description, self.shiftDate)
+
+    shift = models.ForeignKey(
+        "gatehouse.Shift",
+        on_delete=models.CASCADE,
+        verbose_name="Plantão",
+        help_text="Plantão ao qual esta escala pertence",
+        related_name="scales",
+    )
+    description = models.CharField(
+        "Descrição",
+        max_length=255,
+        help_text="Descrição da escala",
+        blank=True,
+    )
+    shiftDate = models.DateField(
+        "Data da Escala",
+        help_text="Data da escala",
+    )
+    startTime = models.TimeField(
+        "Hora Inicial",
+        help_text="Hora inicial da escala",
+    )
+    endTime = models.TimeField(
+        "Hora Final",
+        help_text="Hora final da escala",
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se a escala está ativa",
+    )
+
 
 class ServiceTransition(models.Model):
     class Meta:
-        app_label = 'gatehouse'
+        app_label = "gatehouse"
         verbose_name = "02. Passagem de Serviço"
         verbose_name_plural = "02. Passagens de Serviços"
+        ordering = ["-releaseDate", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["condominium", "collaboratorEnd", "collaboratorStart", "releaseDate"],
+                name="uniq_svctrans_cond_end_date",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["releaseDate"], name="idx_svctrans_release_date"),
+        ]
+
+    condominium = models.ForeignKey(
+        "condominium.Condominium",
+        on_delete=models.CASCADE,
+        related_name="service_transitions",
+        verbose_name="Condomínio",
+        blank=False,
+        null=False,
+    )
+    collaboratorEnd = models.ForeignKey(
+        "condominium.Collaborator",
+        on_delete=models.CASCADE,
+        related_name="service_transitions_end",
+        verbose_name="Colaborador de saída",
+        blank=False,
+        null=False,
+    )
+    collaboratorStart = models.ForeignKey(
+        "condominium.Collaborator",
+        on_delete=models.CASCADE,
+        related_name="service_transitions_start",
+        verbose_name="Colaborador de entrada",
+        blank=False,
+        null=False,
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=False,
+        null=False,
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
-        return "02. Passagem de Serviço"
+        return "02. Passagem de Serviço %s" % self.id
+
+
+class ServiceTransitionObject(models.Model):
+    class Meta:
+        app_label = "gatehouse"
+        verbose_name = "02. Objeto da Passagem de Serviço"
+        verbose_name_plural = "02. Objetos da Passagem de Serviço"
+        ordering = ["shiftDate", "id"]
+
+    service_transition = models.ForeignKey(
+        "gatehouse.ServiceTransition",
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="Passagem de serviço",
+    )
+    categoryObj = models.ForeignKey(
+        "parameters.ConciergeServiceCategory",
+        on_delete=models.CASCADE,
+        related_name="parameters",
+        verbose_name="Categoria",
+        blank=False,
+        null=False,
+    )
+    itemObj = models.CharField(
+        "Item",
+        max_length=255,
+        blank=False,
+        null=False,
+    )
+    amountObj = models.IntegerField(
+        "Quantidade",
+        default=1,
+        validators=[MinValueValidator(1)],
+    )
+    shiftDate = models.DateField(
+        "Data do turno",
+        default=timezone.localdate,
+        blank=False,
+        null=False,
+    )
+
+    def __str__(self):
+        return "%s (%s)" % (self.itemObj, self.amountObj)
+
 
 class UsefulPhoneNumber(models.Model):
+    """Registro de telefone útil da portaria (módulo 03)."""
+
     class Meta:
-        app_label = 'gatehouse'
+        app_label = "gatehouse"
         verbose_name = "03. Telefone Útil"
         verbose_name_plural = "03. Telefones Úteis"
+        ordering = ["name", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("condominium", "categoryPhone", "name", "releaseDate"),
+                name="uniq_uphone_cond_cat_name_date",
+            ),
+        ]
+
+    condominium = models.ForeignKey(
+        "condominium.Condominium",
+        on_delete=models.CASCADE,
+        verbose_name="Condomínio",
+        blank=False,
+        null=False,
+    )
+    categoryPhone = models.ForeignKey(
+        "parameters.CategoryPhone",
+        on_delete=models.CASCADE,
+        verbose_name="Categoria do telefone",
+        blank=True,
+        null=True,
+        help_text="Categoria do telefone (obrigatória no formulário)",
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=True,
+        null=True,
+        help_text="Data de lançamento (obrigatória no formulário)",
+    )
+    name = models.CharField(
+        "Nome",
+        max_length=255,
+        blank=False,
+        null=False,
+    )
+    phone1 = models.CharField(
+        "Telefone 1",
+        max_length=25,
+        blank=False,
+        null=False,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone2 = models.CharField(
+        "Telefone 2",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone3 = models.CharField(
+        "Telefone 3",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone4 = models.CharField(
+        "Telefone 4",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    phone5 = models.CharField(
+        "Telefone 5",
+        max_length=25,
+        blank=True,
+        help_text="Digite no seguinte formato: (99) 99999-9999",
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se o telefone está ativo",
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário que criou o registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da criação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
 
     def __str__(self):
+        if self.name:
+            return ("%s - %s" % (self.name, self.phone1 or "")).strip(" -")
         return "03. Telefone Útil"
 
+
 class Order(models.Model):
+    """Registro de encomenda recebida na portaria (módulo 04)."""
+
     class Meta:
-        app_label = 'gatehouse'
+        app_label = "gatehouse"
         verbose_name = "04. Encomenda"
         verbose_name_plural = "04. Encomendas"
+        ordering = ["-releaseDate", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("unit", "releaseDate", "documentNumber"),
+                name="uniq_order_unit_date_doc",
+            ),
+        ]
+
+    unit = models.ForeignKey(
+        "residents.CondominiumUnit",
+        on_delete=models.CASCADE,
+        related_name="orders",
+        verbose_name="Unidade",
+        blank=False,
+        null=False,
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=True,
+        null=True,
+        help_text="Data de chegada da encomenda (preenchida pelo servidor na criação)",
+    )
+    documentNumber = models.CharField(
+        "Número do documento",
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Conteúdo numérico ou alfanumérico, sem máscara (opcional)",
+    )
+    fileImage = models.FileField(
+        "Arquivo",
+        upload_to="gatehouse/orders/",
+        blank=True,
+        null=False,
+        help_text=(
+            "Imagem ou PDF de até 10 MB (.jpg, .jpeg, .png, .pdf). "
+            "Opcional quando houver ao menos uma foto anexada"
+        ),
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se a encomenda está ativa",
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário que criou o registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da criação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
 
     def __str__(self):
+        if self.documentNumber:
+            return "Encomenda %s" % self.documentNumber
+        if self.releaseDate:
+            return "Encomenda %s" % self.releaseDate
         return "04. Encomenda"
 
-class VisitorsRegister(models.Model):
+
+class OrderPhoto(models.Model):
+    """Foto anexada a uma encomenda (módulo 04), via botão 'Foto'."""
+
     class Meta:
-        app_label = 'gatehouse'
+        app_label = "gatehouse"
+        verbose_name = "Foto de Encomenda"
+        verbose_name_plural = "Fotos de Encomenda"
+        ordering = ["id"]
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="photos",
+        verbose_name="Encomenda",
+        blank=False,
+        null=False,
+    )
+    file = models.FileField(
+        "Foto",
+        upload_to="gatehouse/orders/photos/",
+        blank=False,
+        null=False,
+        help_text="Imagem de até 10 MB (.jpg, .jpeg, .png)",
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário que anexou a foto",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da anexação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
+
+    def __str__(self):
+        if self.order_id:
+            return "Foto %s — %s" % (self.pk, self.order)
+        return "Foto de Encomenda"
+
+
+class VisitorsRegister(models.Model):
+    """Registro de visita de um visitante na portaria (módulo 05).
+
+    Cada linha é um registro simples: um visitante em uma data. O mesmo
+    visitante pode ter vários registros em datas diferentes (unicidade
+    por visitor + visitDate). ``created_by`` representa o usuário da
+    última gravação (decisão de requisito do módulo 05).
+    """
+
+    class Meta:
+        app_label = "gatehouse"
+        ordering = ["-visitDate", "-id"]
         verbose_name = "05. Reg. Visitante"
         verbose_name_plural = "05. Reg. Visitantes"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("visitor", "visitDate"),
+                name="uniq_visitreg_visitor_date",
+            ),
+        ]
+
+    visitor = models.ForeignKey(
+        "residents.Visitor",
+        on_delete=models.CASCADE,
+        related_name="visit_registers",
+        verbose_name="Visitante",
+        blank=False,
+        null=False,
+        help_text="Visitante responsável pela visita",
+    )
+    visitDate = models.DateField(
+        "Data da visita",
+        blank=True,
+        null=True,
+        help_text=(
+            "Data da visita (obrigatória no formulário; "
+            "preenchida pelo servidor na criação)"
+        ),
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+    )
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário da última gravação do registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
+        if self.visitor_id:
+            return "Visita %s — %s" % (self.visitDate or "s/ data", self.visitor)
         return "05. Reg. Visitante"
 
-class Correspondence(models.Model):
-    class Meta:
-        app_label = 'gatehouse'
-        verbose_name = "06. Correspondência"
-        verbose_name_plural = "06. Correspondências"
-
-    def __str__(self):
-        return "06. Correspondência"
 
 class Occurrence(models.Model):
+    """Ocorrência registrada na portaria (módulo 07).
+
+    Cada linha é uma ocorrência simples em uma data/hora. Unicidade por
+    unidade + data/hora + assunto (sem unidade — valor nulo — o banco
+    permite duplicatas, decisão de requisito padrão do módulo 04).
+    ``created_user`` representa o usuário da última gravação (decisão de
+    requisito do módulo 07).
+    """
+
     class Meta:
-        app_label = 'gatehouse'
+        app_label = "gatehouse"
+        ordering = ["-releaseDate", "-id"]
         verbose_name = "07. Ocorrência"
         verbose_name_plural = "07. Ocorrências"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("unit", "releaseDate", "subject"),
+                name="uniq_occurrence_unit_date_subject",
+            ),
+        ]
+
+    unit = models.ForeignKey(
+        "residents.CondominiumUnit",
+        on_delete=models.CASCADE,
+        related_name="occurrences",
+        verbose_name="Unidade",
+        blank=True,
+        null=True,
+        help_text="Unidade da ocorrência (opcional)",
+    )
+    releaseDate = models.DateTimeField(
+        "Data/hora da ocorrência",
+        blank=True,
+        null=True,
+        help_text=(
+            "Data e hora da ocorrência (obrigatórias no formulário; "
+            "preenchidas pelo servidor na criação)"
+        ),
+    )
+    subject = models.CharField(
+        "Assunto",
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text="Assunto da ocorrência (até 255 caracteres)",
+    )
+    participants = models.ManyToManyField(
+        "condominium.Collaborator",
+        blank=True,
+        related_name="occurrences",
+        verbose_name="Participantes",
+        help_text="Colaboradores participantes (opcional)",
+    )
+    description = models.TextField(
+        "Descrição",
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+    )
+    created_user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Criado por",
+        help_text="Usuário da última gravação do registro",
+        editable=False,
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
+        if self.subject:
+            return "Ocorrência %s" % self.subject
         return "07. Ocorrência"
 
+
 class Bag(models.Model):
+    """Malote (08): condomínio, remetente e itens vinculados.
+
+    Decisões aprovadas: CRUD completo com edição liberada; ``condominium``
+    aponta para Condominium (``related_name="condominium"``); unicidade
+    composta (condominium + releaseDate + title + sender); ``releaseDate``
+    é preenchida pelo servidor na criação; ``recipient`` é opcional;
+    ``handDelivery`` default False; sem campos de usuário de auditoria
+    (apenas is_active/created_at/updated_at).
+    """
+
     class Meta:
-        app_label = 'gatehouse'
+        app_label = "gatehouse"
         verbose_name = "08. Malote"
         verbose_name_plural = "08. Malotes"
+        ordering = ["-releaseDate", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("condominium", "releaseDate", "title", "sender"),
+                name="uniq_bag_condominium_date_title_sender",
+            )
+        ]
+
+    condominium = models.ForeignKey(
+        "condominium.Condominium",
+        on_delete=models.CASCADE,
+        related_name="condominium",
+        verbose_name="Condomínio",
+        blank=False,
+        null=True,
+        help_text="Condomínio de destino do malote",
+    )
+    releaseDate = models.DateField(
+        "Data de lançamento",
+        blank=True,
+        null=True,
+        help_text="Data de lançamento (preenchida pelo servidor na criação)",
+    )
+    title = models.CharField(
+        "Título",
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text="Título do malote (até 255 caracteres)",
+    )
+    sender = models.ForeignKey(
+        "condominium.Collaborator",
+        on_delete=models.CASCADE,
+        related_name="sent_bags",
+        verbose_name="Remetente",
+        blank=False,
+        null=True,
+        help_text="Colaborador remetente do malote",
+    )
+    recipient = models.CharField(
+        "Destinatário",
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Destinatário do malote (até 255 caracteres, opcional)",
+    )
+    deliveryDate = models.DateField(
+        "Data de entrega",
+        blank=False,
+        null=True,
+        help_text="Data de entrega do malote",
+    )
+    handDelivery = models.BooleanField(
+        "Entrega manual",
+        blank=True,
+        null=True,
+        default=False,
+        help_text="Indica se houve entrega em mão (Sim/Não); padrão Não",
+    )
+    observations = models.TextField(
+        "Observações",
+        blank=True,
+        null=True,
+        help_text="Observações sobre o malote (opcional)",
+    )
+    is_active = models.BooleanField(
+        "Ativo",
+        default=True,
+        help_text="Indica se o malote está ativo",
+    )
+    created_at = models.DateTimeField(
+        "Criado em",
+        auto_now_add=True,
+        help_text="Data e hora da criação",
+    )
+    updated_at = models.DateTimeField(
+        "Atualizado em",
+        auto_now=True,
+        help_text="Data e hora da última atualização",
+    )
 
     def __str__(self):
-        return "08. Malote"
+        if self.title and self.condominium_id:
+            return "Malote %s - %s" % (self.title, self.condominium)
+        return "Malote %s" % (self.title or "sem título")
 
-class ElectronicTimeClock(models.Model):
+
+class BagItem(models.Model):
+    """Item vinculado a um malote (aba Itens)."""
+
     class Meta:
-        app_label = 'gatehouse'
-        verbose_name = "09. Ponto Eletrônico"
-        verbose_name_plural = "09. Pontos Eletrônicos"
+        app_label = "gatehouse"
+        verbose_name = "08. Item de Malote"
+        verbose_name_plural = "08. Itens de Malote"
+        ordering = ["id"]
+
+    bag = models.ForeignKey(
+        "gatehouse.Bag",
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="Malote",
+    )
+    description = models.CharField(
+        "Descrição",
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text="Descrição do item (até 255 caracteres)",
+    )
+    documentNumber = models.CharField(
+        "Número do documento",
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="Número do documento (opcional, até 30 caracteres)",
+    )
+    amount = models.PositiveSmallIntegerField(
+        "Quantidade",
+        blank=False,
+        null=False,
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(999)],
+        help_text="Quantidade do item (mínimo 1, máximo 999)",
+    )
+    value = models.DecimalField(
+        "Valor",
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Valor do item (até 10 dígitos e 2 casas decimais, opcional)",
+    )
 
     def __str__(self):
-        return "09. Ponto Eletrônico"
+        return "%s (x%s)" % (self.description, self.amount)
