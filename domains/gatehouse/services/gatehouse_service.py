@@ -29,7 +29,3 @@ class GatehouseService:
     @staticmethod
     def get_all_bags():
         return GatehouseSelector.get_all_bags()
-
-    @staticmethod
-    def get_all_electronic_time_clocks():
-        return GatehouseSelector.get_all_electronic_time_clocks()

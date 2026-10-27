@@ -779,13 +779,3 @@ class BagItem(models.Model):
 
     def __str__(self):
         return "%s (x%s)" % (self.description, self.amount)
-
-
-class ElectronicTimeClock(models.Model):
-    class Meta:
-        app_label = "gatehouse"
-        verbose_name = "09. Ponto Eletrônico"
-        verbose_name_plural = "09. Pontos Eletrônicos"
-
-    def __str__(self):
-        return "09. Ponto Eletrônico"

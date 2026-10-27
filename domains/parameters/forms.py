@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone, TypesOfRental
 
 
 
@@ -562,3 +562,70 @@ class CategoryPhoneForm(forms.ModelForm):
             )
 
         return name
+
+
+class TypesOfRentalForm(forms.ModelForm):
+    class Meta:
+        model = TypesOfRental
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição do tipo de locação',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'numberOfAppointments': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a quantidade de agendamentos',
+            }),
+            'numberOfReservations': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a quantidade de reservas',
+            }),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+            'numberOfAppointments': 'Quantidade Agendamentos',
+            'numberOfReservations': 'Quantidade Reservas',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para o tipo de locação.',
+            'is_active': 'Define se o tipo de locação poderá ser utilizado em novos registros.',
+            'numberOfAppointments': 'Informe a quantidade mínima de agendamentos (mínimo 1). Deixe em branco se não houver limite.',
+            'numberOfReservations': 'Informe a quantidade mínima de reservas (mínimo 1). Deixe em branco se não houver limite.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'Informe a descrição do tipo de locação.',
+            },
+            'numberOfAppointments': {
+                'min_value': 'A quantidade de agendamentos deve ser no mínimo 1.',
+            },
+            'numberOfReservations': {
+                'min_value': 'A quantidade de reservas deve ser no mínimo 1.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('Informe a descrição do tipo de locação.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = TypesOfRental.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe um tipo de locação com esta descrição.'
+            )
+
+        return description

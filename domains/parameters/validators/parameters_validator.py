@@ -62,3 +62,9 @@ class ParametersValidator:
         description = data.get('description', '')
         if not description or not description.strip():
             raise ValueError("A descrição é obrigatória.")
+
+    @staticmethod
+    def validate_types_of_rental(data):
+        description = data.get('description', '')
+        if not description or not description.strip():
+            raise ValueError("A descrição é obrigatória.")

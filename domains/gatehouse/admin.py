@@ -15,7 +15,7 @@ from domains.gatehouse.forms import (
 from domains.gatehouse.models import (
     Shift, ShiftScale, ServiceTransition,
     ServiceTransitionObject, UsefulPhoneNumber, Order, VisitorsRegister,
-    Occurrence, Bag, BagItem, ElectronicTimeClock,
+    Occurrence, Bag, BagItem,
 )
 
 
@@ -553,8 +553,3 @@ class BagAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related(
             "condominium", "sender"
         ).prefetch_related("items")
-
-
-@admin.register(ElectronicTimeClock)
-class ElectronicTimeClockAdmin(admin.ModelAdmin):
-    list_display = ("id", "__str__")

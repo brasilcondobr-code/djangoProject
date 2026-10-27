@@ -9,8 +9,9 @@ from .models import (
     Chartofaccountstype, Accountingclasstypes, ChartofaccountsMaingroup,
     ChartofaccountsSubgroup, ChartofaccountsStatus, VotingType,
     AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone,
+    TypesOfRental,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm, TypesOfRentalForm
 
 
 @admin.register(TypesCondominium)
@@ -351,5 +352,31 @@ class CategoryPhoneAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Dados principais', {
             'fields': ('name', 'is_active'),
+        }),
+    )
+
+
+@admin.register(TypesOfRental)
+class TypesOfRentalAdmin(admin.ModelAdmin):
+    form = TypesOfRentalForm
+    list_display = ('description', 'is_active', 'created_at', 'updated_at')
+    list_display_links = ('description',)
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    empty_value_display = '-'
+
+    fieldsets = (
+        ('Dados principais', {
+            'fields': ('description', 'is_active'),
+        }),
+        ('Limites', {
+            'fields': ('numberOfAppointments', 'numberOfReservations'),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': ('created_at', 'updated_at'),
         }),
     )
