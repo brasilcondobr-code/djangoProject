@@ -1,17 +1,220 @@
-from django.contrib import admin
-from domains.reservations.models import Reforms, Rentals, MaintenanceReservations, MoveReservations
+from django.contrib import admin, messages
+
+from domains.reservations.forms import RentalsForm
+from domains.reservations.models import (
+    Reforms,
+    Rentals,
+    MaintenanceReservations,
+    MoveReservations,
+)
+from domains.reservations.services.rentals_service import RentalsService
+
 
 @admin.register(Rentals)
 class RentalsAdmin(admin.ModelAdmin):
-    pass
+    """Administração do módulo 01. Locações.
+
+    Edição permitida somente em ``Agendamento``. ``Reservado`` e
+    ``Finalizado`` ficam somente leitura, inclusive contra POST manipulado
+    (``has_change_permission`` retorna ``False`` para esses registros).
+    """
+
+    form = RentalsForm
+    list_display = (
+        "id",
+        "condominium",
+        "typesOfRentals",
+        "startDate",
+        "endDate",
+        "applicant",
+        "rentalPrice",
+        "charge_amount",
+        "status",
+        "is_active",
+    )
+    list_display_links = ("id", "applicant")
+    list_filter = (
+        "typesOfRentals",
+        "status",
+        "charge_amount",
+        "is_active",
+        "condominium__condominium",
+    )
+    search_fields = (
+        "applicant",
+        "condominium__unit_number",
+        "condominium__tower",
+        "condominium__condominium__name",
+        "typesOfRentals__description",
+    )
+    list_select_related = (
+        "condominium",
+        "condominium__condominium",
+        "typesOfRentals",
+        "created_by",
+        "updated_by",
+    )
+    autocomplete_fields = ("condominium", "typesOfRentals")
+    date_hierarchy = "startDate"
+    ordering = ("-startDate", "-id")
+    list_per_page = 25
+    empty_value_display = "-"
+    jazzmin_section_order = ["Principal", "Auditoria"]
+
+    readonly_fields = (
+        "status",
+        "errorStatus",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at",
+    )
+
+    fieldsets = (
+        (
+            "Principal",
+            {
+                "fields": (
+                    "condominium",
+                    "typesOfRentals",
+                    "startDate",
+                    "endDate",
+                    "applicant",
+                    "rentalPrice",
+                    "charge_amount",
+                    "observations",
+                ),
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "is_active",
+                    "status",
+                    "errorStatus",
+                    "created_by",
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
+    )
+
+    actions = ("reservar_locacoes", "finalizar_locacoes")
+
+    class Media:
+        js = (
+            "js/utils.js",
+            "js/rentals_admin.js",
+        )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            "condominium",
+            "condominium__condominium",
+            "typesOfRentals",
+            "created_by",
+            "updated_by",
+        )
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and obj.status != Rentals.Status.AGENDAMENTO:
+            return False
+        return super().has_change_permission(request, obj)
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj is not None and obj.status != Rentals.Status.AGENDAMENTO:
+            readonly = [field.name for field in self.model._meta.fields]
+        return readonly
+
+    def save_model(self, request, obj, form, change):
+        # O formulário já validou período, preço e capacidade (com lock) dentro
+        # da transação do Admin; aqui apenas auditoria e persistência.
+        RentalsService.save_instance(
+            obj,
+            user=request.user,
+            is_new=not change,
+            check_capacity=False,
+        )
+
+    # ------------------------------------------------------------------
+    # Ações em lote
+    # ------------------------------------------------------------------
+    @admin.action(
+        description="Reservar locações selecionadas",
+        permissions=("change",),
+    )
+    def reservar_locacoes(self, request, queryset):
+        results = RentalsService.reserve_rentals(
+            list(queryset.values_list("pk", flat=True)),
+            user=request.user,
+        )
+        self._report_transition_results(request, results, "reservada(s)")
+
+    @admin.action(
+        description="Finalizar locações selecionadas",
+        permissions=("change",),
+    )
+    def finalizar_locacoes(self, request, queryset):
+        results = RentalsService.finalize_rentals(
+            list(queryset.values_list("pk", flat=True)),
+            user=request.user,
+        )
+        self._report_transition_results(request, results, "finalizada(s)")
+
+    def _report_transition_results(self, request, results, success_label):
+        successes = [item for item in results if item["success"]]
+        failures = [item for item in results if not item["success"]]
+
+        if successes:
+            ids = ", ".join(f"#{item['pk']}" for item in successes[:20])
+            if len(successes) > 20:
+                ids += f" ... e mais {len(successes) - 20}"
+            self.message_user(
+                request,
+                f"{len(successes)} locação(ões) {success_label} com sucesso: "
+                f"{ids}.",
+                level=messages.SUCCESS,
+            )
+        if failures:
+            self.message_user(
+                request,
+                f"{len(failures)} locação(ões) rejeitada(s):",
+                level=messages.WARNING,
+            )
+            for item in failures[:20]:
+                self.message_user(
+                    request,
+                    f"#{item['pk']}: {item['message']}",
+                    level=messages.WARNING,
+                )
+            if len(failures) > 20:
+                self.message_user(
+                    request,
+                    f"... e mais {len(failures) - 20} rejeição(ões).",
+                    level=messages.WARNING,
+                )
+        if not successes and not failures:
+            self.message_user(
+                request,
+                "Nenhuma locação selecionada.",
+                level=messages.WARNING,
+            )
+
 
 @admin.register(MaintenanceReservations)
 class MaintenanceReservationsAdmin(admin.ModelAdmin):
     pass
 
+
 @admin.register(MoveReservations)
 class MoveReservationsAdmin(admin.ModelAdmin):
     pass
+
 
 @admin.register(Reforms)
 class ReformsAdmin(admin.ModelAdmin):
