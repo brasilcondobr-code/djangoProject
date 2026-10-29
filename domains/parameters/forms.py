@@ -1,5 +1,5 @@
 from django import forms
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone, TypesOfRental
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone, TypesOfRental, TypesOfMaintenanceReservations
 
 
 
@@ -626,6 +626,55 @@ class TypesOfRentalForm(forms.ModelForm):
         if queryset.exists():
             raise forms.ValidationError(
                 'Já existe um tipo de locação com esta descrição.'
+            )
+
+        return description
+
+
+class TypesOfMaintenanceReservationsForm(forms.ModelForm):
+    class Meta:
+        model = TypesOfMaintenanceReservations
+        fields = '__all__'
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição do tipo de manutenção',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para o tipo de manutenção.',
+            'is_active': 'Define se o tipo de manutenção poderá ser utilizado em novos registros.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'Informe a descrição do tipo de manutenção.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError('Informe a descrição do tipo de manutenção.')
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError('A descrição não pode conter apenas espaços.')
+
+        instance = self.instance
+        queryset = TypesOfMaintenanceReservations.objects.filter(description__iexact=description)
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe um tipo de manutenção com esta descrição.'
             )
 
         return description

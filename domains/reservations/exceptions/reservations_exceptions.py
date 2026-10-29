@@ -21,3 +21,18 @@ class RentalCapacityError(RentalError):
 class RentalTransitionError(RentalError):
     """Transição de status não permitida para a locação."""
     pass
+
+
+class MaintenanceReservationError(ReservationsException):
+    """Erro de regra de negócio no módulo 02. Manutenções."""
+    pass
+
+
+class MaintenanceReservationValidationError(MaintenanceReservationError):
+    """Dados inválidos informados para uma manutenção."""
+    pass
+
+
+class MaintenanceReservationTransitionError(MaintenanceReservationError):
+    """Transição de status não permitida para a manutenção."""
+    pass

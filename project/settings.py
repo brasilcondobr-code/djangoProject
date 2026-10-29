@@ -341,7 +341,6 @@ JAZZMIN_SETTINGS = {
         "reservations.Rentals": "fa-solid fa-location-arrow",
         "reservations.MaintenanceReservations": "fas fa-tools",
         "reservations.MoveReservations": "fas fa-truck-moving",
-        "reservations.Reforms": "fas fa-hammer",
         "gatehouse.Shift": "fa-solid fa-sun",
         "gatehouse.ServiceTransition": "fa-solid fa-people-arrows",
         "gatehouse.UsefulPhoneNumber": "fa-solid fa-phone",

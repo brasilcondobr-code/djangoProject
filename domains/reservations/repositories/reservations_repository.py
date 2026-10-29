@@ -1,5 +1,5 @@
 from domains.reservations.models import (
-    Rentals, MaintenanceReservations, MoveReservations, Reforms
+    Rentals, MaintenanceReservations, MoveReservations
 )
 
 
@@ -13,12 +13,39 @@ class ReservationsRepository:
         return MaintenanceReservations.objects.all()
 
     @staticmethod
-    def get_all_move_reservations():
-        return MoveReservations.objects.all()
+    def get_maintenance_reservation_by_id(maintenance_id):
+        try:
+            return MaintenanceReservations.objects.select_related(
+                "condominium",
+                "typesOfMaintenance",
+                "created_by",
+                "updated_by",
+            ).get(pk=maintenance_id)
+        except MaintenanceReservations.DoesNotExist:
+            return None
 
     @staticmethod
-    def get_all_reforms():
-        return Reforms.objects.all()
+    def get_maintenance_reservation_for_update(maintenance_id):
+        """Obtém a manutenção com bloqueio de linha (exige transação ativa)."""
+        return MaintenanceReservations.objects.select_for_update(
+            of=("self",)
+        ).select_related(
+            "condominium", "typesOfMaintenance"
+        ).get(pk=maintenance_id)
+
+    @staticmethod
+    def create_maintenance_reservation(maintenance):
+        maintenance.save()
+        return maintenance
+
+    @staticmethod
+    def update_maintenance_reservation(maintenance):
+        maintenance.save()
+        return maintenance
+
+    @staticmethod
+    def get_all_move_reservations():
+        return MoveReservations.objects.all()
 
     @staticmethod
     def get_rental_by_id(rental_id):

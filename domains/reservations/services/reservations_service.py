@@ -13,7 +13,3 @@ class ReservationsService:
     @staticmethod
     def get_all_move_reservations():
         return ReservationsSelector.get_all_move_reservations()
-
-    @staticmethod
-    def get_all_reforms():
-        return ReservationsSelector.get_all_reforms()

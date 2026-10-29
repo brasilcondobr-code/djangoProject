@@ -8,9 +8,16 @@ exibir o erro no próprio formulário do Admin.
 from django import forms
 from django.db import connection, models
 
-from domains.reservations.exceptions import RentalError, RentalValidationError
-from domains.reservations.models import Rentals
+from domains.reservations.exceptions import (
+    MaintenanceReservationValidationError,
+    RentalError,
+    RentalValidationError,
+)
+from domains.reservations.models import MaintenanceReservations, Rentals
 from domains.reservations.repositories import ReservationsRepository
+from domains.reservations.services.maintenance_reservations_service import (
+    MaintenanceReservationsService,
+)
 from domains.reservations.services.rentals_service import RentalsService
 from domains.reservations.validators import (
     normalize_applicant,
@@ -18,7 +25,14 @@ from domains.reservations.validators import (
     validate_period,
     validate_price,
 )
-from domains.parameters.models import TypesOfRental
+from domains.reservations.validators.maintenance_reservations_validators import (
+    normalize_applicant as normalize_maintenance_applicant,
+    validate_period as validate_maintenance_period,
+)
+from domains.parameters.models import (
+    TypesOfMaintenanceReservations,
+    TypesOfRental,
+)
 from domains.residents.models import CondominiumUnit
 
 
@@ -248,5 +262,157 @@ class RentalsForm(forms.ModelForm):
             RentalsService.assert_capacity_for_form(probe)
         except RentalError as exc:
             raise forms.ValidationError(str(exc))
+
+        return cleaned_data
+
+
+class MaintenanceReservationsForm(forms.ModelForm):
+    """Formulário do módulo 02. Manutenções.
+
+    As regras de domínio (status, transições e auditoria) ficam no service.
+    Aqui ficam apenas validações imediatas e mensagens amigáveis.
+    """
+
+    class Meta:
+        model = MaintenanceReservations
+        fields = (
+            "condominium",
+            "typesOfMaintenance",
+            "startDate",
+            "endDate",
+            "applicant",
+            "observations",
+            "is_active",
+        )
+        widgets = {
+            "condominium": forms.Select(attrs={"class": "form-control"}),
+            "typesOfMaintenance": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+            "startDate": ISODateInput(attrs={"type": "date"}),
+            "endDate": ISODateInput(attrs={"type": "date"}),
+            "applicant": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nome do solicitante",
+                    "maxlength": "255",
+                }
+            ),
+            "observations": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observações (opcional)",
+                }
+            ),
+        }
+        labels = {
+            "condominium": "Unidade",
+            "typesOfMaintenance": "Tipo de manutenção",
+            "startDate": "Data inicial",
+            "endDate": "Data final",
+            "applicant": "Solicitante",
+            "observations": "Observações",
+            "is_active": "Ativo",
+        }
+        help_texts = {
+            "condominium": "Unidade condominial da manutenção.",
+            "typesOfMaintenance": "Tipo que classifica a manutenção.",
+            "startDate": "Data inicial da manutenção (inclusive).",
+            "endDate": (
+                "Data final da manutenção (inclusive); deve ser maior ou "
+                "igual à data inicial."
+            ),
+            "applicant": "Nome do solicitante (até 255 caracteres).",
+            "observations": "Observações sobre a manutenção (opcional).",
+            "is_active": "Define se a manutenção está ativa.",
+        }
+        error_messages = {
+            "condominium": {"required": "Selecione a unidade da manutenção."},
+            "typesOfMaintenance": {
+                "required": "Selecione o tipo de manutenção."
+            },
+            "startDate": {"required": "Informe a data inicial."},
+            "endDate": {"required": "Informe a data final."},
+            "applicant": {"required": "Informe o solicitante."},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if "condominium" in self.fields:
+            self.fields["condominium"].queryset = (
+                CondominiumUnit.objects.select_related("condominium").order_by(
+                    "condominium__name", "tower", "unit_number"
+                )
+            )
+
+        if "typesOfMaintenance" in self.fields:
+            queryset = TypesOfMaintenanceReservations.objects.all()
+            if self.instance.pk and self.instance.typesOfMaintenance_id:
+                queryset = queryset.filter(
+                    models.Q(is_active=True)
+                    | models.Q(pk=self.instance.typesOfMaintenance_id)
+                )
+            else:
+                queryset = queryset.filter(is_active=True)
+            self.fields["typesOfMaintenance"].queryset = queryset.order_by(
+                "description"
+            )
+
+    # ------------------------------------------------------------------
+    # Campos
+    # ------------------------------------------------------------------
+    def clean_applicant(self):
+        try:
+            return normalize_maintenance_applicant(
+                self.cleaned_data.get("applicant")
+            )
+        except MaintenanceReservationValidationError as exc:
+            raise forms.ValidationError(str(exc))
+
+    # ------------------------------------------------------------------
+    # Validação cruzada
+    # ------------------------------------------------------------------
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.instance.pk:
+            if (
+                self.instance.status
+                != MaintenanceReservations.Status.AGENDAMENTO
+            ):
+                raise forms.ValidationError(
+                    "Somente manutenções em Agendamento podem ser editadas."
+                )
+            # Revalida o status sob lock: uma ação em lote pode ter alterado o
+            # registro entre a renderização e o POST.
+            if connection.in_atomic_block:
+                try:
+                    locked = (
+                        ReservationsRepository.get_maintenance_reservation_for_update(
+                            self.instance.pk
+                        )
+                    )
+                except MaintenanceReservations.DoesNotExist:
+                    raise forms.ValidationError(
+                        "Manutenção não encontrada."
+                    )
+                if (
+                    locked.status
+                    != MaintenanceReservations.Status.AGENDAMENTO
+                ):
+                    raise forms.ValidationError(
+                        "Somente manutenções em Agendamento podem ser "
+                        f"editadas. Status atual: '{locked.get_status_display()}'."
+                    )
+
+        start_date = cleaned_data.get("startDate")
+        end_date = cleaned_data.get("endDate")
+        if start_date and end_date:
+            try:
+                validate_maintenance_period(start_date, end_date)
+            except MaintenanceReservationValidationError as exc:
+                self.add_error("endDate", str(exc))
 
         return cleaned_data

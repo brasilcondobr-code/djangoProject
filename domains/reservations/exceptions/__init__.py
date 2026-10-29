@@ -1,4 +1,7 @@
 from domains.reservations.exceptions.reservations_exceptions import (
+    MaintenanceReservationError,
+    MaintenanceReservationTransitionError,
+    MaintenanceReservationValidationError,
     RentalCapacityError,
     RentalError,
     RentalTransitionError,
@@ -12,4 +15,7 @@ __all__ = [
     "RentalValidationError",
     "RentalCapacityError",
     "RentalTransitionError",
+    "MaintenanceReservationError",
+    "MaintenanceReservationValidationError",
+    "MaintenanceReservationTransitionError",
 ]

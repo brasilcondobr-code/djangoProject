@@ -1,3 +1,4 @@
+from . import maintenance_reservations_validators
 from .rentals_validators import (
     normalize_applicant,
     normalize_observations,
@@ -12,4 +13,5 @@ __all__ = [
     "parse_rental_price",
     "validate_period",
     "validate_price",
+    "maintenance_reservations_validators",
 ]

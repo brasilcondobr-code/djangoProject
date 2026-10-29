@@ -146,13 +146,110 @@ class Rentals(models.Model):
 
 
 class MaintenanceReservations(models.Model):
+    """Módulo 02. Manutenções.
+
+    O status é controlado exclusivamente pelo servidor: todo registro nasce
+    em ``Agendamento`` e só avança por ações explícitas (Executar/Finalizar).
+    """
+
+    class Status(models.TextChoices):
+        AGENDAMENTO = "agendamento", "Agendamento"
+        EXECUCAO = "execucao", "Execução"
+        FINALIZADO = "finalizado", "Finalizado"
+
     class Meta:
         app_label = 'reservations'
         verbose_name = "02. Manutenção"
         verbose_name_plural = "02. Manutenções"
+        ordering = ["-startDate", "-id"]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(endDate__gte=models.F("startDate")),
+                name="maintenance_reservations_end_date_gte_start_date",
+                violation_error_message=(
+                    "A data final deve ser maior ou igual à data inicial."
+                ),
+            ),
+        ]
+
+    condominium = models.ForeignKey(
+        "residents.CondominiumUnit",
+        on_delete=models.PROTECT,
+        related_name="maintenance_reservations",
+        verbose_name="Unidade",
+        help_text="Unidade condominial à qual a manutenção pertence",
+    )
+    typesOfMaintenance = models.ForeignKey(
+        "parameters.TypesOfMaintenanceReservations",
+        on_delete=models.PROTECT,
+        related_name="maintenance_reservations",
+        verbose_name="Tipo de manutenção",
+        help_text="Tipo que classifica a manutenção",
+    )
+    startDate = models.DateField(
+        verbose_name="Data inicial",
+        help_text="Data inicial da manutenção (inclusive)",
+    )
+    endDate = models.DateField(
+        verbose_name="Data final",
+        help_text="Data final da manutenção (inclusive)",
+    )
+    applicant = models.CharField(
+        verbose_name="Solicitante",
+        max_length=255,
+        help_text="Nome do solicitante da manutenção",
+    )
+    observations = models.TextField(
+        verbose_name="Observações",
+        blank=True,
+        default="",
+        help_text="Observações sobre a manutenção (opcional)",
+    )
+    is_active = models.BooleanField(
+        verbose_name="Ativo",
+        default=True,
+        help_text="Indica se a manutenção está ativa",
+    )
+    status = models.CharField(
+        verbose_name="Status",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.AGENDAMENTO,
+        editable=False,
+        db_index=True,
+        help_text="Situação definida pelo servidor",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="created_maintenance_reservations",
+        verbose_name="Criado por",
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="updated_maintenance_reservations",
+        verbose_name="Atualizado por",
+    )
+    created_at = models.DateTimeField(
+        verbose_name="Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        verbose_name="Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
-        return "02. Manutenção"
+        identifier = self.applicant or "sem solicitante"
+        prefix = f"02. Manutenção {self.pk}" if self.pk else "02. Manutenção"
+        return f"{prefix} - {identifier}"
 
 class MoveReservations(models.Model):
     class Meta:
@@ -162,12 +259,3 @@ class MoveReservations(models.Model):
 
     def __str__(self):
         return "03. Mudança"
-
-class Reforms(models.Model):
-    class Meta:
-        app_label = 'reservations'
-        verbose_name = "04. Reforma"
-        verbose_name_plural = "04. Reformas"
-
-    def __str__(self):
-        return "04. Reforma"

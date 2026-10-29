@@ -10,8 +10,9 @@ from .models import (
     ChartofaccountsSubgroup, ChartofaccountsStatus, VotingType,
     AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone,
     TypesOfRental,
+    TypesOfMaintenanceReservations,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm, TypesOfRentalForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm, TypesOfRentalForm, TypesOfMaintenanceReservationsForm
 
 
 @admin.register(TypesCondominium)
@@ -374,6 +375,29 @@ class TypesOfRentalAdmin(admin.ModelAdmin):
         }),
         ('Limites', {
             'fields': ('numberOfAppointments', 'numberOfReservations'),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': ('created_at', 'updated_at'),
+        }),
+    )
+
+
+@admin.register(TypesOfMaintenanceReservations)
+class TypesOfMaintenanceReservationsAdmin(admin.ModelAdmin):
+    form = TypesOfMaintenanceReservationsForm
+    list_display = ('description', 'is_active', 'created_at', 'updated_at')
+    list_display_links = ('description',)
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    empty_value_display = '-'
+
+    fieldsets = (
+        ('Dados principais', {
+            'fields': ('description', 'is_active'),
         }),
         ('Auditoria', {
             'classes': ('collapse',),

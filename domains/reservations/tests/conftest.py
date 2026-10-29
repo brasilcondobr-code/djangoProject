@@ -8,6 +8,7 @@ from domains.parameters.models import (
     Addresses,
     States,
     TypesCondominium,
+    TypesOfMaintenanceReservations,
     TypesOfRental,
 )
 from domains.reservations.models import Rentals
@@ -79,6 +80,13 @@ def other_rental_type(db):
         description="Locação de Churrasqueira",
         numberOfAppointments=2,
         numberOfReservations=1,
+    )
+
+
+@pytest.fixture
+def maintenance_type(db):
+    return TypesOfMaintenanceReservations.objects.create(
+        description="Manutenção Preventiva",
     )
 
 
