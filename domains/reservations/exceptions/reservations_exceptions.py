@@ -36,3 +36,18 @@ class MaintenanceReservationValidationError(MaintenanceReservationError):
 class MaintenanceReservationTransitionError(MaintenanceReservationError):
     """Transição de status não permitida para a manutenção."""
     pass
+
+
+class MoveReservationError(ReservationsException):
+    """Erro de regra de negócio no módulo 03. Mudanças."""
+    pass
+
+
+class MoveReservationValidationError(MoveReservationError):
+    """Dados inválidos informados para uma mudança."""
+    pass
+
+
+class MoveReservationTransitionError(MoveReservationError):
+    """Transição de status não permitida para a mudança."""
+    pass

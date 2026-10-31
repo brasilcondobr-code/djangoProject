@@ -252,10 +252,110 @@ class MaintenanceReservations(models.Model):
         return f"{prefix} - {identifier}"
 
 class MoveReservations(models.Model):
+    """Módulo 03. Mudanças.
+
+    O status é controlado exclusivamente pelo servidor: todo registro nasce
+    em ``Agendamento`` e só avança por ações explícitas (Executar/Finalizar).
+    """
+
+    class TypeOfChange(models.TextChoices):
+        ENTRADA = "E", "Entrada"
+        SAIDA = "S", "Saída"
+
+    class Status(models.TextChoices):
+        AGENDAMENTO = "agendamento", "Agendamento"
+        EXECUCAO = "execucao", "Execução"
+        FINALIZADO = "finalizado", "Finalizado"
+
     class Meta:
         app_label = 'reservations'
         verbose_name = "03. Mudança"
         verbose_name_plural = "03. Mudanças"
+        ordering = ["-startDate", "-id"]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(endDate__gte=models.F("startDate")),
+                name="move_reservations_end_date_gte_start_date",
+                violation_error_message=(
+                    "A data final deve ser maior ou igual à data inicial."
+                ),
+            ),
+        ]
+
+    condominium = models.ForeignKey(
+        "residents.CondominiumUnit",
+        on_delete=models.PROTECT,
+        related_name="move_reservations",
+        verbose_name="Unidade",
+        help_text="Unidade condominial à qual a mudança pertence",
+    )
+    typeOfChange = models.CharField(
+        verbose_name="Tipo de mudança",
+        max_length=1,
+        choices=TypeOfChange.choices,
+        help_text="Entrada ou saída de bens da unidade",
+    )
+    startDate = models.DateField(
+        verbose_name="Data inicial",
+        help_text="Data inicial da mudança (inclusive)",
+    )
+    endDate = models.DateField(
+        verbose_name="Data final",
+        help_text="Data final da mudança (inclusive)",
+    )
+    applicant = models.CharField(
+        verbose_name="Solicitante",
+        max_length=255,
+        help_text="Nome do solicitante da mudança",
+    )
+    observations = models.TextField(
+        verbose_name="Observações",
+        blank=True,
+        default="",
+        help_text="Observações sobre a mudança (opcional)",
+    )
+    is_active = models.BooleanField(
+        verbose_name="Ativo",
+        default=True,
+        help_text="Indica se a mudança está ativa",
+    )
+    status = models.CharField(
+        verbose_name="Status",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.AGENDAMENTO,
+        editable=False,
+        db_index=True,
+        help_text="Situação definida pelo servidor",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="created_move_reservations",
+        verbose_name="Criado por",
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="updated_move_reservations",
+        verbose_name="Atualizado por",
+    )
+    created_at = models.DateTimeField(
+        verbose_name="Criado em",
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        verbose_name="Atualizado em",
+        auto_now=True,
+    )
 
     def __str__(self):
-        return "03. Mudança"
+        identifier = self.applicant or "sem solicitante"
+        prefix = f"03. Mudança {self.pk}" if self.pk else "03. Mudança"
+        return f"{prefix} - {identifier}"

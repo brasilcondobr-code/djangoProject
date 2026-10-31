@@ -48,6 +48,34 @@ class ReservationsRepository:
         return MoveReservations.objects.all()
 
     @staticmethod
+    def get_move_reservation_by_id(move_id):
+        try:
+            return MoveReservations.objects.select_related(
+                "condominium",
+                "created_by",
+                "updated_by",
+            ).get(pk=move_id)
+        except MoveReservations.DoesNotExist:
+            return None
+
+    @staticmethod
+    def get_move_reservation_for_update(move_id):
+        """Obtém a mudança com bloqueio de linha (exige transação ativa)."""
+        return MoveReservations.objects.select_for_update(
+            of=("self",)
+        ).select_related("condominium").get(pk=move_id)
+
+    @staticmethod
+    def create_move_reservation(move):
+        move.save()
+        return move
+
+    @staticmethod
+    def update_move_reservation(move):
+        move.save()
+        return move
+
+    @staticmethod
     def get_rental_by_id(rental_id):
         try:
             return Rentals.objects.select_related(

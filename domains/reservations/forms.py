@@ -10,10 +10,15 @@ from django.db import connection, models
 
 from domains.reservations.exceptions import (
     MaintenanceReservationValidationError,
+    MoveReservationValidationError,
     RentalError,
     RentalValidationError,
 )
-from domains.reservations.models import MaintenanceReservations, Rentals
+from domains.reservations.models import (
+    MaintenanceReservations,
+    MoveReservations,
+    Rentals,
+)
 from domains.reservations.repositories import ReservationsRepository
 from domains.reservations.services.maintenance_reservations_service import (
     MaintenanceReservationsService,
@@ -28,6 +33,10 @@ from domains.reservations.validators import (
 from domains.reservations.validators.maintenance_reservations_validators import (
     normalize_applicant as normalize_maintenance_applicant,
     validate_period as validate_maintenance_period,
+)
+from domains.reservations.validators.move_reservations_validators import (
+    normalize_applicant as normalize_move_applicant,
+    validate_period as validate_move_period,
 )
 from domains.parameters.models import (
     TypesOfMaintenanceReservations,
@@ -413,6 +422,136 @@ class MaintenanceReservationsForm(forms.ModelForm):
             try:
                 validate_maintenance_period(start_date, end_date)
             except MaintenanceReservationValidationError as exc:
+                self.add_error("endDate", str(exc))
+
+        return cleaned_data
+
+
+class MoveReservationsForm(forms.ModelForm):
+    """Formulário do módulo 03. Mudanças.
+
+    As regras de domínio (status, transições e auditoria) ficam no service.
+    Aqui ficam apenas validações imediatas e mensagens amigáveis.
+    """
+
+    class Meta:
+        model = MoveReservations
+        fields = (
+            "condominium",
+            "typeOfChange",
+            "startDate",
+            "endDate",
+            "applicant",
+            "observations",
+            "is_active",
+        )
+        widgets = {
+            "condominium": forms.Select(attrs={"class": "form-control"}),
+            "typeOfChange": forms.Select(attrs={"class": "form-control"}),
+            "startDate": ISODateInput(attrs={"type": "date"}),
+            "endDate": ISODateInput(attrs={"type": "date"}),
+            "applicant": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nome do solicitante",
+                    "maxlength": "255",
+                }
+            ),
+            "observations": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observações (opcional)",
+                }
+            ),
+        }
+        labels = {
+            "condominium": "Unidade",
+            "typeOfChange": "Tipo de mudança",
+            "startDate": "Data inicial",
+            "endDate": "Data final",
+            "applicant": "Solicitante",
+            "observations": "Observações",
+            "is_active": "Ativo",
+        }
+        help_texts = {
+            "condominium": "Unidade condominial da mudança.",
+            "typeOfChange": "Selecione se a mudança é de entrada ou saída.",
+            "startDate": "Data inicial da mudança (inclusive).",
+            "endDate": (
+                "Data final da mudança (inclusive); deve ser maior ou igual "
+                "à data inicial."
+            ),
+            "applicant": "Nome do solicitante (até 255 caracteres).",
+            "observations": "Observações sobre a mudança (opcional).",
+            "is_active": "Define se a mudança está ativa.",
+        }
+        error_messages = {
+            "condominium": {"required": "Selecione a unidade da mudança."},
+            "typeOfChange": {
+                "required": "Selecione o tipo de mudança.",
+                "invalid_choice": "Selecione um tipo de mudança válido.",
+            },
+            "startDate": {"required": "Informe a data inicial."},
+            "endDate": {"required": "Informe a data final."},
+            "applicant": {"required": "Informe o solicitante."},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if "condominium" in self.fields:
+            self.fields["condominium"].queryset = (
+                CondominiumUnit.objects.select_related("condominium").order_by(
+                    "condominium__name", "tower", "unit_number"
+                )
+            )
+
+    # ------------------------------------------------------------------
+    # Campos
+    # ------------------------------------------------------------------
+    def clean_applicant(self):
+        try:
+            return normalize_move_applicant(
+                self.cleaned_data.get("applicant")
+            )
+        except MoveReservationValidationError as exc:
+            raise forms.ValidationError(str(exc))
+
+    # ------------------------------------------------------------------
+    # Validação cruzada
+    # ------------------------------------------------------------------
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.instance.pk:
+            if self.instance.status != MoveReservations.Status.AGENDAMENTO:
+                raise forms.ValidationError(
+                    "Somente mudanças em Agendamento podem ser editadas."
+                )
+            # Revalida o status sob lock: uma ação em lote pode ter alterado o
+            # registro entre a renderização e o POST.
+            if connection.in_atomic_block:
+                try:
+                    locked = (
+                        ReservationsRepository.get_move_reservation_for_update(
+                            self.instance.pk
+                        )
+                    )
+                except MoveReservations.DoesNotExist:
+                    raise forms.ValidationError("Mudança não encontrada.")
+                if locked.status != MoveReservations.Status.AGENDAMENTO:
+                    raise forms.ValidationError(
+                        "Somente mudanças em Agendamento podem ser editadas. "
+                        f"Status atual: '{locked.get_status_display()}'."
+                    )
+
+        start_date = cleaned_data.get("startDate")
+        end_date = cleaned_data.get("endDate")
+        if start_date and end_date:
+            try:
+                validate_move_period(start_date, end_date)
+            except MoveReservationValidationError as exc:
                 self.add_error("endDate", str(exc))
 
         return cleaned_data
