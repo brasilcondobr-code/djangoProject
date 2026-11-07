@@ -33,6 +33,26 @@ class FinancialRepository:
         return NewRelease.objects.all()
 
     @staticmethod
+    def get_new_release_by_id(new_release_id):
+        try:
+            return NewRelease.objects.select_related(
+                "condominium",
+                "condominium__condominium",
+                "paymaster",
+                "chartOfAccounts",
+                "fund",
+                "created_by",
+                "updated_by",
+            ).get(pk=new_release_id)
+        except NewRelease.DoesNotExist:
+            return None
+
+    @staticmethod
+    def get_new_release_for_update(new_release_id):
+        """Obtém o lançamento com bloqueio de linha (exige transação ativa)."""
+        return NewRelease.objects.select_for_update().get(pk=new_release_id)
+
+    @staticmethod
     def get_all_payments():
         return Payment.objects.all()
 

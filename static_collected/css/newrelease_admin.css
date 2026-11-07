@@ -1,0 +1,61 @@
+/*
+ * O Jazzmin não carrega o base.css do Django, que define as variáveis usadas
+ * pelo autocomplete.css. Sem elas, os seletores de Condomínio/Unidade, Plano
+ * de contas e Fundo ficam sem borda e com fundo transparente.
+ */
+:root {
+    --body-bg: var(--bs-body-bg);
+    --body-fg: var(--bs-body-color);
+    --body-quiet-color: var(--bs-secondary-color);
+    --border-color: var(--bs-border-color);
+    --darkened-bg: var(--bs-tertiary-bg);
+    --primary: var(--bs-primary);
+    --primary-fg: var(--bs-white);
+    --selected-bg: var(--bs-secondary-bg);
+}
+
+/* O autocomplete.css do Django define 20em; no formulário usamos a largura
+ * total da coluna para o seletor não parecer escondido. */
+body select.admin-autocomplete {
+    width: 100% !important;
+}
+
+body .select2-container--admin-autocomplete {
+    width: 100% !important;
+}
+
+/* Mantém a mesma altura e espaçamento dos demais campos do formulário. */
+body .select2-container--admin-autocomplete .select2-selection--single {
+    min-height: calc(1.5em + 0.75rem + 2px);
+    padding: 0;
+}
+
+body .select2-container--admin-autocomplete .select2-selection--single .select2-selection__rendered {
+    line-height: calc(1.5em + 0.75rem);
+    padding-left: 0.75rem;
+    padding-right: 1.75rem;
+}
+
+body .select2-container--admin-autocomplete .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + 0.75rem + 2px);
+    right: 0.5rem;
+}
+
+/* Dropdown de resultados no tema escuro. */
+body .select2-container--admin-autocomplete .select2-dropdown {
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+body .select2-container--admin-autocomplete .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--bs-primary);
+    color: var(--bs-white);
+}
+
+body .select2-container--admin-autocomplete .select2-search--dropdown .select2-search__field {
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+    padding: 0.375rem 0.75rem;
+}
