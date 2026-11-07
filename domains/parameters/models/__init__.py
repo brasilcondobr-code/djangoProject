@@ -26,3 +26,18 @@ from .concierge_service_categories import ConciergeServiceCategory
 from .categoryphone import CategoryPhone
 from .types_of_rental import TypesOfRental
 from .types_of_maintenance_reservations import TypesOfMaintenanceReservations
+
+# ``FundFinancial`` referencia ``condominium.Condominium``. O pacote
+# ``parameters.models`` é importado antecipadamente por ``condominium``,
+# antes de o app ``condominium`` concluir o registro do modelo. O import é
+# exposto de forma preguiçosa para que a FK seja resolvida somente depois
+# que o app registry estiver pronto.
+def __getattr__(name):
+    if name == 'FundFinancial':
+        from .fund_financial import FundFinancial
+
+        globals()['FundFinancial'] = FundFinancial
+        return FundFinancial
+    raise AttributeError(
+        f"module {__name__!r} has no attribute {name!r}"
+    )

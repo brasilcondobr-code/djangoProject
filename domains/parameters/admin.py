@@ -11,8 +11,9 @@ from .models import (
     AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone,
     TypesOfRental,
     TypesOfMaintenanceReservations,
+    FundFinancial,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm, TypesOfRentalForm, TypesOfMaintenanceReservationsForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm, TypesOfRentalForm, TypesOfMaintenanceReservationsForm, FundFinancialForm
 
 
 @admin.register(TypesCondominium)
@@ -404,3 +405,40 @@ class TypesOfMaintenanceReservationsAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at'),
         }),
     )
+
+
+@admin.register(FundFinancial)
+class FundFinancialAdmin(admin.ModelAdmin):
+    form = FundFinancialForm
+    list_display = (
+        'description', 'condominium', 'is_active', 'created_at', 'updated_at',
+    )
+    list_display_links = ('description',)
+    search_fields = (
+        'description',
+        'condominium__name',
+        'condominium__code',
+        'condominium__cnpj',
+    )
+    list_filter = ('condominium', 'is_active')
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ('condominium',)
+    list_select_related = ('condominium',)
+    list_per_page = 25
+    empty_value_display = '-'
+
+    fieldsets = (
+        ('Dados principais', {
+            'fields': ('condominium', 'description', 'is_active'),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': ('created_at', 'updated_at'),
+        }),
+    )
+
+    class Media:
+        css = {
+            'all': ('css/fund_financial_admin.css',),
+        }

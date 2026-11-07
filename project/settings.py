@@ -320,6 +320,8 @@ JAZZMIN_SETTINGS = {
         "parameters.ConciergeServiceCategory": "fa-solid fa-concierge-bell",
         "parameters.CategoryPhone": "fa-solid fa-tags",
         "parameters.TypesOfRental": "fas fa-file-signature",
+        "parameters.typesofmaintenancereservations": "fas fa-piggy-bank",
+        "parameters.fundfinancial": "fa-solid fa-handshake-slash",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",
