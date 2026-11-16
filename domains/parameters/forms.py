@@ -2,7 +2,7 @@ from django import forms
 
 from domains.condominium.models import Condominium
 
-from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone, TypesOfRental, TypesOfMaintenanceReservations, FundFinancial
+from .models import Addresses, States, TypesVisitorRestrictions, ResidentType, DocumentType, InfractionsType, VotingType, AssemblyStatus, TopicOption, ConciergeServiceCategory, CategoryPhone, TypesOfRental, TypesOfMaintenanceReservations, FundFinancial, FinancialTransaction
 
 
 
@@ -751,6 +751,61 @@ class FundFinancialForm(forms.ModelForm):
             raise forms.ValidationError(
                 'Já existe um fundo com esta descrição para o '
                 'condomínio selecionado.'
+            )
+
+        return description
+
+
+class FinancialTransactionForm(forms.ModelForm):
+    class Meta:
+        model = FinancialTransaction
+        fields = ('description', 'is_active')
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Informe a descrição da operação financeira',
+                'maxlength': '255',
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'description': 'Descrição',
+            'is_active': 'Ativo',
+        }
+        help_texts = {
+            'description': 'Informe uma descrição única para a operação financeira.',
+            'is_active': 'Define se a operação financeira poderá ser utilizada em novos registros.',
+        }
+        error_messages = {
+            'description': {
+                'required': 'Informe a descrição da operação financeira.',
+            },
+        }
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if not description:
+            raise forms.ValidationError(
+                'Informe a descrição da operação financeira.'
+            )
+
+        description = description.strip()
+
+        if not description:
+            raise forms.ValidationError(
+                'A descrição não pode conter apenas espaços.'
+            )
+
+        instance = self.instance
+        queryset = FinancialTransaction.objects.filter(
+            description__iexact=description
+        )
+        if instance and instance.pk:
+            queryset = queryset.exclude(pk=instance.pk)
+
+        if queryset.exists():
+            raise forms.ValidationError(
+                'Já existe uma operação financeira com esta descrição.'
             )
 
         return description

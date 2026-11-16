@@ -26,6 +26,7 @@ from .concierge_service_categories import ConciergeServiceCategory
 from .categoryphone import CategoryPhone
 from .types_of_rental import TypesOfRental
 from .types_of_maintenance_reservations import TypesOfMaintenanceReservations
+from .financial_transaction import FinancialTransaction
 
 # ``FundFinancial`` referencia ``condominium.Condominium``. O pacote
 # ``parameters.models`` é importado antecipadamente por ``condominium``,

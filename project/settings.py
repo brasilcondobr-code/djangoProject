@@ -322,6 +322,7 @@ JAZZMIN_SETTINGS = {
         "parameters.TypesOfRental": "fas fa-file-signature",
         "parameters.typesofmaintenancereservations": "fas fa-piggy-bank",
         "parameters.fundfinancial": "fa-solid fa-handshake-slash",
+        "parameters.financialtransaction": "fas fa-exchange-alt",
         "residents.CondominiumUnit": "fas fa-building",
         "residents.Resident": "fas fa-user-tie",
         "residents.Vehicle": "fas fa-car",

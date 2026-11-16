@@ -12,8 +12,9 @@ from .models import (
     TypesOfRental,
     TypesOfMaintenanceReservations,
     FundFinancial,
+    FinancialTransaction,
 )
-from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm, TypesOfRentalForm, TypesOfMaintenanceReservationsForm, FundFinancialForm
+from .forms import AddressesForm, StatesForm, TypesVisitorRestrictionsForm, ResidentTypeForm, DocumentTypeForm, InfractionsTypeForm, VotingTypeForm, AssemblyStatusForm, TopicOptionForm, ConciergeServiceCategoryForm, CategoryPhoneForm, TypesOfRentalForm, TypesOfMaintenanceReservationsForm, FundFinancialForm, FinancialTransactionForm
 
 
 @admin.register(TypesCondominium)
@@ -442,3 +443,26 @@ class FundFinancialAdmin(admin.ModelAdmin):
         css = {
             'all': ('css/fund_financial_admin.css',),
         }
+
+
+@admin.register(FinancialTransaction)
+class FinancialTransactionAdmin(admin.ModelAdmin):
+    form = FinancialTransactionForm
+    list_display = ('description', 'is_active', 'created_at', 'updated_at')
+    list_display_links = ('description',)
+    search_fields = ('description',)
+    list_filter = ('is_active',)
+    ordering = ('description',)
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 25
+    empty_value_display = '-'
+
+    fieldsets = (
+        ('Dados principais', {
+            'fields': ('description', 'is_active'),
+        }),
+        ('Auditoria', {
+            'classes': ('collapse',),
+            'fields': ('created_at', 'updated_at'),
+        }),
+    )
