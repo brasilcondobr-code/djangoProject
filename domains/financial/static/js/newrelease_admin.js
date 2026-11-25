@@ -112,6 +112,21 @@
         if ($value.length) {
             if ($.fn.mask) {
                 $value.mask("###.###,##", { reverse: true });
+                // O plugin de máscara descarta o sinal "-". Removemos o sinal
+                // na fase de captura (antes da máscara formatar) e o
+                // reaplicamos logo depois, conforme o tipo de lançamento.
+                document.addEventListener(
+                    "input",
+                    function (event) {
+                        if (event.target !== $value[0]) {
+                            return;
+                        }
+                        if (event.target.value.charAt(0) === "-") {
+                            event.target.value = event.target.value.slice(1);
+                        }
+                    },
+                    true
+                );
             } else {
                 // Fallback para o caso de o plugin não ser carregado.
                 $value.on("input", function () {
@@ -127,6 +142,30 @@
                     $(this).val(amount);
                 });
             }
+
+            // Débito é exibido como positivo e crédito como negativo. O sinal
+            // é apenas visual: o backend o reaplica em clean_value.
+            var $launchType = $("input[name='launchType']");
+            var shouldBeNegative = function () {
+                return $launchType.filter(":checked").val() === "C";
+            };
+            var applyValueSign = function () {
+                var current = $value.val();
+                if (!current) {
+                    return;
+                }
+                var hasSign = current.charAt(0) === "-";
+                var body = hasSign ? current.slice(1) : current;
+                var negative = shouldBeNegative();
+                if (negative === hasSign) {
+                    return;
+                }
+                $value.val(negative ? "-" + body : body);
+            };
+
+            $value.on("input change blur", applyValueSign);
+            $launchType.on("change", applyValueSign);
+            applyValueSign();
         }
 
         var $scope = $("#id_scope");

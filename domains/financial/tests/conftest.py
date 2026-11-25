@@ -4,6 +4,7 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth.models import User
 from django.test import Client
+from django.utils import timezone
 
 from domains.administrative.models import ChartOfAccount
 from domains.condominium.models import Condominium
@@ -285,7 +286,7 @@ def _new_release(
         chartOfAccounts=_chart_account,
         fund=_fund,
         launchType=NewRelease.LaunchType.DEBITO,
-        value=Decimal("-150.00"),
+        value=Decimal("150.00"),
         created_by=_user,
         updated_by=_user,
     )
@@ -304,8 +305,27 @@ def _billing_release(
         chartOfAccounts=_chart_account,
         fund=_fund,
         launchType=NewRelease.LaunchType.DEBITO,
-        value=Decimal("-200.00"),
+        value=Decimal("200.00"),
         status=NewRelease.Status.COBRANCA,
+        created_by=_user,
+        updated_by=_user,
+    )
+
+
+@pytest.fixture
+def _current_release(_unit, _resident, _chart_account, _fund, _user):
+    """Lançamento em aberto na competência atual e no vencimento de hoje."""
+    today = timezone.localdate()
+    return NewRelease.objects.create(
+        condominium=_unit,
+        paymaster=_resident,
+        title="Taxa Atual",
+        scope=today.replace(day=1),
+        launchDate=today,
+        chartOfAccounts=_chart_account,
+        fund=_fund,
+        launchType=NewRelease.LaunchType.DEBITO,
+        value=Decimal("150.00"),
         created_by=_user,
         updated_by=_user,
     )
@@ -326,3 +346,184 @@ def _valid_form_data(_unit, _resident, _chart_account, _fund):
         "notes": "",
         "is_active": "on",
     }
+
+
+@pytest.fixture
+def _financial_transaction():
+    from domains.parameters.models import FinancialTransaction
+
+    return FinancialTransaction.objects.create(
+        description="Pagamento de cobrança"
+    )
+
+
+def _make_collection(unit, user, **overrides):
+    from domains.financial.models import Collection
+
+    data = {
+        "condominium": unit,
+        "billingDate": date(2026, 1, 5),
+        "scope": date(2026, 1, 1),
+        "originalValue": Decimal("1000.00"),
+        "discountPercent": Decimal("10.00"),
+        "penaltyPercent": Decimal("2.00"),
+        "feesPercent": Decimal("1.00"),
+        "chargesPercent": Decimal("0.50"),
+        "discountAmount": Decimal("100.00"),
+        "fineAmount": Decimal("20.00"),
+        "interestAmount": Decimal("10.00"),
+        "chargesAmount": Decimal("5.00"),
+        "discountDeadline": date(2026, 1, 10),
+        "dueDate": date(2099, 1, 10),
+        "totalAmount": Decimal("935.00"),
+        "balance": Decimal("935.00"),
+        "status": Collection.Status.TO_BE_WON,
+        "created_by": user,
+        "updated_by": user,
+    }
+    data.update(overrides)
+    return Collection.objects.create(**data)
+
+
+@pytest.fixture
+def _collection(_unit, _user):
+    return _make_collection(_unit, _user)
+
+
+@pytest.fixture
+def _expired_collection(_unit, _user):
+    from domains.financial.models import Collection
+
+    return _make_collection(
+        _unit,
+        _user,
+        billingDate=date(2026, 2, 5),
+        scope=date(2026, 2, 1),
+        originalValue=Decimal("100.00"),
+        discountPercent=None,
+        penaltyPercent=None,
+        feesPercent=None,
+        chargesPercent=None,
+        discountAmount=None,
+        fineAmount=None,
+        interestAmount=None,
+        chargesAmount=None,
+        discountDeadline=date(2026, 2, 10),
+        dueDate=date(2020, 2, 10),
+        totalAmount=Decimal("100.00"),
+        balance=Decimal("100.00"),
+        status=Collection.Status.EXPIRED,
+    )
+
+
+@pytest.fixture
+def _partial_collection(_unit, _user):
+    from domains.financial.models import Collection, Payment
+
+    collection = _make_collection(
+        _unit,
+        _user,
+        billingDate=date(2026, 3, 5),
+        scope=date(2026, 3, 1),
+        discountPercent=None,
+        penaltyPercent=None,
+        feesPercent=None,
+        chargesPercent=None,
+        discountAmount=None,
+        fineAmount=None,
+        interestAmount=None,
+        chargesAmount=None,
+        discountDeadline=date(2026, 3, 10),
+        dueDate=date(2099, 3, 10),
+        totalAmount=Decimal("1000.00"),
+        balance=Decimal("600.00"),
+        status=Collection.Status.PARTIAL,
+    )
+    Payment.objects.create(
+        collection=collection,
+        financialTransaction=_financial_transaction_fixture(),
+        dateReceived=date(2026, 3, 10),
+        amountReceived=Decimal("400.00"),
+        created_by=_user,
+        updated_by=_user,
+    )
+    return collection
+
+
+@pytest.fixture
+def _paid_collection(_unit, _user):
+    from domains.financial.models import Collection, Payment
+
+    collection = _make_collection(
+        _unit,
+        _user,
+        billingDate=date(2026, 4, 5),
+        scope=date(2026, 4, 1),
+        originalValue=Decimal("100.00"),
+        discountPercent=None,
+        penaltyPercent=None,
+        feesPercent=None,
+        chargesPercent=None,
+        discountAmount=None,
+        fineAmount=None,
+        interestAmount=None,
+        chargesAmount=None,
+        discountDeadline=date(2026, 4, 10),
+        dueDate=date(2099, 4, 10),
+        totalAmount=Decimal("100.00"),
+        balance=Decimal("0.00"),
+        status=Collection.Status.PAID,
+    )
+    Payment.objects.create(
+        collection=collection,
+        financialTransaction=_financial_transaction_fixture(),
+        dateReceived=date(2026, 4, 10),
+        amountReceived=Decimal("100.00"),
+        created_by=_user,
+        updated_by=_user,
+    )
+    return collection
+
+
+def _financial_transaction_fixture():
+    from domains.parameters.models import FinancialTransaction
+
+    return FinancialTransaction.objects.get_or_create(
+        description="Operação de teste"
+    )[0]
+
+
+@pytest.fixture
+def _collection_credit(_collection, _user):
+    from domains.financial.models import CollectionCredit
+
+    credit = CollectionCredit.objects.create(
+        collection=_collection,
+        financialTransaction=_financial_transaction_fixture(),
+        creditDate=date(2026, 1, 15),
+        amountCredit=Decimal("100.00"),
+        created_by=_user,
+        updated_by=_user,
+    )
+    _collection.balance = Decimal("835.00")
+    _collection.status = _collection.Status.PARTIAL
+    _collection.save(update_fields=["balance", "status", "updated_at"])
+    return credit
+
+
+@pytest.fixture
+def _collection_payment(_collection, _user):
+    from domains.financial.models import Payment
+
+    payment = Payment.objects.create(
+        collection=_collection,
+        financialTransaction=_financial_transaction_fixture(),
+        dateReceived=date(2026, 1, 15),
+        amountReceived=Decimal("100.00"),
+        created_by=_user,
+        updated_by=_user,
+    )
+    _collection.balance = Decimal("835.00")
+    _collection.status = _collection.Status.PARTIAL
+    _collection.save(update_fields=["balance", "status", "updated_at"])
+    return payment

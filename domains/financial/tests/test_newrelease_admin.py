@@ -124,7 +124,7 @@ class TestNewReleaseAdminConfiguration:
         assert self.model_admin.launch_type_display(_new_release) == "Débito"
 
     def test_value_display(self, _new_release):
-        assert self.model_admin.value_display(_new_release) == "-150,00"
+        assert self.model_admin.value_display(_new_release) == "150,00"
 
     def test_value_display_without_value(self):
         assert self.model_admin.value_display(NewRelease()) == "-"
@@ -431,7 +431,7 @@ class TestNewReleaseAdminIntegration:
         assert release.created_by == _user
         assert release.updated_by == _user
         assert release.scope == date(2026, 7, 1)
-        assert release.value == Decimal("-1234.56")
+        assert release.value == Decimal("1234.56")
 
     def test_add_rejects_paymaster_of_another_unit(
         self,
@@ -490,7 +490,7 @@ class TestNewReleaseAdminIntegration:
         assert response.status_code == 302, response.content
         _new_release.refresh_from_db()
         assert _new_release.title == "Título Alterado"
-        assert _new_release.value == Decimal("-200.00")
+        assert _new_release.value == Decimal("200.00")
         assert _new_release.created_by_id == created_by
         assert _new_release.updated_by == _user
 
@@ -559,7 +559,7 @@ class TestNewReleaseAdminIntegration:
         assert not NewRelease.objects.filter(pk=pk).exists()
 
     def test_action_generate_billing(
-        self, _client, _user, _new_release
+        self, _client, _user, _current_release
     ):
         _client.force_login(_user)
 
@@ -567,7 +567,7 @@ class TestNewReleaseAdminIntegration:
             reverse("admin:financial_newrelease_changelist"),
             {
                 "action": "gerar_cobranca",
-                "_selected_action": [str(_new_release.pk)],
+                "_selected_action": [str(_current_release.pk)],
                 "select_across": "0",
                 "index": "0",
             },
@@ -575,15 +575,19 @@ class TestNewReleaseAdminIntegration:
         )
 
         assert response.status_code == 200
-        _new_release.refresh_from_db()
-        assert _new_release.status == NewRelease.Status.COBRANCA
-        assert _new_release.updated_by == _user
+        _current_release.refresh_from_db()
+        assert _current_release.status == NewRelease.Status.COBRANCA
+        assert _current_release.updated_by == _user
+        assert _current_release.collection_id is not None
+        assert (
+            _current_release.collection.new_releases.count() == 1
+        )
 
     def test_action_generate_billing_reports_blocked_items(
         self,
         _client,
         _user,
-        _new_release,
+        _current_release,
         _billing_release,
     ):
         _client.force_login(_user)
@@ -593,7 +597,7 @@ class TestNewReleaseAdminIntegration:
             {
                 "action": "gerar_cobranca",
                 "_selected_action": [
-                    str(_new_release.pk),
+                    str(_current_release.pk),
                     str(_billing_release.pk),
                 ],
                 "select_across": "0",
@@ -611,8 +615,9 @@ class TestNewReleaseAdminIntegration:
             f"ID {_billing_release.pk}" in message
             for message in messages
         )
-        _new_release.refresh_from_db()
-        assert _new_release.status == NewRelease.Status.COBRANCA
+        _current_release.refresh_from_db()
+        assert _current_release.status == NewRelease.Status.COBRANCA
+        assert _current_release.collection_id is not None
 
     def test_action_delete_lancamentos(
         self, _client, _user, _new_release

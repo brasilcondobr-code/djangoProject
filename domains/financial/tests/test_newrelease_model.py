@@ -36,7 +36,7 @@ class TestNewReleaseModel:
             chartOfAccounts=_chart_account,
             fund=_fund,
             launchType=NewRelease.LaunchType.CREDITO,
-            value=Decimal("10.00"),
+            value=Decimal("-10.00"),
         )
         release.refresh_from_db()
         assert release.scope == date(2026, 3, 1)
@@ -53,7 +53,7 @@ class TestNewReleaseModel:
             chartOfAccounts=_new_release.chartOfAccounts,
             fund=_new_release.fund,
             launchType=NewRelease.LaunchType.DEBITO,
-            value=Decimal("-10.00"),
+            value=Decimal("10.00"),
         )
         with pytest.raises(IntegrityError):
             with transaction.atomic():
@@ -71,11 +71,11 @@ class TestNewReleaseModel:
             chartOfAccounts=_new_release.chartOfAccounts,
             fund=_new_release.fund,
             launchType=NewRelease.LaunchType.DEBITO,
-            value=Decimal("-10.00"),
+            value=Decimal("10.00"),
         )
         assert other.pk is not None
 
-    def test_check_constraint_rejects_positive_debit(
+    def test_check_constraint_rejects_negative_debit(
         self, _unit, _resident, _chart_account, _fund
     ):
         with pytest.raises(IntegrityError):
@@ -83,16 +83,16 @@ class TestNewReleaseModel:
                 NewRelease.objects.create(
                     condominium=_unit,
                     paymaster=_resident,
-                    title="Débito positivo",
+                    title="Débito negativo",
                     scope=date(2026, 4, 1),
                     launchDate=date(2026, 4, 1),
                     chartOfAccounts=_chart_account,
                     fund=_fund,
                     launchType=NewRelease.LaunchType.DEBITO,
-                    value=Decimal("10.00"),
+                    value=Decimal("-10.00"),
                 )
 
-    def test_check_constraint_rejects_negative_credit(
+    def test_check_constraint_rejects_positive_credit(
         self, _unit, _resident, _chart_account, _fund
     ):
         with pytest.raises(IntegrityError):
@@ -100,13 +100,13 @@ class TestNewReleaseModel:
                 NewRelease.objects.create(
                     condominium=_unit,
                     paymaster=_resident,
-                    title="Crédito negativo",
+                    title="Crédito positivo",
                     scope=date(2026, 4, 1),
                     launchDate=date(2026, 4, 1),
                     chartOfAccounts=_chart_account,
                     fund=_fund,
                     launchType=NewRelease.LaunchType.CREDITO,
-                    value=Decimal("-10.00"),
+                    value=Decimal("10.00"),
                 )
 
     def test_value_can_be_null(

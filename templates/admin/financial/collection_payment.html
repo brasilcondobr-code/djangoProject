@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="{{ action }}">
+  <input type="hidden" name="apply" value="1">
+  {% for id in selected_ids %}
+    <input type="hidden" name="_selected_action" value="{{ id }}">
+  {% endfor %}
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">{{ title }}</h3>
+    </div>
+    <div class="card-body">
+      <p class="mb-3">
+        Cobranças selecionadas: <strong>{{ selected_ids|length }}</strong>
+      </p>
+      {{ form.as_p }}
+    </div>
+    <div class="card-footer">
+      <button type="submit" class="btn btn-primary">Registrar pagamento</button>
+      <a href="{% url opts|admin_urlname:'changelist' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script src="{% static 'js/jquery.mask.min.js' %}"></script>
+<script src="{% static 'js/collection_payment_admin.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,374 @@
+Prompt técnico de implementação — Atualização da ação “Gerar Cobrança” (newrelease)
+
+	Atue como engenheiro(a) de software sênior, com experiência em Python, Django, PostgreSQL, Django Admin/Jazzmin e engenharia de software. Analise e atualize a ação “Gerar Cobrança” do módulo “07. Lançamentos” ('newrelease'), no app financial, do projeto 'BrasilCondo'.
+
+	Trabalhe de forma colaborativa com as equipes multidisciplinares, respeitando os processos ágeis, o versionamento de código e a documentação técnica do projeto. O código e as regras de domínio aprovadas são as fontes de verdade: inspecione o repositório antes de propor ou realizar alterações. Não presuma caminhos, classes, campos, relações, permissões ou comportamentos que não tenham sido confirmados.
+
+	Divida o trabalho em quatro etapas: Inspeção, Plano, Implementação e Validação. Não altere arquivos durante a inspeção. Apresente o diagnóstico e o plano antes de implementar e aguarde aprovação quando houver decisões essenciais de domínio pendentes.
+
+1. Objetivo
+
+	Atualizar a ação “Gerar Cobrança” para selecionar lançamentos elegíveis, agrupá-los conforme regras de domínio aprovadas, criar registros correspondentes em 'collection', relacionar a eles os lançamentos de origem e alterar para “Cobrança” o 'status' dos lançamentos processados com sucesso.
+
+	A operação deve ser segura, rastreável e consistente diante de falhas, reexecuções ou solicitações simultâneas. Valide as regras no servidor; não dependa do estado visual do Django Admin ou de dados enviados pelo navegador.
+
+	O escopo primário é a ação e os componentes estritamente necessários para implementá-la. Não refatore nem altere o CRUD de 'newrelease', o módulo 'collection' ou outros fluxos além do necessário e aprovado.
+
+2. Contexto técnico a confirmar
+
+	As tecnologias e práticas informadas são contexto inicial, não prova da configuração atual:
+
+		* Projeto: 'BrasilCondo'.
+		* App: 'financial'.
+		* Módulos envolvidos: 'newrelease' e 'collection'.
+		* Tecnologias indicadas: Django, Python, PostgreSQL, Django Admin/Jazzmin e Docker.
+		* O projeto pode utilizar DDD, Service Layer, Clean Architecture, Celery, RabbitMQ e Flower.
+		* A arquitetura pode conter formulários, serviços, seletores, validadores, ações administrativas e testes organizados por domínio.
+	
+	Confirme no repositório as versões, os caminhos, as dependências, a estrutura dos apps e os padrões existentes. Mantenha a operação síncrona na primeira versão: não introduza Celery, RabbitMQ, RQ ou Flower para uma ação administrativa síncrona, salvo requisito aprovado que demonstre necessidade real.
+
+3. Regra funcional solicitada
+
+	3.1 Escopo mensal
+	
+		Ao executar a ação:
+			1.	Obtenha a data atual com os utilitários de data e fuso horário adotados pelo projeto.
+			2.	Determine o mês e o ano atuais no formato apresentado como exemplo '11/2026'.
+			3.	Use esse valor como referência 'tmpScope' para localizar lançamentos cujo 'scope' corresponda ao período atual.
+			4.	Considere elegíveis, conforme a solicitação inicial, os lançamentos com:
+				* status “Lançamento”;
+				* competência correspondente a 'tmpScope'.
+		
+		Confirme o tipo e a representação reais de 'newrelease.scope'. Se o campo for uma data, uma competência normalizada ou outra estrutura, adapte a comparação ao modelo existente. Não presuma que o banco armazene literalmente uma string no formato 'MM/YYYY', nem altere o formato de dados sem aprovação.
+
+	3.2 Seleção dos lançamentos
+		A ação é iniciada a partir de registros selecionados no Django Admin. A solicitação também descreve a consulta de todos os lançamentos com 'status' e competência elegíveis.
+
+		Decisão bloqueante: determine se a ação deve:
+			* processar somente os IDs selecionados que também atendem aos filtros de status e competência; ou
+			* processar todos os lançamentos elegíveis da competência atual, independentemente da seleção inicial.
+		
+		Inspecione o comportamento atual da ação, mas não escolha silenciosamente entre essas interpretações. Registre a divergência no diagnóstico e solicite decisão se ela não estiver resolvida por uma regra de domínio aprovada.
+
+		Em qualquer alternativa, valide no servidor que cada lançamento ainda está elegível no momento do processamento. Não confie na seleção, nos filtros ou no estado da página do Admin.
+
+	3.3 Agrupamento
+		A solicitação informa que os registros devem ser ordenados por condomínio, competência e tipo de lançamento e que pode ser gerada uma cobrança por competência. O exemplo mostra uma cobrança única para três lançamentos da mesma unidade e competência, com valores distintos.
+
+		Decisões bloqueantes: confirme:
+			* quais campos formam a chave de agrupamento da cobrança;
+			* se o agrupamento deve separar condomínios/unidades;
+			* se deve separar tipos de lançamento;
+			* se deve considerar pagador, plano de contas, fundo, data ou outros campos;
+			* se o resultado esperado é uma cobrança por grupo ou uma cobrança única para toda a competência;
+			* como tratar lançamentos do mesmo grupo cujas datas de lançamento sejam diferentes.
+		
+		A ordenação por 'condominium', 'scope' e 'launchType' não define, por si só, a chave de agrupamento. Não agrupe lançamentos de unidades, pagadores ou outros escopos distintos sem uma regra aprovada.
+
+		O exemplo fornecido indica uma soma de valores:
+			* lançamentos de '347,11', '250,00' e '347,11';
+			* total agregado de '944,22';
+			* uma cobrança associada aos três lançamentos de origem.
+		
+		Use esse exemplo como cenário de teste de aceitação, não como autorização para presumir a cardinalidade ou a chave de agrupamento definitiva.
+
+	3.4 Valores e mapeamento preliminar
+		A solicitação propõe o seguinte mapeamento entre 'newrelease' e 'collection'. Confirme a existência, os tipos, a nulabilidade e a semântica dos campos antes de implementar.
+
+		----------------------------------------------------------------------------------------------------------
+		Campo proposto em collection			Origem ou valor solicitado
+		----------------------------------------------------------------------------------------------------------
+		'condominiumUnit'						'newrelease.condominium'
+		'billingDate'							'newrelease.launchDate'
+		'scope'									'newrelease.scope'
+		'originalValue'							Valor ou total agregado dos lançamentos do grupo; confirmar
+		Percentual de desconto					'0.00'
+		'discountAmount'						'0.00'
+		'discountDeadline'						'NULL'
+		Percentual de multa						'0.00'
+		'fineAmount'							'0.00'
+		Percentual de juros ('fees')			'0.00'
+		'interestAmount'						'0.00'
+		Percentual de encargos ('charges')		'0.00'
+		'chargesAmount'							'0.00
+		'dueDate'								'newrelease.launchDate'; confirmar semântica
+		'totalAmount'							Total agregado do grupo
+		'balance'								Total agregado do grupo
+		Relação com 'newrelease'				Todos os lançamentos de origem pertencentes ao grupo
+		'financialTransaction'					'NULL'
+		'creditDate'							'NULL'
+		'amountCredit'							'NULL'
+		'is_active'								'True'
+		'status'								Derivado segundo a regra de data aprovada
+		'errorStatus'							String vazia, se compatível com o modelo
+		'created_by'							Auditoria do lançamento ou usuário autenticado, conforme decisão
+		'updated_by'							Auditoria do lançamento ou usuário autenticado, conforme decisão
+		'created_at'							Gerenciado pelo modelo/servidor, salvo regra comprovada em contrário
+		'updated_at'							Gerenciado pelo modelo/servidor, salvo regra comprovada em contrário
+		----------------------------------------------------------------------------------------------------------
+		
+		Valores financeiros
+			* Calcule totais com aritmética decimal adequada a valores monetários. Não use ponto flutuante binário.
+			* Confirme se 'originalValue' representa o valor individual ou o total agregado quando uma cobrança reúne vários lançamentos.
+			* Confirme se 'totalAmount' e 'balance' devem receber o total agregado e quais outros componentes podem participar dos cálculos.
+			* Defina o comportamento para valores nulos, zero, negativos, precisão inválida ou campos obrigatórios ausentes.
+			* Não altere nem descarte valores de origem silenciosamente.
+			* Assegure que a soma corresponde exatamente aos lançamentos efetivamente vinculados à cobrança criada.
+		
+		Datas e status
+			A regra fornecida associa o status de 'collection' à data de 'dueDate':
+				* se 'dueDate' for menor ou igual à data atual, definir “Á vencer”;
+				* se 'dueDate' for maior que a data atual, definir “Vencido”.
+			
+			Essa regra parece invertida em relação à interpretação usual, e os nomes podem divergir dos valores internos já usados no modelo de 'collection'.
+
+			Além disso, 'dueDate' foi associado a 'newrelease.launchDate', embora 'launchDate' seja descrito como data do lançamento, não necessariamente como vencimento.
+
+			Não corrija nem implemente silenciosamente essa lógica. Confirme:
+				* qual campo representa a data de vencimento;
+				* qual condição deve produzir os estados “A vencer” e “Vencido”;
+				* se a data atual deve ser obtida como data local do projeto;
+				* quais valores internos de status devem ser persistidos;
+				* se as escolhas já existentes em 'collection' usam outros códigos, por exemplo 'to_be_won' e 'expired'.
+			
+			Preserve os estados existentes e não altere registros históricos automaticamente.
+
+	3.5 Relação entre 'collection' e 'newrelease'
+		O exemplo sugere que uma cobrança pode estar vinculada a vários lançamentos. Confirme no modelo real se a relação permite essa cardinalidade.
+			* Uma 'ForeignKey' simples entre 'collection' e 'newrelease' pode não representar corretamente vários lançamentos associados a uma mesma cobrança.
+			* Inspecione a direção e a cardinalidade atuais da relação, as tabelas intermediárias e as migrations.
+			* Confirme se um lançamento pode estar associado a mais de uma cobrança.
+			* Não crie 'ManyToManyField', modelo associativo, 'formset' ou 'migration' de relacionamento sem verificar o domínio e obter aprovação quando isso alterar a estrutura persistida.
+			* Não crie cobranças duplicadas nem vincule um lançamento já cobrado a outra cobrança sem regra aprovada.
+
+4. Elegibilidade e mudança de status
+
+	Antes de criar cobranças, confirme que cada lançamento:
+		* pertence ao escopo autorizado da ação;
+		* está com status “Lançamento”;
+		* tem competência correspondente ao período atual;
+		* possui as relações e os dados financeiros necessários;
+		* não foi processado previamente, conforme a regra de idempotência aprovada.
+	
+	Após a criação e a associação bem-sucedidas de uma cobrança, alterar para “Cobrança” o status dos lançamentos vinculados àquela cobrança.
+
+	A atualização do status e a criação da cobrança devem ser consistentes. Não marque um lançamento como “Cobrança” se a cobrança correspondente não tiver sido efetivamente criada e relacionada.
+
+	Confirme o tratamento de erros por grupo e por lançamento. Se um grupo falhar, o sistema não pode apresentar seus lançamentos como processados com sucesso.
+
+5. Auditoria
+
+	A solicitação propõe copiar 'created_by' e 'updated_by' de 'newrelease' para 'collection', mas os campos automáticos de data foram indicados como 'NULL'.
+
+	Inspecione os modelos e as convenções existentes antes de decidir:
+		* se os usuários de auditoria da cobrança devem ser copiados dos lançamentos, vir do usuário autenticado que executa a ação ou seguir outro padrão já existente;
+		* se 'created_by' deve representar o autor da cobrança ou o autor original dos lançamentos;
+		* se 'updated_by' deve ser definido ao criar a cobrança;
+		* se 'created_at' e 'updated_at' são automáticos, não nulos ou gerenciados por 'auto_now_add'/'auto_now'.
+	
+	Não persista valores 'NULL' em campos automáticos ou obrigatórios por seguir literalmente a tabela sem verificar o modelo. Não altere a semântica de auditoria nem sobrescreva autoria original por inferência.
+
+6. Idempotência, concorrência e processamento de lotes
+
+	A ação pode ser executada mais de uma vez ou simultaneamente por usuários diferentes. Evite que o mesmo lançamento seja incluído em múltiplas cobranças por reexecução ou concorrência.
+
+	Durante a inspeção e no plano, determine uma estratégia compatível com o repositório e com PostgreSQL, considerando, conforme necessário:
+		* transação atômica para criação da cobrança, vínculo dos lançamentos e mudança de status;
+		* bloqueio das linhas relevantes durante a seleção e validação;
+		* constraint ou mecanismo persistente de unicidade/idempotência, se compatível com a regra de negócio;
+		* revalidação de status e competência dentro da transação;
+		* tratamento de chamadas repetidas;
+		* fronteiras de transação para lotes com vários grupos.
+	
+	Não afirme que a operação é idempotente ou protegida contra concorrência sem uma estratégia efetivamente implementada e testada.
+
+	Decisão necessária: confirme se a ação deve ser totalmente atômica para toda a seleção ou se deve processar cada grupo independentemente, permitindo sucesso parcial. A política deve definir:
+		* o que ocorre quando um dos grupos é inválido;
+		* se grupos válidos podem ser processados quando outro falha;
+		* como apresentar IDs e motivos de rejeição;
+		* se erros devem ser persistidos em 'errorStatus' ou somente apresentados/logados.
+	
+	Não grave mensagens de erro dentro de uma transação que será revertida e depois informe que foram persistidas.
+
+7. Etapa 1 — Inspeção
+
+	Antes de modificar arquivos:
+
+		1.	Confirme a raiz do projeto, as configurações Django, as versões relevantes e o caminho real dos apps 'financial, 'newrelease' e 'collection'.
+		2.	Examine os modelos, migrations e relações existentes de 'newrelease' e 'collection'.
+		3.	Localize e examine:
+			* a ação atual “Gerar Cobrança”;
+			* 'ModelAdmin', formulários, serviços, validadores, seletores, views, URLs, templates e JavaScript relacionados;
+			* as escolhas e transições atuais de status;
+			* os campos de auditoria e seus comportamentos;
+			* os campos e tipos reais de 'scope', 'launchDate', valores e datas de cobrança;
+			* a relação entre cobranças e lançamentos, incluindo tabelas intermediárias;
+			* constraints, índices e mecanismos existentes contra duplicidade;
+			* testes pertinentes e configuração de teste;
+			* padrões de transações, locking, mensagens, logging e ações em lote.
+		4.	Confirme como são representadas competências mensais no projeto e como a data atual e o fuso horário são obtidos.
+		5.	Avalie, sem alterar dados, se existem estados, relações ou duplicidades que possam ser afetados.
+		6.	Verifique se há cobranças já criadas para lançamentos que poderiam ser selecionados novamente.
+		7.	Confirme se a operação é restrita aos registros selecionados ou se já existe regra aprovada para processar todos os lançamentos elegíveis da competência.
+		8.	Não edite arquivos, não altere dados e não aplique migrations durante esta etapa.
+		
+		Apresente um diagnóstico conciso contendo:
+			* caminhos e componentes relevantes;
+			* estado atual da ação;
+			* modelos, campos, status e relações confirmados;
+			* representação real de 'scope';
+			* cardinalidade entre 'collection' e 'newrelease';
+			* regras de auditoria e transação existentes;
+			* divergências entre o exemplo e o código;
+			* riscos de duplicidade, concorrência e inconsistência financeira;
+			* decisões de domínio pendentes.
+
+8. Etapa 2 — Plano
+
+	Com base na inspeção, apresente um plano antes de implementar. Inclua:
+
+		1.	Arquivos que serão criados ou alterados e a justificativa.
+		2.	Serviço ou componente que centralizará a operação, se compatível com a arquitetura existente.
+		3.	Critério de seleção: somente IDs selecionados ou todos os lançamentos elegíveis.
+		4.	Formato e comparação de competência para 'tmpScope'.
+		5.	Chave de agrupamento e campos que devem separar cobranças.
+		6.	Tratamento de datas diferentes dentro do mesmo grupo.
+		7.	Fórmulas e mapeamento aprovados para 'originalValue', 'totalAmount' e 'balance'.
+		8.	Relação persistente entre cobranças e lançamentos.
+		9.	Valores internos e regra aprovada para 'status' de cobrança.
+		10.	Semântica e preenchimento de 'created_by', 'updated_by', 'created_at' e 'updated_at'.
+		11.	Política de atomicidade ou sucesso parcial por grupo.
+		12.	Estratégia contra reexecução, duplicidade e concorrência.
+		13.	Comportamento para dados inválidos e mensagens por registro/grupo.
+		14.	Migrations necessárias e estratégia para preservar os dados.
+		15.	Testes a adicionar ou atualizar.
+		16.	Confirmação de que autenticação, permissões globais, SMTP, outros apps e infraestrutura permanecerão inalterados.
+		17.	Lista explícita de decisões pendentes que bloqueiam a implementação.
+		
+		Não avance para a implementação enquanto as decisões essenciais de agrupamento, seleção, datas, status, relação entre os modelos, auditoria ou processamento parcial não estiverem resolvidas.
+
+9. Etapa 3 — Implementação
+
+	Após concluir a inspeção, obter aprovação do plano e resolver as decisões bloqueantes:
+
+		9.1 Serviço e responsabilidade
+			* Reutilize o padrão existente do app 'financial'.
+			* Centralize a operação em 'Service Layer' somente se isso for compatível com a arquitetura do projeto.
+			* Mantenha o Admin responsável pela interface e delegue a lógica de negócio ao componente apropriado.
+			* Mantenha a implementação proporcional ao caso de uso; não introduza algoritmos, estruturas de dados, Design Patterns ou abstrações sem necessidade demonstrável.
+			* Siga PEP 8, SRP, Separation of Concerns, Clean Code e validação defensiva.
+			* Não refatore outros módulos fora do escopo.
+		
+		9.2 Seleção e agrupamento
+			* Gere a competência atual com o fuso horário adotado pelo projeto.
+			* Compare 'scope' usando o tipo e a representação confirmados.
+			* Selecione apenas os registros aprovados no plano e revalide status, competência e demais condições no servidor.
+			* Agrupe usando exatamente a chave aprovada.
+			* Ordene de modo consistente com as convenções do projeto e com o processamento seguro.
+			* Some somente os valores dos registros efetivamente incluídos no grupo e na cobrança.
+			* Use aritmética decimal; não use 'float'.
+			* Não misture grupos com condomínios, unidades, pagadores, tipos ou datas incompatíveis com as regras aprovadas.
+		
+		9.3 Criação e vínculo da cobrança
+			* Crie o registro em 'collection' usando o modelo e os campos reais.
+			* Aplique o mapeamento aprovado para valores, datas, competência, 'status' e auditoria.
+			* Relacione todos e somente os lançamentos pertencentes ao grupo.
+			* Garanta que 'totalAmount' e 'balance' correspondam aos valores efetivamente associados, de acordo com a fórmula aprovada.
+			* Não force 'NULL' em campos obrigatórios ou automáticos.
+			* Não crie campos, relações, nomes técnicos com caracteres inválidos ou migrations sem necessidade confirmada.
+			* Após a persistência consistente da cobrança e de seus vínculos, atualizar os status dos lançamentos processados para “Cobrança”.
+		
+		9.4 Transações, concorrência e idempotência
+			* Use transações nas fronteiras definidas no plano.
+			* Revalide status e competência no momento da gravação.
+			* Adote locking ou outro mecanismo adequado ao banco e ao projeto para impedir que duas execuções processem simultaneamente os mesmos lançamentos.
+			* Impeça cobranças duplicadas em reexecuções segundo a estratégia aprovada.
+			* Se ocorrer falha, mantenha coerentes a cobrança, os vínculos e os status dos lançamentos.
+			* Respeite a política aprovada de atomicidade integral ou processamento por grupo.
+			* Apresente mensagens claras para sucessos, falhas e registros ignorados, sem afirmar conclusão para itens não processados.
+		
+		9.5 Admin/Jazzmin, formulários e interface
+			* Preserve a ação “Gerar Cobrança” no fluxo administrativo existente.
+			* Atualize 'ModelAdmin', formulários, views, templates ou JavaScript somente se a inspeção confirmar que são necessários.
+			* Não crie telas ou endpoints paralelos se a ação do Admin atender ao requisito.
+			* Configure rótulos, mensagens, 'help_text', widgets e placeholders apenas quando forem pertinentes à interface efetivamente alterada.
+			* A validação e autorização devem permanecer no servidor.
+			* Não introduza máscaras para valores financeiros sem necessidade comprovada; a conversão e a validação decimal devem ser feitas no backend.
+		
+		9.6 Assincronia e integrações
+			* Mantenha a ação síncrona nesta implementação, salvo requisito aprovado em sentido contrário.
+			* Não adicione Celery, RabbitMQ, RQ, Flower, filas ou tarefas “por precaução”.
+			* Não adicione configurações SMTP, envio de e-mail, notificações ou providers externos.
+			* Se um processamento assíncrono for aprovado futuramente, trate-o em escopo próprio, reutilizando a infraestrutura existente e especificando idempotência, retry, rastreabilidade, observabilidade e tratamento de falhas.
+		
+		9.7 Migrations
+		
+			Crie migrations somente se a inspeção e o plano aprovados demonstrarem que o modelo precisa ser alterado. Quando necessárias, elas devem:
+				* ter nome descritivo e ser reversíveis quando tecnicamente possível;
+				* preservar os dados existentes;
+				* avaliar duplicidades e relações antes de adicionar constraints;
+				* evitar operações destrutivas ou alterações automáticas de status históricos;
+				* seguir as convenções do projeto e ser compatíveis com a versão do Django e PostgreSQL encontrados;
+				* não ser aplicadas em produção.
+
+10. Etapa 4 — Testes e validação
+
+	Adicione ou atualize testes conforme o padrão do projeto. Cubra, quando aplicável:
+		* competência atual e comparação com 'scope';
+		* seleção apenas dos lançamentos elegíveis;
+		* distinção entre IDs selecionados e demais registros elegíveis;
+		* agrupamento por cada componente aprovado da chave;
+		* soma decimal correta para o exemplo de referência: '347,11' + '250,00' + '347,11' = '944,22';
+		* tratamento de valores nulos, zero, negativos ou inválidos;
+		* tratamento de diferentes condomínios/unidades, tipos, pagadores e datas;
+		* criação da cobrança e preenchimento dos campos aprovados;
+		* associação de todos e somente os lançamentos do grupo;
+		* atualização para “Cobrança” somente após persistência bem-sucedida;
+		* rejeição de lançamentos com status ou competência incompatíveis;
+		* status de cobrança conforme a regra de data aprovada;
+		* preenchimento correto da auditoria;
+		* reexecução da ação sem cobranças ou vínculos duplicados;
+		* falhas no meio do processamento conforme a política de atomicidade aprovada;
+		* concorrência e consistência transacional, na medida suportada pelo ambiente de teste;
+		* mensagens do Admin para sucesso, rejeição e falha;
+		* proteção contra requisições manipuladas.
+	
+	Execute e relate somente resultados reais:
+		1.	Testes específicos da ação e testes pertinentes de 'financial'.
+		2.	'python manage.py check'.
+		3.	'python manage.py makemigrations --check'.
+		4.	Inspeção das migrations e do plano de aplicação, se houver.
+		5.	Revisão do diff para confirmar que as alterações ficaram restritas ao escopo aprovado.
+		6.	Verificação de que autenticação, permissões, SMTP, outros apps e infraestrutura fora do escopo não foram alterados.
+		
+	Se um comando não puder ser executado, informe o motivo e o comando necessário para validação posterior. Não declare testes aprovados sem execução e não aplique migrations em produção.
+
+11. Critérios de aceite
+	* A ação opera no módulo 'financial.newrelease' e cria cobranças no 'financial.collection', conforme confirmado no repositório.
+	* O escopo mensal é determinado pelo servidor e comparado com 'newrelease.scope' segundo sua representação real.
+	* A ação processa somente os registros definidos pela decisão aprovada e valida novamente sua elegibilidade no backend.
+	* O agrupamento corresponde à chave aprovada e não mistura registros de escopos incompatíveis.
+	* Os valores agregados são calculados com aritmética decimal e correspondem aos lançamentos vinculados.
+	* A relação entre cobrança e lançamentos permite a cardinalidade aprovada.
+	* O status de cada lançamento muda para “Cobrança” somente após o sucesso da operação correspondente.
+	* Os status de 'collection', as datas e os campos de auditoria seguem regras explicitamente aprovadas.
+	* Reexecuções ou solicitações concorrentes não geram cobranças ou vínculos duplicados dentro dos limites da estratégia implementada.
+	* Falhas não deixam cobrança, vínculo e status em estado inconsistente.
+	* A ação funciona no Django Admin/Jazzmin segundo as convenções existentes.
+	* 'python manage.py check' não apresenta erros atribuíveis à alteração, quando executado.
+	* Migrations, quando necessárias, preservam dados e são compatíveis com o ambiente suportado.
+	* Os testes pertinentes são executados e seus resultados são relatados com precisão.
+	* Autenticação, permissões, SMTP, outros apps e infraestrutura fora do escopo permanecem inalterados.
+
+12. Entrega final
+
+	Ao concluir, apresente:
+		1.	Diagnóstico da inspeção e plano aprovado.
+		2.	Decisões tomadas sobre seleção, competência, agrupamento, datas, valores, status, cardinalidade, auditoria e processamento parcial.
+		3.	Resumo técnico da implementação.
+		4.	Relação dos arquivos criados ou modificados e justificativa.
+		5.	Migrations criadas, se houver, e estratégia de preservação dos dados.
+		6.	Testes e comandos executados, com resultados reais.
+		7.	Pendências, limitações ou riscos remanescentes.
+		8.	Confirmação explícita de que autenticação, permissões globais, SMTP, outros apps e infraestrutura fora do escopo não foram alterados.
+        

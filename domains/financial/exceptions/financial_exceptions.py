@@ -16,3 +16,18 @@ class NewReleaseValidationError(NewReleaseError):
 class NewReleaseTransitionError(NewReleaseError):
     """Invalid status transition for a NewRelease record."""
     pass
+
+
+class CollectionError(FinancialException):
+    """Base error for the Collection domain."""
+    pass
+
+
+class CollectionValidationError(CollectionError):
+    """Validation error for a Collection record or its operations."""
+    pass
+
+
+class CollectionTransitionError(CollectionError):
+    """Invalid status transition for a Collection record."""
+    pass

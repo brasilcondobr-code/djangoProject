@@ -18,20 +18,20 @@ class TestNewReleaseForm:
 
         assert form.is_valid(), form.errors
         assert form.cleaned_data["scope"] == date(2026, 1, 1)
-        assert form.cleaned_data["value"] == Decimal("-150.00")
+        assert form.cleaned_data["value"] == Decimal("150.00")
 
         instance = form.save(commit=False)
         assert instance.scope == date(2026, 1, 1)
-        assert instance.value == Decimal("-150.00")
+        assert instance.value == Decimal("150.00")
 
-    def test_credit_value_is_positive(self, _valid_form_data):
+    def test_credit_value_is_negative(self, _valid_form_data):
         data = dict(_valid_form_data)
         data["launchType"] = NewRelease.LaunchType.CREDITO
 
         form = NewReleaseForm(data=data)
 
         assert form.is_valid(), form.errors
-        assert form.cleaned_data["value"] == Decimal("150.00")
+        assert form.cleaned_data["value"] == Decimal("-150.00")
 
     def test_empty_value_is_none(self, _valid_form_data):
         data = dict(_valid_form_data)
@@ -125,7 +125,7 @@ class TestNewReleaseForm:
         assert not form.is_valid()
         assert "fund" in form.errors
 
-    @pytest.mark.parametrize("raw_value", ["0,00", "-10,00", "abc"])
+    @pytest.mark.parametrize("raw_value", ["0,00", "abc"])
     def test_invalid_value(self, _valid_form_data, raw_value):
         data = dict(_valid_form_data)
         data["value"] = raw_value

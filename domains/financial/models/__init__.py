@@ -1,4 +1,20 @@
 from .financial_models import (
-    Agreement, PaymentSlip, Cash, Collection, Shopping, Loan, 
-    NewRelease, Payment, Apportionment, Receipt, BankTransfer
+    Agreement, PaymentSlip, Cash, Collection, Shopping, Loan,
+    NewRelease, Payment, CollectionCredit, Apportionment, Receipt,
+    BankTransfer
 )
+
+__all__ = [
+    "Agreement",
+    "PaymentSlip",
+    "Cash",
+    "Collection",
+    "Shopping",
+    "Loan",
+    "NewRelease",
+    "Payment",
+    "CollectionCredit",
+    "Apportionment",
+    "Receipt",
+    "BankTransfer",
+]
